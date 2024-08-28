@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -6,10 +7,10 @@ from sklearn.model_selection import train_test_split, cross_val_score, Stratifie
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.metrics import accuracy_score, confusion_matrix
 
-sns.set(style='whitegrid')
+sns.set_theme(style='whitegrid')
 
-
-df = pd.read_csv('C:\\Users\\Sufrimiento\\Documents\\UADE\\2024\\Tesis - Proyecto Final de Ingeniería\\Algoritmo de ML - Repo\\PFI-Tesis-2024\\scr\\dataset.csv')
+csv_path = os.path.join('PFI-Tesis-2024','data', 'dataset.csv')
+df = pd.read_csv(csv_path)
 print(df.head())
 
 df_encoded = pd.get_dummies(df, columns=['Hornevian','Harmonic','Harmony','Triad'])
