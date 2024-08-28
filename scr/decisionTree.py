@@ -8,11 +8,11 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 
 sns.set_theme(style='whitegrid')
 
-csv_path = os.path.join('PFI-Tesis-2024','data', 'dataset.csv')
-df = pd.read_csv(csv_path)
-print(df.head())
+#normalize the path to the dataset
+csv_path = os.path.join('PFI-Tesis-2024','data', 'dataset.csv') #normalization
+df = pd.read_csv(csv_path) #transform into dataframe
 
-df_encoded = pd.get_dummies(df, columns=['Hornevian','Harmonic','Harmony','Triad'])
+df_encoded = pd.get_dummies(df, columns=['Hornevian','Harmonic','Harmony','Triad']) #encode the data frame to turn the categorical data into quantitative data
 
 #features and target
 X = df_encoded.drop('Result', axis=1) #Features. All columns except 'Result'
@@ -31,9 +31,11 @@ y_pred = dtc.predict(X_test)
 #accuracy evaluation
 accuracy = accuracy_score(y_test,y_pred) #Compares the testing data with the prediction made by the tree.
 print(f'Accuracy: {accuracy:.2f}')
+#cross validation evaluation
 skf = StratifiedKFold(n_splits=5)
 scores = cross_val_score(dtc, X, y, cv=skf)
 print(f'Cross-Validation Accuracy: {scores.mean():.2f}')
+#confusion matrix evaluation
 cm = confusion_matrix(y_test, y_pred)
 sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels= range(1,10), yticklabels=range(1,10)) #Better visualize confusion matrix
 plt.xlabel('Predicted')
