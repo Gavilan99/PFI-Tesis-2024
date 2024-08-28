@@ -1,4 +1,3 @@
-import numpy as np
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -36,7 +35,7 @@ skf = StratifiedKFold(n_splits=5)
 scores = cross_val_score(dtc, X, y, cv=skf)
 print(f'Cross-Validation Accuracy: {scores.mean():.2f}')
 cm = confusion_matrix(y_test, y_pred)
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues') #Better visualize confusion matrix
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels= range(1,10), yticklabels=range(1,10)) #Better visualize confusion matrix
 plt.xlabel('Predicted')
 plt.ylabel('Actual')
 plt.title('Confusion Matrix')
