@@ -3,9 +3,10 @@ import joblib
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import graphviz
 import datetime
 from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
-from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.tree import DecisionTreeClassifier, plot_tree, export_graphviz
 from sklearn.metrics import accuracy_score, confusion_matrix
 
 #Save path for the decision tree.
@@ -29,7 +30,7 @@ y = df_encoded['Result'] #Target. Column 'Result' => Enneatype
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 #initialize the Decision Tree Classifier
-dtc = DecisionTreeClassifier(max_depth=5, min_samples_split=10, class_weight='balanced' ,criterion='entropy', random_state=42)
+dtc = DecisionTreeClassifier(max_depth=7, min_samples_split=10, class_weight='balanced' ,criterion='entropy', random_state=42)
 #trains the classifier with the testing data from our data set
 dtc.fit(X_train, y_train)
 
@@ -63,6 +64,24 @@ plt.show()
 plt.figure(figsize=(12, 8))
 plot_tree(dtc, feature_names=X.columns, 
           class_names=[str(i) for i in sorted(y.unique())], 
-          filled=True, rounded=True, fontsize=10)
+          filled=True, rounded=True, fontsize=10, proportion=True)
+
 plt.title("Decision Tree for Enneatype Prediction")
 plt.show()
+
+#formats the Matplotlib generated graph into a pdf file, which is more legible.
+
+pdf_save_path= os.path.join('PFI-Tesis-2024', 'output','decision_tree_classifier')
+
+dot_data = export_graphviz(dtc, out_file=None, 
+                           feature_names=X.columns,  
+                           class_names=[str(i) for i in sorted(y.unique())],  
+                           filled=True, rounded=True,  
+                           special_characters=True,
+                           proportion=True) 
+
+dot_data = dot_data.replace('value =', '')
+
+graph = graphviz.Source(dot_data) 
+graph.render(pdf_save_path) 
+graph.view() 
