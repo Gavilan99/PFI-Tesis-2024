@@ -10,12 +10,12 @@ from sklearn.tree import DecisionTreeClassifier, plot_tree, export_graphviz
 from sklearn.metrics import accuracy_score, confusion_matrix
 
 #Save path for the decision tree.
-save_path = os.path.join('PFI-Tesis-2024', 'models', 'decision_tree_model.pkl') #save path
+save_path = '..\\' + os.path.join('PFI-Tesis-2024', 'models', 'decision_tree_model.pkl') #save path
 
 sns.set_theme(style='whitegrid')
 
 #normalize the path to the dataset
-csv_path = os.path.join('PFI-Tesis-2024','data', 'dataset.csv') #normalization
+csv_path = '..\\' + os.path.join('PFI-Tesis-2024','data', 'dataset.csv') #normalization
 df = pd.read_csv(csv_path) #transform into dataframe
 
 df_encoded = pd.get_dummies(df, columns=['Hornevian','Harmonic','Harmony','Triad']) #encode the data frame to turn the categorical data into quantitative data
@@ -71,7 +71,7 @@ plt.show()
 
 #formats the Matplotlib generated graph into a pdf file, which is more legible.
 
-pdf_save_path= os.path.join('PFI-Tesis-2024', 'output','decision_tree_classifier')
+pdf_save_path= '..\\' + os.path.join('PFI-Tesis-2024', 'output','decision_tree_classifier')
 
 dot_data = export_graphviz(dtc, out_file=None, 
                            feature_names=X.columns,  

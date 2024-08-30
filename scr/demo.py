@@ -7,7 +7,7 @@ import pandas as pd
 search_path = os.path.join('PFI-Tesis-2024', 'models', 'decision_tree_model.pkl') #get the correct path for the DTC
 
 #load the DTC to make the prediction
-dtc = joblib.load(search_path)
+dtc = joblib.load('..\\'+search_path)
 
 #dictionay with questions, a dictionary per group. Questions : List of answers
 hor_questions = {
@@ -27,23 +27,16 @@ triad_questions ={
     "¿Cómo aborda la resolución de problemas en una situación de alta presión?" : ["Confío en mis emociones y en cómo me hace sentir la situación","Confío en mis instintos para guiarme","Pienso en la situación lógicamente"]
 }
 
-def getRandomKey(dct):
-    """Gets a random key from a dictionary"""
-    num = random.randint(0,len(dct))
-    aux = list(dct.keys())
-    return aux[num]
-
-
 #questions and answers for the user to give
-hor_index = getRandomKey(hor_questions)
-harc_index = getRandomKey(harc_questions)
-hary_index = getRandomKey(hary_questions)
-triad_index = getRandomKey(triad_questions)
-print("Seleccione una opción para cada pregunta:")
-hornevian = input("P: {question}: \n1){assertive} (assertive) \n2){compliant} (compliant) \n3) {withdrawn} (withdrawn)\nSeleccione una opción: ".format(question = hor_index, assertive = hor_questions[hor_index][0], compliant = hor_questions[hor_index][1], withdrawn = hor_questions[hor_index][2]))
-harmonic = input("P: {question}: \n1){competency} (competency) \n2){positive} (positive) \n3) {reactive} (reactive) \nSeleccione una opción: ".format(question = harc_index, competency = harc_questions[harc_index][0], positive = harc_questions[harc_index][1], reactive = harc_questions[harc_index][2]))
-harmony = input("P: {question}: \n1){attachment} (attachment) \n2){frustration} (frustration) \n3) {rejection} (rejection) \nSeleccione una opción: ".format(question = hary_index, attachment = hary_questions[hary_index][0], frustration = hary_questions[hary_index][1], rejection = hary_questions[hary_index][2]))
-triad = input("P: {question}: \n1){feeling} (feeling) \n2){intuition} (intuition) \n3) {thought} (thought) \nSeleccione una opción: ".format(question =triad_index, feeling = triad_questions[triad_index][0], intuition = triad_questions[triad_index][1], thought = triad_questions[triad_index][2]))
+hor_index = random.choice(list(hor_questions.keys()))
+harc_index = random.choice(list(harc_questions.keys()))
+hary_index = random.choice(list(hary_questions.keys()))
+triad_index = random.choice(list(triad_questions.keys()))
+print("\n\nSeleccione una opción para cada pregunta:")
+hornevian = input("\nP: {question}: \n    1) {assertive} (assertive) \n    2) {compliant} (compliant) \n    3) {withdrawn} (withdrawn)\n\nSeleccione una opción: ".format(question = hor_index, assertive = hor_questions[hor_index][0], compliant = hor_questions[hor_index][1], withdrawn = hor_questions[hor_index][2]))
+harmonic = input("\nP: {question}: \n    1) {competency} (competency) \n    2) {positive} (positive) \n    3) {reactive} (reactive) \n\nSeleccione una opción: ".format(question = harc_index, competency = harc_questions[harc_index][0], positive = harc_questions[harc_index][1], reactive = harc_questions[harc_index][2]))
+harmony = input("\nP: {question}: \n    1) {attachment} (attachment) \n    2) {frustration} (frustration) \n    3) {rejection} (rejection) \n\nSeleccione una opción: ".format(question = hary_index, attachment = hary_questions[hary_index][0], frustration = hary_questions[hary_index][1], rejection = hary_questions[hary_index][2]))
+triad = input("\nP: {question}: \n    1) {feeling} (feeling) \n    2) {intuition} (intuition) \n    3) {thought} (thought) \n\nSeleccione una opción: ".format(question =triad_index, feeling = triad_questions[triad_index][0], intuition = triad_questions[triad_index][1], thought = triad_questions[triad_index][2]))
 
 #map the answers
 encoded_responses = {
@@ -67,4 +60,4 @@ user_df = pd.DataFrame([encoded_responses])
 #make the prediction with the answers given by the user
 predicted_enneatype = dtc.predict(user_df)
 
-print(f'Tu Eneatipo predicho es: {predicted_enneatype[0]}')
+print(f'\nTu Eneatipo predicho es: {predicted_enneatype[0]}')
