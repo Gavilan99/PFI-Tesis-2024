@@ -12,7 +12,7 @@ dtc = joblib.load('..\\'+search_path)
 #dictionay with questions, a dictionary per group. Questions : List of answers
 hor_questions = {
     "En una situación en la que tus ideas son cuestionadas, ¿cómo respondes habitualmente?" : ["Afirmo mi punto de vista y mantengo mi postura","Intento conciliar las diferencias y mantener la armonía","Tomo distancia para reflexionar y reconsiderar mi posición"],
-    "Si te sientes abrumado, ¿cuál es tu respuesta típica?" : ["Sigo adelante y tomo acción","Me retiro para reflexionar y recargar mi energía","Me retiro para reflexionar y recargar mi energía"],
+    "Si te sientes abrumado, ¿cuál es tu respuesta típica?" : ["Sigo adelante y tomo acción","Busco a otros para que me orienten y me den apoyo","Me retiro para reflexionar y recargar mi energía"],
 }
 harc_questions = {
     "Imagina que te enfrentas con un obstáculo en tu camino hacia un objetivo, ¿cómo reaccionarías?" : ["Me concentro en encontrar una solución y seguir adelante","Mantengo una actitud positiva y busco el lado bueno", "Reacciono emocionalmente y expreso mi frustración"],
