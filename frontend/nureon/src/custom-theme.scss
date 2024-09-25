@@ -1,0 +1,30 @@
+@import '~@angular/material/theming';
+
+// Include Angular Material core styles
+@include mat-core();
+
+// Define your custom color palettes
+$custom-primary: (
+    500: #1a7f5b, // Dark Green
+    600: #5bc795, // Light Green
+);
+
+$custom-accent: (
+    500: #ff6d33, // Orange
+);
+
+$custom-warn: (
+    500: #ffbf1f, // Yellow
+);
+
+// Create the theme
+$custom-theme: mat-light-theme((
+    color: (
+        primary: mat-palette($custom-primary),
+        accent: mat-palette($custom-accent),
+        warn: mat-palette($custom-warn),
+    )
+));
+
+// Include the theme styles
+@include angular-material-theme($custom-theme);

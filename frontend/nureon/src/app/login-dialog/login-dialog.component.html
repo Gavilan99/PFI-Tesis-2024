@@ -1,0 +1,23 @@
+<h1 mat-dialog-title class="login-title">Log In</h1>
+
+<div mat-dialog-content class="login-dialog-content">
+  <form>
+    <!-- Email input field -->
+    <mat-form-field appearance="fill" class="full-width" appearance="outline">
+      <mat-label class="mat-lable">Username or E-mail</mat-label>
+      <input matInput type="email" required>
+    </mat-form-field>
+
+    <!-- Password input field -->
+    <mat-form-field appearance="fill" class="full-width" appearance="outline">
+      <mat-label class="mat-lable">Your password... it's a secret!</mat-label>
+      <input matInput type="password" required>
+    </mat-form-field>
+  </form>
+</div>
+
+<!-- Action buttons -->
+<div mat-dialog-actions class="login-dialog-actions">
+  <button mat-button mat-dialog-close class="cancel-btn">Cancel</button>
+  <button mat-button class="submit-btn">Submit</button>
+</div>
