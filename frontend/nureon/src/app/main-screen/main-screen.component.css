@@ -1,0 +1,75 @@
+.screen {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  
+  .sidenav-container {
+    flex: 1;
+    height: 100%;
+    padding-top: 80px; /* Push sidenav content below the top navbar */
+  }
+  
+  .sidenav {
+    width: 250px;
+    background-color: #1A7F5B;
+    padding-top: 90px;
+  }
+  
+  mat-list-item {
+    display: flex;
+    align-items: center;
+    padding: 40px;
+    font-size: var(--item-font-size, 18px); /* Default font size of 18px, customizable */
+    margin-bottom: var(--item-spacing, 24px); /* Default space between items, customizable */
+  }
+  
+  mat-icon {
+    margin-right: 16px;
+    font-size: 24px;
+  }
+  
+  a {
+    text-decoration: none;
+    color: black;
+    font-size: inherit; /* Inherit font size from mat-list-item */
+    font-weight: 500;
+  }
+  
+  .top-navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Aligns hamburger on the left, label in the center */
+    height: 80px;
+    background-color: #5bc795;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000; /* Ensure it's above other content */
+    padding: 0 16px;
+  }
+  
+  .navbar-label {
+    font-size: 35px;
+    color: #ffffff;
+    font-family: 'Roboto', sans-serif;
+    font-weight: bold;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%); /* Center the label horizontally */
+    line-height: 80px; /* Match the height of the navbar to vertically center the text */
+  }
+  
+  .hamburger-menu {
+    font-size: 30px;
+    cursor: pointer;
+  }
+  
+  .main-content {
+    padding-top: 80px; /* Leave space for the fixed navbar */
+    background-color: #f0f0f0;
+    padding: 16px;
+    height: 100%;
+  }
+  

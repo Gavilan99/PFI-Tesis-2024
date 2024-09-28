@@ -1,162 +1,124 @@
-/* Style the dialog container - make it larger horizontally */
 .mat-dialog-container {
-    padding: 30px;
-    border-radius: 0px;  /* Rectangular shape */
-    background-color: #fff;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    
-    /* Set a larger fixed width */
-    max-width: 100%;
-    width: 100%;
-    
-    max-height: 80vh;  /* Max height to prevent the dialog from being too tall */
-    min-height: 400px;  /* Ensure there is a decent minimum height */
-    overflow: hidden;  /* Disable scrolling */
-  }
-  
-  /* Form field container */
-  .mat-form-field {
-    width: 150%;
-    margin-bottom: 20px;
-    padding-left: 10%;
-  }
-
-  /* Input field styles */
-  input {
-    padding: 10px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    width: 100%;  /* Ensure the input takes full width of form field */
-  }
-  
-  /* Style for the dialog title */
-.login-title {
-    text-align: center;
-    font-size: 24px;
-    font-weight: bold;
-    font-family: 'Roboto', sans-serif;
-  }
-  
-  /* Style for the dialog content */
-  .login-dialog-content {
-    display: flex;
-    flex-direction: column;
-    padding: 10px 20px;
-  }
-  
-  /* Ensure form fields take full width */
-  .full-width {
-    width: 100%;
-  }
-  
-  /* Center and space out action buttons */
-  .login-dialog-actions {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 20px;
-  }
-  
-  /* Style for cancel button */
-  .cancel-btn {
-    color: #fff; /* Red color for cancel */
-    background-color: #FF6D33;
-    font-weight: bold;
-  }
-  
-  /* Style for submit button */
-  .submit-btn {
-    color: #fff; /* Green color for submit */
-    background-color: #5BC795;
-    font-weight: bold;
-  }
-  
-  /* Optional: Customize dialog size */
-  .mat-dialog-container {
-    width: 400px; /* Set the dialog width */
-    max-width: 100%; /* Make sure it doesn't exceed screen size */
-    height: auto;
-  }
-  
-  /* Style the dialog title */
-  .mat-dialog-title {
-    font-size: 28px;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 15px;
-    text-align: center;
-  }
-  
-  /* Align the buttons at the bottom */
-  .mat-dialog-actions {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
-  }
-  
-  /* Buttons */
-  button {
-    padding: 10px 20px;
-    font-size: 16px;
-    border-radius: 3px;
-    border: none;
-    cursor: pointer;
-    min-width: 100px;
-  }
-  
-  /* Login button specific styles */
-  button.mat-button {
-    background-color: #1A7F5B;  /* Material Design blue */
-    color: #fff;
-  }
-  
-  button.mat-button:hover {
-    background-color: #1A7F5B;
-  }
-  
-  /* Cancel button styles */
-  button.mat-dialog-close {
-    background-color: #FF6D33;  /* Material Design red */
-    color: #fff;
-  }
-  
-  button.mat-dialog-close:hover {
-    background-color: #FF6D33;
-  }
-
-  .mat-lable {
-    font-size: 16px;
-    font-weight: bold;
-    color: #333;
-  }
-
-/* Change the focus underline color */
-.mat-form-field-underline {
-    background-color: #4caf50 !important; /* Green color */
+  padding: 30px;
+  border-radius: 0; /* Rectangular shape */
+  background-color: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 100%;
+  width: 400px; /* Set the dialog width */
+  max-height: 80vh; /* Max height to prevent the dialog from being too tall */
+  min-height: 400px; /* Ensure there is a decent minimum height */
+  overflow: hidden; /* Disable scrolling */
 }
 
-/* Change the focus ripple effect color */
-.mat-form-field-ripple {
-    background-color: #4caf50 !important; /* Green color */
+/* Form field container */
+.mat-form-field {
+  width: 150%;
+  margin-bottom: 20px;
+  padding-left: 10%;
 }
 
-/* Change the color of the mat-label when the input is focused */
-.mat-form-field-label {
-    color: #4caf50 !important; /* Green color */
-}
-
-/* Change the cursor color for the input fields */
+/* Input field styles */
 input {
-    color: #333; /* Input text color */
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  width: 100%; /* Ensure the input takes full width of form field */
+  caret-color: #4caf50 !important; /* Green color */
+  color: #333; /* Input text color */
 }
 
-/* Change the cursor color when the input is focused */
+/* Focus styles for input fields */
 input:focus {
-    outline: none; /* Remove default outline */
-    border-bottom: 2px solid #4caf50; /* Set your desired focus color */
+  outline: none; /* Remove default outline */
+  border-bottom: 2px solid #4caf50; /* Set your desired focus color */
 }
 
-/* Change the color of the placeholder text */
+/* Placeholder text color */
 input::placeholder {
-    color: #999; /* Placeholder text color */
+  color: #999; /* Placeholder text color */
+}
+
+/* Style for the dialog title */
+.login-title,
+.mat-dialog-title {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 15px;
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Style for the dialog content */
+.login-dialog-content {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 20px;
+}
+
+/* Ensure form fields take full width */
+.full-width {
+  width: 100%;
+}
+
+/* Center and space out action buttons */
+.login-dialog-actions,
+.mat-dialog-actions {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 20px;
+  margin-top: 20px;
+}
+
+/* General button styles */
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 3px;
+  border: none;
+  cursor: pointer;
+  min-width: 100px;
+}
+
+/* Button specific styles */
+button.mat-button,
+button.login-btn {
+  background-color: #1A7F5B; /* Custom green color */
+  color: #fff !important; /* Force white color */
+}
+
+button.mat-button:hover,
+button.login-btn:hover {
+  background-color: #155D40; /* Darker shade for hover */
+}
+
+/* Cancel button styles */
+button.cancel-btn,
+button.mat-dialog-close {
+  background-color: #FF6D33; /* Custom red color */
+  color: #fff !important; /* Force white color */
+}
+
+button.cancel-btn:hover,
+button.mat-dialog-close:hover {
+  background-color: #E64A19; /* Darker shade for hover */
+}
+
+/* Label styles */
+.mat-label,
+.mat-lable { /* Fixed typo in 'mat-lable' */
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+/* Change the focus styles for form fields */
+.mat-form-field-underline,
+.mat-form-field-ripple,
+.mat-form-field-label {
+  background-color: #4caf50 !important; /* Green color */
+  color: #4caf50 !important; /* Green color for label */
 }

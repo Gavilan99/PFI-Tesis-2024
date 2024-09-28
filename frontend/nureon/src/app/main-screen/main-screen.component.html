@@ -1,0 +1,48 @@
+<div class="screen">
+    <!-- Top navbar outside sidenav-container -->
+    <div class="top-navbar">
+      <button mat-icon-button (click)="drawer.toggle()">
+        <mat-icon>menu</mat-icon>
+      </button>
+      <div class="navbar-label">
+        NureonAI
+      </div>
+      <!-- Navbar content goes here -->
+    </div>
+  
+    <!-- Sidenav container for main content -->
+    <mat-sidenav-container class="sidenav-container">
+      <mat-sidenav #drawer class="sidenav" mode="side" opened="false">
+        <mat-list>
+          <mat-list-item>
+            <mat-icon>help_outline</mat-icon>
+            <a href="#">Take the test</a>
+          </mat-list-item>
+          <mat-list-item>
+            <mat-icon>assignment_turned_in</mat-icon>
+            <a href="#">View results</a>
+          </mat-list-item>
+          <mat-list-item>
+            <mat-icon>star</mat-icon>
+            <a href="#">About your enneatype</a>
+          </mat-list-item>
+          <mat-list-item>
+            <mat-icon>info_outline</mat-icon>
+            <a href="#">About us</a>
+          </mat-list-item>
+          <mat-list-item>
+            <mat-icon>contacts</mat-icon>
+            <a href="#">Contact</a>
+          </mat-list-item>
+        </mat-list>
+      </mat-sidenav>
+  
+      <mat-sidenav-content>
+        <div class="main-content">
+          <!-- Main content goes here -->
+          <p>This is the main content area.</p>
+        </div>
+      </mat-sidenav-content>
+    </mat-sidenav-container>
+  </div>
+  

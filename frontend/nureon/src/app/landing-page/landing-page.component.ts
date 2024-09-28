@@ -1,11 +1,12 @@
 import { Component, OnInit, Renderer2, ElementRef } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { LoginDialogComponent } from '../login-dialog/login-dialog.component';
+import { SignupDialogComponent } from '../signup-dialog/signup-dialog.component';
 
 @Component({
   selector: 'app-landing-page',
-  standalone: true,
-  imports: [],
+  standalone: false,
+  
   templateUrl: './landing-page.component.html',
   styleUrls: ['./landing-page.component.css']
 })
@@ -16,6 +17,16 @@ export class LandingPageComponent implements OnInit {
 
   openLoginDialog(): void {
     const dialogRef = this.dialog.open(LoginDialogComponent, {
+      width: '300px', // you can customize the width of the modal
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      console.log('The dialog was closed');
+    });
+  }
+
+  openSignupDialog(): void {
+    const dialogRef = this.dialog.open(SignupDialogComponent, {
       width: '300px', // you can customize the width of the modal
     });
 
