@@ -43,11 +43,10 @@ input::placeholder {
 .login-title,
 .mat-dialog-title {
   text-align: center;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: bold;
   color: #333;
-  margin-bottom: 15px;
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Inter';
 }
 
 /* Style for the dialog content */
@@ -68,7 +67,7 @@ input::placeholder {
   display: flex;
   justify-content: space-between;
   padding: 10px 20px;
-  margin-top: 20px;
+  margin-top: 25px;
 }
 
 /* General button styles */

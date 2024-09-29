@@ -10,6 +10,7 @@ import { SignupDialogComponent } from '../signup-dialog/signup-dialog.component'
   templateUrl: './landing-page.component.html',
   styleUrls: ['./landing-page.component.css']
 })
+
 export class LandingPageComponent implements OnInit {
   private intervalId: any;
 

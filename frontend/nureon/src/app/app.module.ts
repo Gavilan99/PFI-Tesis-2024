@@ -11,11 +11,13 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatSidenavModule } from '@angular/material/sidenav';  // Import for sidenav
-import { MatIconModule } from '@angular/material/icon';        // Import for icons
-import { MatToolbarModule } from '@angular/material/toolbar';  // Import for toolbar
-import { MatListModule } from '@angular/material/list';        // Import for list
-import { MatDialogModule } from '@angular/material/dialog';    // Import for dialogs (if needed)
+import { MatSidenavModule } from '@angular/material/sidenav';  
+import { MatIconModule } from '@angular/material/icon';      
+import { MatToolbarModule } from '@angular/material/toolbar';  
+import { MatListModule } from '@angular/material/list';       
+import { MatDialogModule } from '@angular/material/dialog'; 
+import { MatMenuModule } from '@angular/material/menu'; // Added Menu module
+import { MatIconRegistry } from '@angular/material/icon';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -45,11 +47,12 @@ import { MainScreenComponent } from './main-screen/main-screen.component';
     MatSelectModule,
     MatButtonModule,
     MatCardModule,
-    MatSidenavModule,    // Added Sidenav module
-    MatIconModule,       // Added Icon module
-    MatToolbarModule,    // Added Toolbar module
-    MatListModule,       // Added List module
-    MatDialogModule      // Added Dialog module (optional for future use)
+    MatSidenavModule,    // Sidenav module
+    MatIconModule,       // Icon module
+    MatToolbarModule,    // Toolbar module
+    MatListModule,       // List module
+    MatDialogModule,
+    MatMenuModule,       // Menu module
   ],
   providers: [
     provideClientHydration(),

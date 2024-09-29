@@ -1,75 +1,140 @@
-.screen {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
-  
-  .sidenav-container {
-    flex: 1;
-    height: 100%;
-    padding-top: 80px; /* Push sidenav content below the top navbar */
-  }
-  
-  .sidenav {
-    width: 250px;
-    background-color: #1A7F5B;
-    padding-top: 90px;
-  }
-  
-  mat-list-item {
-    display: flex;
-    align-items: center;
-    padding: 40px;
-    font-size: var(--item-font-size, 18px); /* Default font size of 18px, customizable */
-    margin-bottom: var(--item-spacing, 24px); /* Default space between items, customizable */
-  }
-  
-  mat-icon {
-    margin-right: 16px;
-    font-size: 24px;
-  }
-  
-  a {
-    text-decoration: none;
-    color: black;
-    font-size: inherit; /* Inherit font size from mat-list-item */
-    font-weight: 500;
-  }
-  
-  .top-navbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* Aligns hamburger on the left, label in the center */
-    height: 80px;
-    background-color: #5bc795;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000; /* Ensure it's above other content */
-    padding: 0 16px;
-  }
-  
-  .navbar-label {
-    font-size: 35px;
-    color: #ffffff;
-    font-family: 'Roboto', sans-serif;
-    font-weight: bold;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%); /* Center the label horizontally */
-    line-height: 80px; /* Match the height of the navbar to vertically center the text */
-  }
-  
-  .hamburger-menu {
-    font-size: 30px;
-    cursor: pointer;
-  }
-  
-  .main-content {
-    padding-top: 80px; /* Leave space for the fixed navbar */
-    background-color: #f0f0f0;
-    padding: 16px;
-    height: 100%;
-  }
-  
+/* main-screen.component.css */
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center; /* Center items vertically */
+  height: 10%; /* Set height for the nav bar */
+  background-color: #5BC795; 
+  color: white; /* Example text color */
+  padding: 0 20px; /* Add padding to the sides */
+}
+
+.hamburger {
+  margin-right: auto; /* Push hamburger to the left */
+}
+
+.right-button {
+  margin-left: auto; /* Push the button to the right */
+  white-space: nowrap; /* Prevent text from wrapping */
+}
+
+.title {
+  flex-grow: 1; /* Allow title to take available space */
+  text-align: center; /* Center the title */
+  font-family: 'museomoderno', sans-serif; /* Change font */
+  font-size: 55px;
+  font-weight: bold; /* Make title bold */
+}
+
+.mat-icon {
+  margin-right: 15px; /* Space between the button and the text */
+}
+
+.button-container {
+  flex: 1; /* This allows the button container to take up available space */
+  display: flex;
+  flex-direction: column; /* Arrange buttons vertically */
+  padding-bottom: 10%;
+}
+
+.sidenav {
+  display: flex;
+  flex-direction: column;
+  height: 100hv;
+  width: 350px;
+  background-color: #1A7F5B; /* Green as an example */
+  color: white;
+  padding: 20px;
+}
+
+.sidenav-container {
+  flex-grow: 1; /* Takes up remaining 90% of height */
+}
+
+.sidenav-content {
+  flex: 1; /* This allows the content to take up available space */
+  display: flex; 
+  flex-direction: column; /* Arrange buttons vertically */
+}
+
+.sidenav button {
+  width: 100%; /* Make buttons take full width */
+  text-align: left; /* Align text to the left */
+  margin-top: 25px;
+  margin-bottom: 60px; /* Add space between buttons */
+  color: white; /* Change text color to white */
+  justify-content: flex-start; /* Align items to the left */
+  padding: 0px; /* Add padding to the button */
+  font-family: 'inter', sans-serif; /* Change font */
+  font-size: 20px;
+}
+
+.sidenav button mat-icon {
+  margin-right: 10px; /* Space between the icon and text */
+}
+
+.active-button {
+  background-color: #FFBF1F !important; /* Active button background color */
+  color: black !important; /* Active button text color */
+}
+
+.mat-sidenav-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #f4f4f4;
+}
+
+.main-content {
+  padding: 20px;
+  background-color: #F0F0F0;
+}
+
+.profile-icon {
+  margin-left: auto; /* Push the profile icon to the right */
+  color: white; /* Icon color */
+  width: 50px; /* Set width */
+  height: 50px; /* Set height */ 
+}
+
+.link-container {
+  font-size: 18px;
+  text-align: center; /* Center text */
+  color: white; /* Set text color to white */
+  padding: 16px 0; /* Add padding for spacing */
+  margin-top: 10%; /* Pushes the links to the bottom */
+}
+
+.bottom-links {
+  padding: 16px 0; /* Optional: Add some padding for aesthetics */
+  text-align: center; /* Center text */
+  color: white; /* Set text color to white */
+}
+
+.link {
+  display: block; /* Ensures links take full width */
+  margin: 7px 0; /* Adjust space between links */
+  color: white; /* Ensure text is white */
+  cursor: pointer; /* Change cursor to pointer on hover */
+  transition: color 0.3s ease; /* Smooth transition for color change */
+}
+
+.bottom-links p {
+  margin: 7px 0; /* Space between the text and links */
+  color: white; /* Ensure plain text is white */
+}
+
+.spacer {
+  flex-grow: 1; /* This will push the bottom links to the end */
+}
+
+.white-bar {
+  height: 1px; /* Adjust the height of the bar */
+  background-color: white; /* Set the bar color to white */
+  margin-bottom: 10px; /* Space between the bar and the links */
+}

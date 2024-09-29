@@ -29,25 +29,23 @@
 }
 
 .title {
-  font-size: 50px;
+  font-size: 100px;
   color: #ffffff;
   margin-bottom: 20px;
-  font-family: 'Roboto', sans-serif;
+  font-family: 'museomoderno';
   font-weight: bold;
 }
 
 .logo-placeholder{
   width: 500px;
   height: 500px; /* Maintain aspect ratio */
-  margin-bottom: 100px;
-  fill: #ffffff;
 }
 
 .login-button{
-  background-color: #ffffff;
+  background-color: #ffffff !important ;
   color: #000000;
   font-size: large;
-  font-family:'Times New Roman', Times, serif;
+  font-family: 'Inter', sans-serif;
   border: none;
   padding: 10px 20px;
   margin: 5px 0; /* Vertical margin */
@@ -57,11 +55,11 @@
 }
 
 .signup-button{
-  background-color: #ffffff;
+  background-color: #ffbf1f !important;
   color: #000000;
   font-size: large;
-  font-family: 'Times New Roman', Times, serif;
-  font-weight: bold;
+  font-family: 'Inter', sans-serif;
+  font-weight: bolder;
   border: none;
   padding: 10px 20px;
   margin: 5px 0; /* Vertical margin */
@@ -70,9 +68,6 @@
   width: 100%; /* Full width */
 }
 
-.btn:hover {
-  background-color: #a0a0a0;
-}
 
 /* Carousel styles */
 .carousel-container {

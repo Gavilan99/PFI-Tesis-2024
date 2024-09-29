@@ -1,48 +1,76 @@
-<div class="screen">
-    <!-- Top navbar outside sidenav-container -->
-    <div class="top-navbar">
-      <button mat-icon-button (click)="drawer.toggle()">
-        <mat-icon>menu</mat-icon>
+<!-- main-screen.component.html -->
+<div class="nav-bar">
+  <button mat-icon-button (click)="toggleSidenav()" class="hamburger">
+    <mat-icon>menu</mat-icon>
+  </button>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=MuseoModerno:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <span class="title">NureonAI</span>
+
+  <!-- Profile Menu -->
+  <button mat-icon-button [matMenuTriggerFor]="profileMenu" class="profile-icon">
+    <mat-icon>account_circle</mat-icon> <!-- Profile icon -->
+  </button>
+  <mat-menu #profileMenu="matMenu">
+    <button mat-menu-item (click)="navigateToProfile()">
+      Profile
+    </button>
+    <button mat-menu-item (click)="changeLanguage()">
+      Language
+    </button>
+    <button mat-menu-item (click)="logout()">
+      Logout
+    </button>
+  </mat-menu>
+</div>
+
+<mat-sidenav-container class="sidenav-container">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+  
+  <mat-sidenav #sidenav mode="side" class="sidenav" [opened]="sidenavOpened">
+    <div class="button-container">
+      <!-- Sidenav buttons with icons -->
+      <button mat-button 
+              [ngClass]="{'active-button': activeSection === 'Take the test'}" 
+              (click)="setActiveSection('Take the test')">
+        <mat-icon>check_circle</mat-icon> Take the test
       </button>
-      <div class="navbar-label">
-        NureonAI
-      </div>
-      <!-- Navbar content goes here -->
+      <button mat-button 
+              [ngClass]="{'active-button': activeSection === 'View results'}" 
+              (click)="setActiveSection('View results')">
+        <mat-icon>assessment</mat-icon> View results
+      </button>
+      <button mat-button 
+              [ngClass]="{'active-button': activeSection === 'About your enneatype'}" 
+              (click)="setActiveSection('About your enneatype')">
+        <mat-icon>info</mat-icon> About your enneatype
+      </button>
+      <button mat-button 
+              [ngClass]="{'active-button': activeSection === 'About us'}" 
+              (click)="setActiveSection('About us')">
+        <mat-icon>group</mat-icon> About us
+      </button>
+      <button mat-button 
+              [ngClass]="{'active-button': activeSection === 'Contact'}" 
+              (click)="setActiveSection('Contact')">
+        <mat-icon>contact_mail</mat-icon> Contact
+      </button>
     </div>
-  
-    <!-- Sidenav container for main content -->
-    <mat-sidenav-container class="sidenav-container">
-      <mat-sidenav #drawer class="sidenav" mode="side" opened="false">
-        <mat-list>
-          <mat-list-item>
-            <mat-icon>help_outline</mat-icon>
-            <a href="#">Take the test</a>
-          </mat-list-item>
-          <mat-list-item>
-            <mat-icon>assignment_turned_in</mat-icon>
-            <a href="#">View results</a>
-          </mat-list-item>
-          <mat-list-item>
-            <mat-icon>star</mat-icon>
-            <a href="#">About your enneatype</a>
-          </mat-list-item>
-          <mat-list-item>
-            <mat-icon>info_outline</mat-icon>
-            <a href="#">About us</a>
-          </mat-list-item>
-          <mat-list-item>
-            <mat-icon>contacts</mat-icon>
-            <a href="#">Contact</a>
-          </mat-list-item>
-        </mat-list>
-      </mat-sidenav>
-  
-      <mat-sidenav-content>
-        <div class="main-content">
-          <!-- Main content goes here -->
-          <p>This is the main content area.</p>
-        </div>
-      </mat-sidenav-content>
-    </mat-sidenav-container>
-  </div>
-  
+    
+    <div class="link-container">
+      <div class="white-bar"></div> <!-- Add this div for the white bar -->
+      <p (click)="navigateTo('privacy')" class="link">Privacy Policy</p>
+      <p (click)="navigateTo('terms')" class="link">Terms and Conditions</p>
+      <p class="link">2024 NureonAI</p>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <div class="main-content">
+      <p>This is the main content area.</p>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>
