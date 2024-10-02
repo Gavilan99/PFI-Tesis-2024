@@ -35,42 +35,47 @@
       <!-- Sidenav buttons with icons -->
       <button mat-button 
               [ngClass]="{'active-button': activeSection === 'Take the test'}" 
-              (click)="setActiveSection('Take the test')">
+              (click)="setActiveSection('Take the test')"
+              routerLink="test">
         <mat-icon>check_circle</mat-icon> Take the test
       </button>
       <button mat-button 
               [ngClass]="{'active-button': activeSection === 'View results'}" 
-              (click)="setActiveSection('View results')">
+              (click)="setActiveSection('View results')"
+              routerLink="results">
         <mat-icon>assessment</mat-icon> View results
       </button>
       <button mat-button 
               [ngClass]="{'active-button': activeSection === 'About your enneatype'}" 
-              (click)="setActiveSection('About your enneatype')">
+              (click)="setActiveSection('About your enneatype')"
+              routerLink="about-enneatype">
         <mat-icon>info</mat-icon> About your enneatype
       </button>
       <button mat-button 
               [ngClass]="{'active-button': activeSection === 'About us'}" 
-              (click)="setActiveSection('About us')">
+              (click)="setActiveSection('About us')"
+              routerLink="about-us">
         <mat-icon>group</mat-icon> About us
       </button>
       <button mat-button 
               [ngClass]="{'active-button': activeSection === 'Contact'}" 
-              (click)="setActiveSection('Contact')">
+              (click)="setActiveSection('Contact')"
+              routerLink="contact">
         <mat-icon>contact_mail</mat-icon> Contact
       </button>
     </div>
-    
+    <div class="spacer"></div>
     <div class="link-container">
       <div class="white-bar"></div> <!-- Add this div for the white bar -->
       <p (click)="navigateTo('privacy')" class="link">Privacy Policy</p>
       <p (click)="navigateTo('terms')" class="link">Terms and Conditions</p>
-      <p class="link">2024 NureonAI</p>
+      <label>©2024 NureonAI</label>
     </div>
   </mat-sidenav>
 
   <mat-sidenav-content>
     <div class="main-content">
-      <p>This is the main content area.</p>
+      <router-outlet></router-outlet>
     </div>
   </mat-sidenav-content>
 </mat-sidenav-container>

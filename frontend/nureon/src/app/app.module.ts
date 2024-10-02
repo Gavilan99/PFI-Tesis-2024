@@ -1,8 +1,10 @@
 import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
 import { BrowserModule, provideClientHydration } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { HttpClientModule } from '@angular/common/http';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -25,6 +27,28 @@ import { LandingPageComponent } from './landing-page/landing-page.component';
 import { LoginDialogComponent } from './login-dialog/login-dialog.component';
 import { SignupDialogComponent } from './signup-dialog/signup-dialog.component';
 import { MainScreenComponent } from './main-screen/main-screen.component';
+import { TestComponent } from './test/test.component';
+import { ResultsComponent } from './results/results.component';
+import { AboutEnneatypeComponent } from './about-enneatype/about-enneatype.component';
+import { AboutUsComponent } from './about-us/about-us.component';
+import { ContactComponent } from './contact/contact.component';
+import { ProfileComponent } from './profile/profile.component';
+
+const routes: Routes = [
+  {path: '', redirectTo: '/main-screen', pathMatch: 'full'},
+  {
+    path: 'main-screen',
+    component: MainScreenComponent,
+    children: [
+      {path: 'test', component: TestComponent},
+      {path: 'results', component: ResultsComponent},
+      {path: 'about-enneatype', component: AboutEnneatypeComponent},
+      {path: 'about-us', component: AboutUsComponent},
+      {path: 'contact', component: ContactComponent}
+    ],
+  },
+  {path: '**', redirectTo: '/main-screen/test'},
+];
 
 @NgModule({
   declarations: [
@@ -33,6 +57,12 @@ import { MainScreenComponent } from './main-screen/main-screen.component';
     SignupDialogComponent,
     MainScreenComponent,
     LandingPageComponent,
+    TestComponent,
+    ResultsComponent,
+    AboutEnneatypeComponent,
+    AboutUsComponent,
+    ContactComponent,
+    ProfileComponent,
   ],
   imports: [
     BrowserModule,
@@ -52,8 +82,11 @@ import { MainScreenComponent } from './main-screen/main-screen.component';
     MatToolbarModule,    // Toolbar module
     MatListModule,       // List module
     MatDialogModule,
-    MatMenuModule,       // Menu module
+    MatMenuModule,
+    RouterModule.forRoot(routes),
+    HttpClientModule
   ],
+  exports: [RouterModule],
   providers: [
     provideClientHydration(),
     provideAnimationsAsync()

@@ -1,5 +1,6 @@
-// main-screen.component.ts
 import { Component } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog'; // Import MatDialog
+import { ProfileComponent } from '../profile/profile.component'; 
 
 @Component({
   selector: 'app-main-screen',
@@ -9,6 +10,8 @@ import { Component } from '@angular/core';
 export class MainScreenComponent {
   sidenavOpened: boolean = true; // Start with sidenav open
   activeSection: string = 'Take the test'; // Default active section
+
+  constructor(private dialog: MatDialog) {} // Inject MatDialog
 
   toggleSidenav() {
     this.sidenavOpened = !this.sidenavOpened; // Toggle sidenav state
@@ -20,7 +23,21 @@ export class MainScreenComponent {
 
   navigateToProfile() {
     console.log('Navigating to Profile');
-    // Implement navigation logic here
+    this.openProfileDialog(); // Call the method to open the profile dialog
+  }
+
+  openProfileDialog(): void {
+    const dialogRef = this.dialog.open(ProfileComponent, {
+      width: '400px', // Adjust the width as needed
+      data: {
+        // You can pass data to the profile component here if necessary
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      console.log('The dialog was closed', result);
+      // Handle any logic after dialog is closed if needed
+    });
   }
 
   changeLanguage() {

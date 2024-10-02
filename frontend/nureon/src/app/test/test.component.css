@@ -1,0 +1,101 @@
+.carousel-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Center items vertically */
+    height: 90%;
+    padding: 20px;
+    background-color: #f0f0f0;
+    overflow: hidden; /* Ensure content is hidden when sliding out */
+}
+
+.carousel-nav {
+    width: 10%; /* Full width */
+    height: 10%;
+    display: flex;
+    justify-content: center;
+    margin: 5px 0; /* Reduced margin to bring arrows even closer */
+}
+
+.nav-button {
+    display: flex;
+    flex-direction: column; /* Stack the arrow on top of the text */
+    align-items: center;
+    background-color: transparent; /* Transparent background */
+    color: #a1a1a1; /* Text color */
+    border: none; /* Remove border */
+    padding: 0; /* No padding to reduce size */
+    height: 40px; /* Set a fixed height for buttons */
+    width: 40px; /* Set a fixed width for buttons */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: color 0.3s ease; /* Transition for text color */
+}
+
+.nav-button:hover {
+    color: #555555; /* Darker text color on hover */
+}
+
+.arrow {
+    font-size: 16px; /* Size of the arrow */
+}
+
+.nav-text-container {
+    display: flex; /* Use flexbox to align texts horizontally */
+    flex-direction: row; /* Align text next to each other */
+    justify-content: center; /* Center the text */
+    margin-top: 2px; /* Space between the arrow and the text */
+}
+
+.nav-text {
+    font-size: 17px; /* Size of the text */
+    margin: 0 2px; /* Space between the two text elements */
+}
+
+.question-container {
+    background-color: #f0f0f0;
+    width: 90%; /* Reduce width to avoid overflow */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.6s ease-in-out, opacity 0.6s ease-in-out;
+    text-align: center;
+    margin: 10px 0; /* Reduced margin for better spacing */
+    margin-bottom: 40px;
+}
+
+.question-header {
+    margin-bottom: 10px; /* Reduced bottom margin */
+    font-size: 39px;
+    text-align: center;
+}
+
+.answer-container {
+    width: 100%; /* Full width */
+    display: flex;
+    justify-content: center;
+    margin: 5px 0; /* Reduced margin for answers */
+}
+
+.answer-container button {
+    width: 80%; /* Adjust button width */
+    font-size: 26px;
+    margin: 5px;
+    background-color: #7CB0EB; /* Set the button background color */
+    color: white; /* Optional: change text color to white for better contrast */
+    border: none; /* Remove default border */
+    border-radius: 0px; /* Optional: add border radius for rounded corners */
+}
+
+.answer-container button:hover {
+    background-color: #6ba4d3; /* Optional: change color on hover */
+}
+
+mat-icon {
+    font-size: 40px;
+}
+
+.selected-answer {
+    background-color: #4caf50; /* Green background */
+    color: white; /* White text */
+  }

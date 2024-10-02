@@ -36,42 +36,50 @@
 }
 
 .button-container {
-  flex: 1; /* This allows the button container to take up available space */
   display: flex;
   flex-direction: column; /* Arrange buttons vertically */
-  padding-bottom: 10%;
+  flex-grow: 1; /* Allow button container to take available space */
+  margin: 0; /* Ensure no margin around the button container */
 }
 
 .sidenav {
   display: flex;
   flex-direction: column;
-  height: 100hv;
+  height: 100vh; /* Ensure sidenav takes full height of the viewport */
   width: 350px;
   background-color: #1A7F5B; /* Green as an example */
   color: white;
-  padding: 20px;
+  padding: 0; /* Remove padding to ensure buttons are flush against edges */
+  flex-grow: 1;
 }
 
 .sidenav-container {
   flex-grow: 1; /* Takes up remaining 90% of height */
-}
-
-.sidenav-content {
   flex: 1; /* This allows the content to take up available space */
   display: flex; 
   flex-direction: column; /* Arrange buttons vertically */
+  justify-content: space-between;
+  flex-grow: 1;
 }
 
 .sidenav button {
-  width: 100%; /* Make buttons take full width */
+  width: 100%; /* Full width */
+  height: 100px;
+  flex-grow: 1; /* Make buttons grow to fill available height */
   text-align: left; /* Align text to the left */
-  margin-top: 25px;
-  margin-bottom: 60px; /* Add space between buttons */
+  margin: 0; /* Remove space between buttons */
   color: white; /* Change text color to white */
   justify-content: flex-start; /* Align items to the left */
-  padding: 0px; /* Add padding to the button */
+  padding: 15px; /* Add padding for spacing within the button */
   font-family: 'inter', sans-serif; /* Change font */
-  font-size: 20px;
+  font-size: 20px; /* Font size */
+  box-sizing: border-box; /* Include padding and border in width and height */
+  border-radius: 0; /* Remove rounded corners */
+  outline: none; /* Optional: Remove the outline */
+}
+
+.sidenav button:hover {
+  background-color: rgba(255, 191, 31, 0.2); /* Optional: Add a hover effect */
 }
 
 .sidenav button mat-icon {
@@ -92,7 +100,8 @@
 
 .main-content {
   padding: 20px;
-  background-color: #F0F0F0;
+  background-color: #f0f0f0;
+  height: 100%;
 }
 
 .profile-icon {
@@ -100,6 +109,12 @@
   color: white; /* Icon color */
   width: 50px; /* Set width */
   height: 50px; /* Set height */ 
+}
+
+.spacer {
+  flex-grow: 2; /* This will push the bottom links to the end */
+  min-height: 20vh; /* Optional: Set a minimum height */
+  
 }
 
 .link-container {
@@ -127,10 +142,6 @@
 .bottom-links p {
   margin: 7px 0; /* Space between the text and links */
   color: white; /* Ensure plain text is white */
-}
-
-.spacer {
-  flex-grow: 1; /* This will push the bottom links to the end */
 }
 
 .white-bar {

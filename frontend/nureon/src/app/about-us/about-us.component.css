@@ -1,0 +1,69 @@
+.about-us-container {
+    background-color: #f0f0f0;
+    padding: 20px;
+  }
+  
+  .about-card, .why-enneagram-card {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto 20px auto;  /* Center and space */
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-left: 5px solid #7CB0EB;
+  }
+  
+  .title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #1A7F5B;
+    text-align: center;
+  }
+  
+  .nureonai-font {
+    font-family: 'MuseoModerno', sans-serif;
+    font-weight: 600;
+    color: #1A7F5B;
+  }
+  
+  mat-card-content p {
+    font-size: 1.2rem;
+    color: #333;
+    margin-top: 10px;
+  }
+  
+  /* Mission and Vision Cards */
+  .mission-vision-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+  }
+  
+  .mission-card, .vision-card {
+    width: 48%;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-left: 5px solid #7CB0EB;
+    padding: 20px;
+  }
+  
+  @media (max-width: 768px) {
+    .mission-vision-container {
+      flex-direction: column;
+    }
+  
+    .mission-card, .vision-card {
+      width: 100%;
+    }
+  }
+  
+  /* Why the Enneagram Card Styling */
+  .why-enneagram-card {
+    width: 100%;
+    max-width: 1200px;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-left: 5px solid #7CB0EB;
+    padding: 20px;
+    margin-top: 20px;  /* Increase margin to create more space */
+  }
+  
