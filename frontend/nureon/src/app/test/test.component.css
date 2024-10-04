@@ -99,3 +99,13 @@ mat-icon {
     background-color: #4caf50; /* Green background */
     color: white; /* White text */
   }
+
+  .submit-container {
+    margin-top: auto; /* Pushes the submit button to the bottom */
+    padding: 0px;
+}
+
+.submit-button {
+    width: 100%; /* Full width button */
+    height: 50px; /* Set a height for the button */
+}

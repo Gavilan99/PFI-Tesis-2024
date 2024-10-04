@@ -49,3 +49,24 @@ mat-form-field {
 .create-account-btn:hover {
   background-color: #155D40; /* Darker shade for hover */
 }
+
+.success-snackbar {
+  background-color: #1A7F5B;  /* Dark green for success */
+  color: white;
+}
+
+.error-snackbar {
+  background-color: #FF6D33;  /* Orange for error */
+  color: white;
+}
+
+button.create-account-btn {
+  background-color: #5BC795;  /* Light green */
+  color: white;
+}
+
+button.cancel-btn {
+  background-color: #FFBF1F;  /* Yellow */
+  color: white;
+}
+

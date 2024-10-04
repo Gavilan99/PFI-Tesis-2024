@@ -10,13 +10,13 @@ from sklearn.tree import DecisionTreeClassifier, plot_tree, export_graphviz
 from sklearn.metrics import accuracy_score, confusion_matrix
 
 #Save path for the decision tree.
-save_path = '..\\' + os.path.join('PFI-Tesis-2024', 'models', 'decision_tree_model.pkl') #save path
+model_path = r'C:\Users\Sufrimiento\Documents\UADE\2024\Tesis - Proyecto Final de Ingeniería\Algoritmo de ML - Repo\PFI-Tesis-2024\models\decision_tree_model.pkl'
 
 sns.set_theme(style='whitegrid')
 
 #normalize the path to the dataset
-csv_path = '..\\' + os.path.join('PFI-Tesis-2024','data', 'dataset.csv') #normalization
-df = pd.read_csv(csv_path) #transform into dataframe
+csv_path = os.path.join('data', 'dataset.csv')
+df = pd.read_csv('C:\\Users\\Sufrimiento\\Documents\\UADE\\2024\\Tesis - Proyecto Final de Ingeniería\\Algoritmo de ML - Repo\\PFI-Tesis-2024\\data\\dataset.csv') #transform into dataframe
 
 df_encoded = pd.get_dummies(df, columns=['Hornevian','Harmonic','Harmony','Triad']) #encode the data frame to turn the categorical data into quantitative data
 column_names = df_encoded.columns
@@ -35,7 +35,7 @@ dtc = DecisionTreeClassifier(max_depth=7, min_samples_split=10, class_weight='ba
 dtc.fit(X_train, y_train)
 
 #Saves the DTC so it can be used by other files
-joblib.dump(dtc, save_path)
+joblib.dump(dtc, model_path)
 
 #predictions based on the test we want to run
 y_pred = dtc.predict(X_test)

@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
 import { BrowserModule, provideClientHydration } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -21,7 +20,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu'; // Added Menu module
 import { MatIconRegistry } from '@angular/material/icon';
 
-import { AppRoutingModule } from './app-routing.module';
+import { AppRoutingModule } from './app-routing.module';  // Import the new AppRoutingModule
 import { AppComponent } from './app.component';
 import { LandingPageComponent } from './landing-page/landing-page.component';
 import { LoginDialogComponent } from './login-dialog/login-dialog.component';
@@ -33,22 +32,6 @@ import { AboutEnneatypeComponent } from './about-enneatype/about-enneatype.compo
 import { AboutUsComponent } from './about-us/about-us.component';
 import { ContactComponent } from './contact/contact.component';
 import { ProfileComponent } from './profile/profile.component';
-
-const routes: Routes = [
-  {path: '', redirectTo: '/main-screen', pathMatch: 'full'},
-  {
-    path: 'main-screen',
-    component: MainScreenComponent,
-    children: [
-      {path: 'test', component: TestComponent},
-      {path: 'results', component: ResultsComponent},
-      {path: 'about-enneatype', component: AboutEnneatypeComponent},
-      {path: 'about-us', component: AboutUsComponent},
-      {path: 'contact', component: ContactComponent}
-    ],
-  },
-  {path: '**', redirectTo: '/main-screen/test'},
-];
 
 @NgModule({
   declarations: [
@@ -69,7 +52,7 @@ const routes: Routes = [
     BrowserAnimationsModule,
     ReactiveFormsModule,
     FormsModule,
-    AppRoutingModule,
+    AppRoutingModule,  // Use the AppRoutingModule here
     MatFormFieldModule,
     MatInputModule,
     MatDatepickerModule,
@@ -83,10 +66,8 @@ const routes: Routes = [
     MatListModule,       // List module
     MatDialogModule,
     MatMenuModule,
-    RouterModule.forRoot(routes),
     HttpClientModule
   ],
-  exports: [RouterModule],
   providers: [
     provideClientHydration(),
     provideAnimationsAsync()

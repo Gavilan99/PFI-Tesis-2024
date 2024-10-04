@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { HttpClient } from '@angular/common/http'; // Import HttpClient to send requests
+import { Router } from '@angular/router'; // Import Router for navigation
 
 @Component({
   selector: 'app-test',
@@ -19,6 +20,8 @@ import { HttpClient } from '@angular/common/http'; // Import HttpClient to send 
   ]
 })
 export class TestComponent {
+
+
   currentQuestionIndex = 0;
   showSlide = true;
 
@@ -29,6 +32,9 @@ export class TestComponent {
     harmony: '',
     triad: ''
   };
+
+  // Property to hold the logged-in user's username
+  username: string = 'some_username'; // Replace this with actual logic to get the logged-in username
 
   questions = [
     {
@@ -69,7 +75,7 @@ export class TestComponent {
     }
   ];
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   get currentQuestion() {
     return this.questions[this.currentQuestionIndex];
@@ -109,19 +115,58 @@ export class TestComponent {
     }, 600);
   }
 
-  // Submit answers to the backend
+  // Check if all questions have been answered
+  allQuestionsAnswered(): boolean {
+    return this.questions.every(question => this.userAnswers[question.key] !== '');
+  }
+
+  // Log the user's answers to the console
   submitAnswers() {
-    this.http.post<any>('http://localhost:5000/predict', this.userAnswers) // Replace with your actual backend URL
+    const username = localStorage.getItem('username');
+    
+    // Prepare answers based on user input
+    const answers = {
+        Hornevian_Assertive: this.userAnswers.hornevian === '1',
+        Hornevian_Compliant: this.userAnswers.hornevian === '2',
+        Hornevian_Withdrawn: this.userAnswers.hornevian === '3',
+        Harmonic_Competency: this.userAnswers.harmonic === '1',
+        Harmonic_Positive: this.userAnswers.harmonic === '2',
+        Harmonic_Reactive: this.userAnswers.harmonic === '3',
+        Harmony_Attachment: this.userAnswers.harmony === '1',
+        Harmony_Frustration: this.userAnswers.harmony === '2',
+        Harmony_Rejection: this.userAnswers.harmony === '3',
+        Triad_Feeling: this.userAnswers.triad === '1',
+        Triad_Intuition: this.userAnswers.triad === '2',
+        Triad_Thought: this.userAnswers.triad === '3',
+    };
+
+    // Create the payload for the HTTP POST request
+    const payload = {
+        answers: answers, // Directly assign the answers object
+        username: username // Include the username
+    };
+
+    // Send the HTTP POST request to the Flask endpoint
+    this.http.post<any>('http://localhost:5000/sendAnswers', payload)
       .subscribe(
         (response) => {
+          // Handle successful response
           console.log('Prediction result:', response.predicted_enneatype);
-          alert(`Tu Eneatipo predicho es: ${response.predicted_enneatype}`);
+          localStorage.setItem('enneatype', response.predicted_enneatype); 
+
+          // Navigate to the results component
+          this.router.navigate(['main-screen/results']); // Adjust the path as necessary
         },
         (error) => {
+          // Handle error response
           console.error('Error during prediction:', error);
+          // No alert needed
         }
       );
-  }
+
+    // Log the user answers for debugging
+    console.log('User Answers:', payload);
+}
 
   // Check if the answer is selected to keep it marked
   isSelected(answerValue: string): boolean {

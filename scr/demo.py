@@ -3,11 +3,16 @@ import os
 import random
 import pandas as pd
 
-#search path
-search_path = os.path.join('PFI-Tesis-2024', 'models', 'decision_tree_model.pkl') #get the correct path for the DTC
+demo_path = os.path.join('..', 'scr', 'demo.py')
 
-#load the DTC to make the prediction
-dtc = joblib.load('..\\'+search_path)
+#search path
+# Absolute path to the model file
+model_path = r'C:\Users\Sufrimiento\Documents\UADE\2024\Tesis - Proyecto Final de Ingeniería\Algoritmo de ML - Repo\PFI-Tesis-2024\models\decision_tree_model.pkl'
+
+
+# Now load the model
+import joblib
+#dtc = joblib.load(model_path)
 
 #dictionay with questions, a dictionary per group. Questions : List of answers
 hor_questions = {
@@ -32,32 +37,42 @@ hor_index = random.choice(list(hor_questions.keys()))
 harc_index = random.choice(list(harc_questions.keys()))
 hary_index = random.choice(list(hary_questions.keys()))
 triad_index = random.choice(list(triad_questions.keys()))
-print("\n\nSeleccione una opción para cada pregunta:")
-hornevian = input("\nP: {question}: \n    1) {assertive} (assertive) \n    2) {compliant} (compliant) \n    3) {withdrawn} (withdrawn)\n\nSeleccione una opción: ".format(question = hor_index, assertive = hor_questions[hor_index][0], compliant = hor_questions[hor_index][1], withdrawn = hor_questions[hor_index][2]))
-harmonic = input("\nP: {question}: \n    1) {competency} (competency) \n    2) {positive} (positive) \n    3) {reactive} (reactive) \n\nSeleccione una opción: ".format(question = harc_index, competency = harc_questions[harc_index][0], positive = harc_questions[harc_index][1], reactive = harc_questions[harc_index][2]))
-harmony = input("\nP: {question}: \n    1) {attachment} (attachment) \n    2) {frustration} (frustration) \n    3) {rejection} (rejection) \n\nSeleccione una opción: ".format(question = hary_index, attachment = hary_questions[hary_index][0], frustration = hary_questions[hary_index][1], rejection = hary_questions[hary_index][2]))
-triad = input("\nP: {question}: \n    1) {feeling} (feeling) \n    2) {intuition} (intuition) \n    3) {thought} (thought) \n\nSeleccione una opción: ".format(question =triad_index, feeling = triad_questions[triad_index][0], intuition = triad_questions[triad_index][1], thought = triad_questions[triad_index][2]))
+#print("\n\nSeleccione una opción para cada pregunta:")
+#hornevian = input("\nP: {question}: \n    1) {assertive} (assertive) \n    2) {compliant} (compliant) \n    3) {withdrawn} (withdrawn)\n\nSeleccione una opción: ".format(question = hor_index, assertive = hor_questions[hor_index][0], compliant = hor_questions[hor_index][1], withdrawn = hor_questions[hor_index][2]))
+#harmonic = input("\nP: {question}: \n    1) {competency} (competency) \n    2) {positive} (positive) \n    3) {reactive} (reactive) \n\nSeleccione una opción: ".format(question = harc_index, competency = harc_questions[harc_index][0], positive = harc_questions[harc_index][1], reactive = harc_questions[harc_index][2]))
+#harmony = input("\nP: {question}: \n    1) {attachment} (attachment) \n    2) {frustration} (frustration) \n    3) {rejection} (rejection) \n\nSeleccione una opción: ".format(question = hary_index, attachment = hary_questions[hary_index][0], frustration = hary_questions[hary_index][1], rejection = hary_questions[hary_index][2]))
+#triad = input("\nP: {question}: \n    1) {feeling} (feeling) \n    2) {intuition} (intuition) \n    3) {thought} (thought) \n\nSeleccione una opción: ".format(question =triad_index, feeling = triad_questions[triad_index][0], intuition = triad_questions[triad_index][1], thought = triad_questions[triad_index][2]))
 
 #map the answers
-encoded_responses = {
-    'Hornevian_Assertive': True if hornevian == '1' else False,
-    'Hornevian_Compliant': True if hornevian == '2' else False,
-    'Hornevian_Withdrawn': True if hornevian == '3' else False,
-    'Harmonic_Competency': True if harmonic == '1' else False,
-    'Harmonic_Positive': True if harmonic == '2' else False,
-    'Harmonic_Reactive': True if harmonic == '3' else False,
-    'Harmony_Attachment': True if harmony == '1' else False,
-    'Harmony_Frustration': True if harmony == '2' else False,
-    'Harmony_Rejection': True if harmony == '3' else False,
-    'Triad_Feeling': True if triad == '1' else False,
-    'Triad_Intuition': True if triad == '2' else False,
-    'Triad_Thought': True if triad == '3' else False
-}
+#encoded_responses = {
+    #'Hornevian_Assertive': True if hornevian == '1' else False,
+    #'Hornevian_Compliant': True if hornevian == '2' else False,
+    #'Hornevian_Withdrawn': True if hornevian == '3' else False,
+    #'Harmonic_Competency': True if harmonic == '1' else False,
+    #'Harmonic_Positive': True if harmonic == '2' else False,
+    #'Harmonic_Reactive': True if harmonic == '3' else False,
+    #'Harmony_Attachment': True if harmony == '1' else False,
+    #'Harmony_Frustration': True if harmony == '2' else False,
+    #'Harmony_Rejection': True if harmony == '3' else False,
+   # 'Triad_Feeling': True if triad == '1' else False,
+  #  'Triad_Intuition': True if triad == '2' else False,
+ #   'Triad_Thought': True if triad == '3' else False
+#}
 
 #convert the answers into a dataframe
-user_df = pd.DataFrame([encoded_responses])
+#user_df = pd.DataFrame([encoded_responses])
+
+def make_prediction(user_data):
+    # Map the user_data to encoded_responses as before
+    # ...
+
+    # Load the model and make the prediction
+    dtc = joblib.load(model_path)
+    user_df = pd.DataFrame([user_data])
+    predicted_enneatype = dtc.predict(user_df)
+
+    return predicted_enneatype[0]
 
 #make the prediction with the answers given by the user
-predicted_enneatype = dtc.predict(user_df)
-
-print(f'\nTu Eneatipo predicho es: {predicted_enneatype[0]}')
+#predicted_enneatype = dtc.predict(user_df)
+#print(f'\nTu Eneatipo predicho es: {predicted_enneatype[0]}')
