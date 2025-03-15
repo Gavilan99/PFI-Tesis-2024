@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog'; // Import MatDialog
 import { ProfileComponent } from '../profile/profile.component'; 
 
@@ -7,11 +7,17 @@ import { ProfileComponent } from '../profile/profile.component';
   templateUrl: './main-screen.component.html',
   styleUrls: ['./main-screen.component.css']
 })
-export class MainScreenComponent {
+export class MainScreenComponent implements OnInit {
   sidenavOpened: boolean = true; // Start with sidenav open
   activeSection: string = 'Take the test'; // Default active section
+  userType: string | null = null; // Declare userType
 
   constructor(private dialog: MatDialog) {} // Inject MatDialog
+
+  ngOnInit(): void {
+    // Retrieve userType from local storage when the component initializes
+    this.userType = localStorage.getItem('userType');
+  }
 
   toggleSidenav() {
     this.sidenavOpened = !this.sidenavOpened; // Toggle sidenav state
@@ -48,6 +54,7 @@ export class MainScreenComponent {
   logout() {
     console.log('Logging Out');
     // Implement logout logic here
+    localStorage.removeItem('userType'); // Clear the userType when logging out
   }
 
   navigateTo(page: string): void {

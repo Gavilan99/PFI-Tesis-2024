@@ -1,12 +1,13 @@
 from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
+from functools import wraps
 import psycopg2 
 import joblib
 import pandas as pd
 import sys
 import os
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from scr.demo import make_prediction
 
@@ -18,6 +19,17 @@ dtc = joblib.load(model_path)
 app = Flask(__name__)
 
 CORS(app)
+
+def role_required(allowed_roles):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            user_type = request.headers.get("userType")
+            if user_type not in allowed_roles:
+                return make_response(jsonify(message="Access Denied"), 403)
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
 
 # Connect to PostgreSQL
 def get_db_connection():
@@ -64,10 +76,7 @@ def create_user():
     cur = conn.cursor()
     
     # Insert the new user into the database
-    cur.execute("""
-        INSERT INTO users (username, email, pass, birthdate, gender, usertype)
-        VALUES (%s, %s, %s, %s, %s, %s);
-    """, (username, email, password, birth_date, gender, user_type))
+    cur.execute("INSERT INTO users (username, email, pass, birthdate, gender, usertype) VALUES (%s, %s, %s, %s, %s, %s);", (username, email, password, birth_date, gender, user_type))
     
     conn.commit()
     
@@ -90,7 +99,7 @@ def loginUser():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute("SELECT pass FROM users WHERE username = %s;", (username,))
+    cur.execute("SELECT pass, usertype FROM users WHERE username = %s;", (username,))
     user = cur.fetchone()
 
     if user is None:
@@ -100,9 +109,22 @@ def loginUser():
     conn.close()
 
     if password == user[0]:
-        return make_response(jsonify(message="Login successful"), 200)
+        return make_response(jsonify(message="Login successful", userType = user[1]), 200)
     else:
         return make_response(jsonify(message="Invalid password"), 401)
+
+@app.route("/dashboard", methods=["GET"])
+def dashboard():
+    user_type = request.headers.get("userType")
+
+    if user_type == "P":
+        return jsonify(message="Welcome to the Personal User Dashboard"), 200
+    elif user_type == "H":
+        return jsonify(message="Welcome to the HR Dashboard"), 200
+    elif user_type == "D":
+        return jsonify(message="Welcome to the Psychologist/Psychiatrist Dashboard"), 200
+    else:
+        return jsonify(message="Invalid user type"), 400
 
 #update endpoint
 @app.route("/updateUser", methods=["PUT"])
@@ -118,11 +140,7 @@ def update_user():
     cur = conn.cursor()
 
     # Update user information in the database
-    cur.execute("""
-        UPDATE users
-        SET username = %s, email = %s, pass = %s
-        WHERE id = %s;
-    """, (username, email, password, user_id))
+    cur.execute("UPDATE users SET username = %s, email = %s, pass = %s WHERE id = %s;", (username, email, password, user_id))
 
     conn.commit()
     cur.close()
@@ -171,11 +189,7 @@ def sendAnswers():
         cur = conn.cursor()
 
         # Update the user's prediction result in the database
-        cur.execute("""
-            UPDATE users 
-            SET enneatype = %s 
-            WHERE username = %s;
-        """, (int(prediction), username))
+        cur.execute("UPDATE users SET enneatype = %s WHERE username = %s;", (int(prediction), username))
 
         # Commit the changes
         conn.commit()
@@ -190,7 +204,11 @@ def sendAnswers():
     except Exception as e:
         print(f"Error occurred: {e}")
         return jsonify(message="Internal Server Error"), 500
-
+    
+@app.route("/protectedRoute", methods=["GET"])
+@role_required(["H", "D"])
+def protected_route():
+    return jsonify(message="You have access to this route"), 200
     
 @app.errorhandler(Exception)
 def handle_exception(e):

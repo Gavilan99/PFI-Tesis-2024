@@ -63,6 +63,22 @@
               routerLink="contact">
         <mat-icon>contact_mail</mat-icon> Contact
       </button>
+
+      <!-- HR Sidebar Button -->
+      <button *ngIf="userType === 'H'" mat-button 
+              [ngClass]="{'active-button': activeSection === 'Candidates'}" 
+              (click)="setActiveSection('Candidates')"
+              routerLink="candidates">
+        <mat-icon>people</mat-icon> Candidates
+      </button>
+
+      <!-- Psychologist Sidebar Button -->
+      <button *ngIf="userType === 'D'" mat-button 
+              [ngClass]="{'active-button': activeSection === 'Patients'}" 
+              (click)="setActiveSection('Patients')"
+              routerLink="patients">
+        <mat-icon>medical_services</mat-icon> Patients
+      </button>
     </div>
     <div class="spacer"></div>
     <div class="link-container">
