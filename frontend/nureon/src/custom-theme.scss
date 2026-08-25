@@ -1,30 +1,129 @@
-@import '~@angular/material/theming';
+// NureonAI design system — Angular Material theme
+//
+// Replaces the old broken theme file, which used the pre-Angular-Material-15
+// theming API (`~@angular/material/theming`, `mat-light-theme`, `mat-palette`)
+// — incompatible with the Material 17.3 already in package.json, and wasn't
+// even wired into the production build (only into the `test` architect config
+// in angular.json). The app was shipping the default indigo-pink prebuilt
+// theme with plain Roboto. This file replaces that with the actual brand.
+//
+// Brand colors (per CLAUDE.md): primary dark spring green / mint,
+// secondary blue / amber / orange accents.
+//
+// CAVEAT: the 50-900 / A100-A700 tints below are hand-estimated from the two
+// brand base hexes (#1A7F5B primary, #7CB0EB accent), not generated from
+// Material's official color tooling. Good enough for a first-pass design
+// system; before final ship, regenerate precise tints at
+// https://material.angular.io/theming (Theme Builder) using the base hexes
+// as input, and swap the two palette maps below with its output.
 
-// Include Angular Material core styles
-@include mat-core();
+@use '@angular/material' as mat;
 
-// Define your custom color palettes
-$custom-primary: (
-    500: #1a7f5b, // Dark Green
-    600: #5bc795, // Light Green
+@include mat.core();
+
+// Primary — dark spring green (brand primary), ramping toward mint (#5BC795) at the light end.
+$nureon-primary-palette: (
+  50: #e5f4ef,
+  100: #bfe4d7,
+  200: #96d3be,
+  300: #6dc1a4,
+  400: #4db491,
+  500: #1a7f5b,
+  600: #177249,
+  700: #136143,
+  800: #0f5137,
+  900: #08402c,
+  A100: #a8ffdc,
+  A200: #5bc795,
+  A400: #42ffb1,
+  A700: #29ffa5,
+  contrast: (
+    50: rgba(black, 0.87),
+    100: rgba(black, 0.87),
+    200: rgba(black, 0.87),
+    300: rgba(black, 0.87),
+    400: rgba(black, 0.87),
+    500: white,
+    600: white,
+    700: white,
+    800: white,
+    900: white,
+    A100: rgba(black, 0.87),
+    A200: rgba(black, 0.87),
+    A400: rgba(black, 0.87),
+    A700: rgba(black, 0.87),
+  ),
 );
 
-$custom-accent: (
-    500: #ff6d33, // Orange
+// Accent — Ruddy Blue, secondary interactive color.
+$nureon-accent-palette: (
+  50: #eef5fd,
+  100: #d3e5fa,
+  200: #b5d3f6,
+  300: #97c1f2,
+  400: #82b3ef,
+  500: #7cb0eb,
+  600: #6fa0d6,
+  700: #5f8cbd,
+  800: #5079a4,
+  900: #3b5a7d,
+  A100: #d6e6ff,
+  A200: #a9cbff,
+  A400: #7cb0eb,
+  A700: #5f9bff,
+  contrast: (
+    50: rgba(black, 0.87),
+    100: rgba(black, 0.87),
+    200: rgba(black, 0.87),
+    300: rgba(black, 0.87),
+    400: rgba(black, 0.87),
+    500: rgba(black, 0.87),
+    600: white,
+    700: white,
+    800: white,
+    900: white,
+    A100: rgba(black, 0.87),
+    A200: rgba(black, 0.87),
+    A400: rgba(black, 0.87),
+    A700: white,
+  ),
 );
 
-$custom-warn: (
-    500: #ffbf1f, // Yellow
+$nureon-primary: mat.define-palette($nureon-primary-palette, 500, 300, 700);
+$nureon-accent: mat.define-palette($nureon-accent-palette, 500, 300, 700);
+
+// Deliberately NOT mapping brand amber to Material's `warn` slot — `warn` is
+// Material's semantic error/destructive-action color and amber isn't red.
+// Amber (#FFBF1F) and Orange Crayola (#FF6D33) live as CSS custom properties
+// below instead, for result-type badges / highlights, not form validation states.
+$nureon-warn: mat.define-palette(mat.$red-palette);
+
+$nureon-typography: mat.define-typography-config(
+  $font-family: 'Inter, "Helvetica Neue", sans-serif',
 );
 
-// Create the theme
-$custom-theme: mat-light-theme((
-    color: (
-        primary: mat-palette($custom-primary),
-        accent: mat-palette($custom-accent),
-        warn: mat-palette($custom-warn),
-    )
+$nureon-theme: mat.define-light-theme((
+  color: (
+    primary: $nureon-primary,
+    accent: $nureon-accent,
+    warn: $nureon-warn,
+  ),
+  typography: $nureon-typography,
+  density: 0,
 ));
 
-// Include the theme styles
-@include angular-material-theme($custom-theme);
+@include mat.all-component-themes($nureon-theme);
+
+// Brand tokens not covered by Material's 3-color model — used directly in
+// component styles (e.g. `background: var(--nureon-amber)`), not through
+// the Material theme mixins above.
+:root {
+  --nureon-green-dark: #1a7f5b;
+  --nureon-green-mint: #5bc795;
+  --nureon-blue: #7cb0eb;
+  --nureon-amber: #ffbf1f;
+  --nureon-orange: #ff6d33;
+
+  --nureon-font-display: 'Museo Moderno', cursive;
+  --nureon-font-body: 'Inter', 'Helvetica Neue', sans-serif;
+}
