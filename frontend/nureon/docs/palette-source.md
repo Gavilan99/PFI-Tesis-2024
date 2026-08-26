@@ -9,8 +9,8 @@ solo HTTP y no siempre responde. La serie A no usa la matemática de tetrad de m
 es inestable: se deriva de la semilla de acento de marca moviendo luminosidad en HSL,
 con el hue intacto. Por eso `A200` es exactamente el color de marca, sin tocar.
 
-No existe un generador oficial de Google para paletas Material 2 — las originales las
-hizo a mano el equipo de diseño. La mejora sobre lo anterior no es que sean oficiales,
+No existe un generador oficial de Google para paletas Material 2 — las originales se 
+hicieron a mano. La mejora sobre lo anterior no es que sean oficiales,
 es que son deterministas, reproducibles y con el contraste calculado por WCAG 2.1 en
 lugar de elegido a ojo.
 
