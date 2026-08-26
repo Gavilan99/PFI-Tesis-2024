@@ -18,6 +18,7 @@
 // re-running that script, never by hand-editing the maps below.
 
 @use '@angular/material' as mat;
+@use './styles/tokens';
 
 @include mat.core();
 
@@ -117,6 +118,18 @@ $nureon-theme: mat.define-light-theme((
 // Brand tokens not covered by Material's 3-color model — used directly in
 // component styles (e.g. `background: var(--nureon-amber)`), not through
 // the Material theme mixins above.
+//
+// Amber and orange are NOT interchangeable decoration, and neither is a
+// stand-in for warn (errors, above) or accent (default interactive/CTA
+// color — that's --nureon-blue / $nureon-accent). Each has exactly one job:
+//   --nureon-amber:  premium/upsell signal only. Freemium tier badges,
+//                    locked-content indicators, the "upgrade" CTA on the
+//                    paywall (Stage 6). Never a warning, hover, or active
+//                    state color.
+//   --nureon-orange: result emphasis only. The active enneatype's
+//                    wedge/arrow on the enneagram diagram, enneatype badges
+//                    (Stage 3/6). Never a button/link color, and never an
+//                    error or attention-required signal.
 :root {
   --nureon-green-dark: #1a7f5b;
   --nureon-green-mint: #5bc795;
