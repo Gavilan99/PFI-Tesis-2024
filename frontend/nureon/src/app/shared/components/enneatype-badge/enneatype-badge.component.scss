@@ -1,0 +1,10 @@
+// Orange = result emphasis, per its documented semantic role in custom-theme.scss.
+.enneatype-badge {
+  display: inline-block;
+  border-radius: var(--nureon-radius-full);
+  padding: var(--nureon-space-3xs) var(--nureon-space-xs);
+  font-size: var(--nureon-text-caption-size);
+  font-weight: var(--nureon-text-caption-weight);
+  background: var(--nureon-orange);
+  color: white;
+}

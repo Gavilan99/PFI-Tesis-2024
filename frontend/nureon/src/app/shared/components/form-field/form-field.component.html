@@ -1,0 +1,10 @@
+<mat-form-field appearance="outline">
+  <mat-label>{{ label }}</mat-label>
+  <ng-content></ng-content>
+  @if (hint && !errorMessage) {
+    <mat-hint>{{ hint }}</mat-hint>
+  }
+  @if (errorMessage) {
+    <mat-error>{{ errorMessage }}</mat-error>
+  }
+</mat-form-field>

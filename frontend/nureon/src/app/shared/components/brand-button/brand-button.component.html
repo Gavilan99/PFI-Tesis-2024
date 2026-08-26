@@ -1,0 +1,17 @@
+@switch (variant) {
+  @case ('primary') {
+    <button mat-raised-button color="primary" [disabled]="disabled" [type]="type">
+      <ng-content></ng-content>
+    </button>
+  }
+  @case ('secondary') {
+    <button mat-stroked-button color="primary" [disabled]="disabled" [type]="type">
+      <ng-content></ng-content>
+    </button>
+  }
+  @default {
+    <button mat-button color="primary" [disabled]="disabled" [type]="type">
+      <ng-content></ng-content>
+    </button>
+  }
+}
