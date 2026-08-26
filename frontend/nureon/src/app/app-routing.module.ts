@@ -7,7 +7,7 @@ import { resultAvailableGuard } from './core/guards/result-available.guard';
 import { environment } from '../environments/environment';
 
 const routes: Routes = [
-  { path: '', component: PlaceholderComponent, data: { title: 'Landing' } },
+  { path: '', component: PlaceholderComponent },
   { path: 'registro', component: PlaceholderComponent, data: { title: 'Registro' } },
   { path: 'ingresar', component: PlaceholderComponent, data: { title: 'Ingresar' } },
   {
