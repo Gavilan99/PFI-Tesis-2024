@@ -6,12 +6,14 @@ import { HttpClientModule } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { PlaceholderComponent } from './placeholder/placeholder.component';
+import { environment } from '../environments/environment';
+import { API_SERVICE } from './core/services/api.service';
+import { MockApiService } from './core/services/mock-api.service';
+import { HttpApiService } from './core/services/http-api.service';
 
 @NgModule({
   declarations: [
     AppComponent,
-    PlaceholderComponent,
   ],
   imports: [
     BrowserModule,
@@ -22,6 +24,10 @@ import { PlaceholderComponent } from './placeholder/placeholder.component';
   providers: [
     provideClientHydration(),
     provideAnimationsAsync(),
+    {
+      provide: API_SERVICE,
+      useClass: environment.useMockApi ? MockApiService : HttpApiService,
+    },
   ],
   bootstrap: [AppComponent],
 })

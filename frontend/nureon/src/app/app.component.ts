@@ -1,4 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, Inject, Injector, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { environment } from '../environments/environment';
+import { installDevTools } from './core/dev-tools';
 
 @Component({
   selector: 'app-root',
@@ -7,4 +10,10 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'nureon';
+
+  constructor(injector: Injector, @Inject(PLATFORM_ID) platformId: object) {
+    if (!environment.production && isPlatformBrowser(platformId)) {
+      installDevTools(injector);
+    }
+  }
 }
