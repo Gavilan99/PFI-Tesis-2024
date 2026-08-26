@@ -1,0 +1,161 @@
+@use '../../styles/palette';
+
+:host {
+  display: block;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--nureon-space-lg);
+}
+
+section {
+  margin-bottom: var(--nureon-space-2xl);
+}
+
+h2 {
+  font-family: var(--nureon-text-h2-font);
+  font-size: var(--nureon-text-h2-size);
+  font-weight: var(--nureon-text-h2-weight);
+  line-height: var(--nureon-text-h2-line-height);
+}
+
+// ---- Palette swatches ----
+// One CSS class per tint, generated straight from the same maps the
+// Material theme consumes — see styles/_palette.scss.
+.swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--nureon-space-xs);
+}
+
+.swatch {
+  border-radius: var(--nureon-radius-md);
+  padding: var(--nureon-space-xs);
+  font-size: var(--nureon-text-caption-size);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 72px;
+}
+
+@each $key, $value in palette.$nureon-primary-palette {
+  @if $key != contrast {
+    .swatch-primary-#{$key} {
+      background: $value;
+      color: map-get(map-get(palette.$nureon-primary-palette, contrast), $key);
+    }
+  }
+}
+
+@each $key, $value in palette.$nureon-accent-palette {
+  @if $key != contrast {
+    .swatch-accent-#{$key} {
+      background: $value;
+      color: map-get(map-get(palette.$nureon-accent-palette, contrast), $key);
+    }
+  }
+}
+
+.swatch-brand {
+  border-radius: var(--nureon-radius-md);
+  padding: var(--nureon-space-xs);
+  min-height: 72px;
+  display: flex;
+  align-items: flex-end;
+  color: rgba(black, 0.87);
+  font-size: var(--nureon-text-caption-size);
+}
+
+// ---- Typography scale demo ----
+.demo-display {
+  font-family: var(--nureon-text-display-font);
+  font-size: var(--nureon-text-display-size);
+  font-weight: var(--nureon-text-display-weight);
+  line-height: var(--nureon-text-display-line-height);
+}
+
+.demo-h1 {
+  font-family: var(--nureon-text-h1-font);
+  font-size: var(--nureon-text-h1-size);
+  font-weight: var(--nureon-text-h1-weight);
+  line-height: var(--nureon-text-h1-line-height);
+}
+
+.demo-h2 {
+  font-family: var(--nureon-text-h2-font);
+  font-size: var(--nureon-text-h2-size);
+  font-weight: var(--nureon-text-h2-weight);
+  line-height: var(--nureon-text-h2-line-height);
+}
+
+.demo-h3 {
+  font-family: var(--nureon-text-h3-font);
+  font-size: var(--nureon-text-h3-size);
+  font-weight: var(--nureon-text-h3-weight);
+  line-height: var(--nureon-text-h3-line-height);
+}
+
+.demo-body-lg {
+  font-size: var(--nureon-text-body-lg-size);
+  font-weight: var(--nureon-text-body-lg-weight);
+  line-height: var(--nureon-text-body-lg-line-height);
+}
+
+.demo-body {
+  font-size: var(--nureon-text-body-size);
+  font-weight: var(--nureon-text-body-weight);
+  line-height: var(--nureon-text-body-line-height);
+}
+
+.demo-body-sm {
+  font-size: var(--nureon-text-body-sm-size);
+  font-weight: var(--nureon-text-body-sm-weight);
+  line-height: var(--nureon-text-body-sm-line-height);
+}
+
+.demo-caption {
+  font-size: var(--nureon-text-caption-size);
+  font-weight: var(--nureon-text-caption-weight);
+  line-height: var(--nureon-text-caption-line-height);
+}
+
+// ---- Buttons ----
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--nureon-space-sm);
+  align-items: center;
+  margin-bottom: var(--nureon-space-sm);
+}
+
+// ---- Cards / badges ----
+.card-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--nureon-space-md);
+}
+
+.badge {
+  display: inline-block;
+  border-radius: var(--nureon-radius-full);
+  padding: var(--nureon-space-3xs) var(--nureon-space-xs);
+  font-size: var(--nureon-text-caption-size);
+  font-weight: var(--nureon-text-caption-weight);
+  color: rgba(black, 0.87);
+}
+
+.badge-premium {
+  background: var(--nureon-amber);
+}
+
+.badge-result {
+  background: var(--nureon-orange);
+  color: white;
+}
+
+// ---- Empty / error states ----
+.state-card {
+  display: flex;
+  align-items: center;
+  gap: var(--nureon-space-sm);
+  padding: var(--nureon-space-md);
+}
