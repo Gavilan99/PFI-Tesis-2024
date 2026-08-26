@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
 import { BrowserModule, provideClientHydration } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -10,6 +11,8 @@ import { environment } from '../environments/environment';
 import { API_SERVICE } from './core/services/api.service';
 import { MockApiService } from './core/services/mock-api.service';
 import { HttpApiService } from './core/services/http-api.service';
+import { HeaderComponent } from './shared/layout/header/header.component';
+import { FooterComponent } from './shared/layout/footer/footer.component';
 
 @NgModule({
   declarations: [
@@ -20,6 +23,9 @@ import { HttpApiService } from './core/services/http-api.service';
     BrowserAnimationsModule,
     AppRoutingModule,
     HttpClientModule,
+    AsyncPipe,
+    HeaderComponent,
+    FooterComponent,
   ],
   providers: [
     provideClientHydration(),

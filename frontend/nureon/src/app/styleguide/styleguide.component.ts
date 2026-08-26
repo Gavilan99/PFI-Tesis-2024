@@ -1,10 +1,18 @@
 import { Component } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { PageContainerComponent } from '../shared/layout/page-container/page-container.component';
+import { HeaderComponent } from '../shared/layout/header/header.component';
+import { FooterComponent } from '../shared/layout/footer/footer.component';
+import { BrandButtonComponent } from '../shared/components/brand-button/brand-button.component';
+import { FormFieldComponent } from '../shared/components/form-field/form-field.component';
+import { CardComponent } from '../shared/components/card/card.component';
+import { EnneatypeBadgeComponent } from '../shared/components/enneatype-badge/enneatype-badge.component';
+import { ProgressBarComponent } from '../shared/components/progress-bar/progress-bar.component';
+import { EmptyStateComponent } from '../shared/components/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../shared/components/error-state/error-state.component';
 
 const PALETTE_TINTS = [
   '50', '100', '200', '300', '400', '500', '600', '700', '800', '900',
@@ -17,10 +25,18 @@ const PALETTE_TINTS = [
   imports: [
     ReactiveFormsModule,
     MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule,
+    PageContainerComponent,
+    HeaderComponent,
+    FooterComponent,
+    BrandButtonComponent,
+    FormFieldComponent,
+    CardComponent,
+    EnneatypeBadgeComponent,
+    ProgressBarComponent,
+    EmptyStateComponent,
+    ErrorStateComponent,
   ],
   templateUrl: './styleguide.component.html',
   styleUrl: './styleguide.component.scss',
@@ -37,5 +53,9 @@ export class StyleguideComponent {
 
   constructor() {
     this.emailWithError.markAsTouched();
+  }
+
+  onRetry(): void {
+    console.log('Retry clicked in styleguide demo — no-op.');
   }
 }

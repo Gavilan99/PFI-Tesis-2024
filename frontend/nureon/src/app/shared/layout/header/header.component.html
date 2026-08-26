@@ -1,0 +1,44 @@
+<mat-toolbar color="primary">
+  <div class="header">
+    <a routerLink="/" class="header__brand nureon-brand-font">NureonAI</a>
+
+    <nav class="header__nav">
+      <a routerLink="/eneagrama" routerLinkActive="header__link--active" class="header__link">
+        Sobre el eneagrama
+      </a>
+      <a routerLink="/nosotros" routerLinkActive="header__link--active" class="header__link">
+        Nosotros
+      </a>
+      <a routerLink="/contacto" routerLinkActive="header__link--active" class="header__link">
+        Contacto
+      </a>
+    </nav>
+
+    <div class="header__account">
+      @if (!isAuthenticated) {
+        <a mat-stroked-button routerLink="/ingresar">Ingresar</a>
+        <a mat-raised-button color="accent" routerLink="/registro">Registrarse</a>
+      } @else {
+        <a mat-button routerLink="/perfil">Mi perfil</a>
+        <button mat-button (click)="logoutRequested.emit()">Cerrar sesión</button>
+      }
+    </div>
+
+    <button mat-icon-button class="header__menu-trigger" [matMenuTriggerFor]="mobileMenu" aria-label="Abrir menú">
+      <mat-icon>menu</mat-icon>
+    </button>
+  </div>
+
+  <mat-menu #mobileMenu="matMenu">
+    <a mat-menu-item routerLink="/eneagrama">Sobre el eneagrama</a>
+    <a mat-menu-item routerLink="/nosotros">Nosotros</a>
+    <a mat-menu-item routerLink="/contacto">Contacto</a>
+    @if (!isAuthenticated) {
+      <a mat-menu-item routerLink="/ingresar">Ingresar</a>
+      <a mat-menu-item routerLink="/registro">Registrarse</a>
+    } @else {
+      <a mat-menu-item routerLink="/perfil">Mi perfil</a>
+      <button mat-menu-item (click)="logoutRequested.emit()">Cerrar sesión</button>
+    }
+  </mat-menu>
+</mat-toolbar>

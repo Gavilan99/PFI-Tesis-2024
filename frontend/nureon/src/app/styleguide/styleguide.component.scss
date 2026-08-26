@@ -2,9 +2,6 @@
 
 :host {
   display: block;
-  max-width: 960px;
-  margin: 0 auto;
-  padding: var(--nureon-space-lg);
 }
 
 section {
@@ -128,15 +125,17 @@ h2,
   background: var(--nureon-amber);
 }
 
-.badge-result {
-  background: var(--nureon-orange);
-  color: white;
+// ---- Shell demo ----
+.shell-demo {
+  border: 1px solid rgba(black, 0.12);
+  border-radius: var(--nureon-radius-md);
+  margin-bottom: var(--nureon-space-sm);
+  overflow: hidden;
 }
 
-// ---- Empty / error states ----
+// ---- Loading state ----
 .state-card {
   display: flex;
   align-items: center;
   gap: var(--nureon-space-sm);
-  padding: var(--nureon-space-md);
 }
