@@ -10,12 +10,12 @@
 // Brand colors (per CLAUDE.md): primary dark spring green / mint,
 // secondary blue / amber / orange accents.
 //
-// CAVEAT: the 50-900 / A100-A700 tints below are hand-estimated from the two
-// brand base hexes (#1A7F5B primary, #7CB0EB accent), not generated from
-// Material's official color tooling. Good enough for a first-pass design
-// system; before final ship, regenerate precise tints at
-// https://material.angular.io/theming (Theme Builder) using the base hexes
-// as input, and swap the two palette maps below with its output.
+// RESOLVED (Stage 1): the 50-900 / A100-A700 tints below are no longer
+// hand-estimated. They come from tools/generate_palette.py — a deterministic
+// generator (mcg.mbitson.com's 50-900 ramp algorithm, reimplemented locally;
+// A-series derived from the brand accent seed via hue-preserving HSL lightness
+// shifts) — with output committed at docs/palette-source.md. Regenerate by
+// re-running that script, never by hand-editing the maps below.
 
 @use '@angular/material' as mat;
 
@@ -23,20 +23,20 @@
 
 // Primary — dark spring green (brand primary), ramping toward mint (#5BC795) at the light end.
 $nureon-primary-palette: (
-  50: #e5f4ef,
-  100: #bfe4d7,
-  200: #96d3be,
-  300: #6dc1a4,
-  400: #4db491,
+  50: #e4f0eb,
+  100: #bad9ce,
+  200: #8cbfad,
+  300: #5fa58c,
+  400: #3c9274,
   500: #1a7f5b,
-  600: #177249,
-  700: #136143,
-  800: #0f5137,
-  900: #08402c,
-  A100: #a8ffdc,
+  600: #177753,
+  700: #136c49,
+  800: #0f6240,
+  900: #084f2f,
+  A100: #9fdec1,
   A200: #5bc795,
-  A400: #42ffb1,
-  A700: #29ffa5,
+  A400: #33bc7d,
+  A700: #259762,
   contrast: (
     50: rgba(black, 0.87),
     100: rgba(black, 0.87),
@@ -57,20 +57,20 @@ $nureon-primary-palette: (
 
 // Accent — Ruddy Blue, secondary interactive color.
 $nureon-accent-palette: (
-  50: #eef5fd,
-  100: #d3e5fa,
-  200: #b5d3f6,
-  300: #97c1f2,
-  400: #82b3ef,
+  50: #eff6fd,
+  100: #d8e7f9,
+  200: #bed8f5,
+  300: #a3c8f1,
+  400: #90bcee,
   500: #7cb0eb,
-  600: #6fa0d6,
-  700: #5f8cbd,
-  800: #5079a4,
-  900: #3b5a7d,
-  A100: #d6e6ff,
-  A200: #a9cbff,
-  A400: #7cb0eb,
-  A700: #5f9bff,
+  600: #74a9e9,
+  700: #69a0e5,
+  800: #5f97e3,
+  900: #4c87dd,
+  A100: #cce0f7,
+  A200: #7cb0eb,
+  A400: #4895ec,
+  A700: #147aed,
   contrast: (
     50: rgba(black, 0.87),
     100: rgba(black, 0.87),
@@ -78,14 +78,14 @@ $nureon-accent-palette: (
     300: rgba(black, 0.87),
     400: rgba(black, 0.87),
     500: rgba(black, 0.87),
-    600: white,
-    700: white,
-    800: white,
-    900: white,
+    600: rgba(black, 0.87),
+    700: rgba(black, 0.87),
+    800: rgba(black, 0.87),
+    900: rgba(black, 0.87),
     A100: rgba(black, 0.87),
     A200: rgba(black, 0.87),
     A400: rgba(black, 0.87),
-    A700: white,
+    A700: rgba(black, 0.87),
   ),
 );
 
