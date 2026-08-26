@@ -11,11 +11,10 @@ section {
   margin-bottom: var(--nureon-space-2xl);
 }
 
-h2 {
-  font-family: var(--nureon-text-h2-font);
-  font-size: var(--nureon-text-h2-size);
-  font-weight: var(--nureon-text-h2-weight);
-  line-height: var(--nureon-text-h2-line-height);
+h2,
+.demo-h2 {
+  font: var(--nureon-text-h2-weight) var(--nureon-text-h2-size) / var(--nureon-text-h2-line-height)
+    var(--nureon-text-h2-font);
 }
 
 // ---- Palette swatches ----
@@ -27,14 +26,23 @@ h2 {
   gap: var(--nureon-space-xs);
 }
 
-.swatch {
+.swatch,
+.swatch-brand {
   border-radius: var(--nureon-radius-md);
   padding: var(--nureon-space-xs);
   font-size: var(--nureon-text-caption-size);
+  min-height: 72px;
   display: flex;
+  align-items: flex-end;
+}
+
+.swatch {
   flex-direction: column;
   justify-content: flex-end;
-  min-height: 72px;
+}
+
+.swatch-brand {
+  color: rgba(black, 0.87);
 }
 
 @each $key, $value in palette.$nureon-primary-palette {
@@ -55,67 +63,40 @@ h2 {
   }
 }
 
-.swatch-brand {
-  border-radius: var(--nureon-radius-md);
-  padding: var(--nureon-space-xs);
-  min-height: 72px;
-  display: flex;
-  align-items: flex-end;
-  color: rgba(black, 0.87);
-  font-size: var(--nureon-text-caption-size);
-}
-
 // ---- Typography scale demo ----
 .demo-display {
-  font-family: var(--nureon-text-display-font);
-  font-size: var(--nureon-text-display-size);
-  font-weight: var(--nureon-text-display-weight);
-  line-height: var(--nureon-text-display-line-height);
+  font: var(--nureon-text-display-weight) var(--nureon-text-display-size) /
+    var(--nureon-text-display-line-height) var(--nureon-text-display-font);
 }
 
 .demo-h1 {
-  font-family: var(--nureon-text-h1-font);
-  font-size: var(--nureon-text-h1-size);
-  font-weight: var(--nureon-text-h1-weight);
-  line-height: var(--nureon-text-h1-line-height);
-}
-
-.demo-h2 {
-  font-family: var(--nureon-text-h2-font);
-  font-size: var(--nureon-text-h2-size);
-  font-weight: var(--nureon-text-h2-weight);
-  line-height: var(--nureon-text-h2-line-height);
+  font: var(--nureon-text-h1-weight) var(--nureon-text-h1-size) / var(--nureon-text-h1-line-height)
+    var(--nureon-text-h1-font);
 }
 
 .demo-h3 {
-  font-family: var(--nureon-text-h3-font);
-  font-size: var(--nureon-text-h3-size);
-  font-weight: var(--nureon-text-h3-weight);
-  line-height: var(--nureon-text-h3-line-height);
+  font: var(--nureon-text-h3-weight) var(--nureon-text-h3-size) / var(--nureon-text-h3-line-height)
+    var(--nureon-text-h3-font);
 }
 
 .demo-body-lg {
-  font-size: var(--nureon-text-body-lg-size);
-  font-weight: var(--nureon-text-body-lg-weight);
-  line-height: var(--nureon-text-body-lg-line-height);
+  font: var(--nureon-text-body-lg-weight) var(--nureon-text-body-lg-size) /
+    var(--nureon-text-body-lg-line-height) var(--nureon-font-body);
 }
 
 .demo-body {
-  font-size: var(--nureon-text-body-size);
-  font-weight: var(--nureon-text-body-weight);
-  line-height: var(--nureon-text-body-line-height);
+  font: var(--nureon-text-body-weight) var(--nureon-text-body-size) / var(--nureon-text-body-line-height)
+    var(--nureon-font-body);
 }
 
 .demo-body-sm {
-  font-size: var(--nureon-text-body-sm-size);
-  font-weight: var(--nureon-text-body-sm-weight);
-  line-height: var(--nureon-text-body-sm-line-height);
+  font: var(--nureon-text-body-sm-weight) var(--nureon-text-body-sm-size) /
+    var(--nureon-text-body-sm-line-height) var(--nureon-font-body);
 }
 
 .demo-caption {
-  font-size: var(--nureon-text-caption-size);
-  font-weight: var(--nureon-text-caption-weight);
-  line-height: var(--nureon-text-caption-line-height);
+  font: var(--nureon-text-caption-weight) var(--nureon-text-caption-size) /
+    var(--nureon-text-caption-line-height) var(--nureon-font-body);
 }
 
 // ---- Buttons ----
