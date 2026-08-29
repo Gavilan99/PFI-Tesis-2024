@@ -39,6 +39,10 @@ export class HttpApiService implements ApiService {
     return this.notImplemented('submitResponse');
   }
 
+  getResponses(_attemptId: string): Observable<TestResponse[]> {
+    return this.notImplemented('getResponses');
+  }
+
   completeTestAttempt(_attemptId: string): Observable<TestAttempt> {
     return this.notImplemented('completeTestAttempt');
   }
