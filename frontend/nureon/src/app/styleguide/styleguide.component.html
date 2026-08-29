@@ -98,16 +98,21 @@
 
   <section>
     <h2>Campo de formulario</h2>
-    <app-form-field label="Nombre de usuario" hint="Así se ve un campo sin error.">
+    <!-- mat-form-field directo, no envuelto: ver la nota en RegistroComponent
+         sobre por qué un wrapper con ng-content rompe MatFormFieldControl. -->
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre de usuario</mat-label>
       <input matInput placeholder="sin error" />
-    </app-form-field>
+      <mat-hint>Así se ve un campo sin error.</mat-hint>
+    </mat-form-field>
 
-    <app-form-field
-      label="Email"
-      [errorMessage]="emailWithError.hasError('email') ? 'Ingresá un email válido.' : null"
-    >
+    <mat-form-field appearance="outline">
+      <mat-label>Email</mat-label>
       <input matInput [formControl]="emailWithError" />
-    </app-form-field>
+      @if (emailWithError.hasError('email')) {
+        <mat-error>Ingresá un email válido.</mat-error>
+      }
+    </mat-form-field>
   </section>
 
   <section>

@@ -2,12 +2,12 @@ import { Component } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PageContainerComponent } from '../shared/layout/page-container/page-container.component';
 import { HeaderComponent } from '../shared/layout/header/header.component';
 import { FooterComponent } from '../shared/layout/footer/footer.component';
 import { BrandButtonComponent } from '../shared/components/brand-button/brand-button.component';
-import { FormFieldComponent } from '../shared/components/form-field/form-field.component';
 import { CardComponent } from '../shared/components/card/card.component';
 import { EnneatypeBadgeComponent } from '../shared/components/enneatype-badge/enneatype-badge.component';
 import { ProgressBarComponent } from '../shared/components/progress-bar/progress-bar.component';
@@ -26,12 +26,12 @@ const PALETTE_TINTS = [
     ReactiveFormsModule,
     MatButtonModule,
     MatInputModule,
+    MatFormFieldModule,
     MatProgressSpinnerModule,
     PageContainerComponent,
     HeaderComponent,
     FooterComponent,
     BrandButtonComponent,
-    FormFieldComponent,
     CardComponent,
     EnneatypeBadgeComponent,
     ProgressBarComponent,
