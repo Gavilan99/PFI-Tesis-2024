@@ -72,7 +72,9 @@
   <section class="profile__section">
     <h2>Historial de intentos</h2>
     @if (historyLoading) {
-      <p>Cargando…</p>
+      <app-loading-state message="Cargando tu historial…"></app-loading-state>
+    } @else if (historyError) {
+      <app-error-state [message]="historyError" (retry)="retryHistory()"></app-error-state>
     } @else if (history.length === 0) {
       <app-empty-state message="Todavía no hiciste ningún test."></app-empty-state>
     } @else {

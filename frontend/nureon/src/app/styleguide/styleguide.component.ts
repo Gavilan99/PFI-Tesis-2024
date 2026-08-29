@@ -3,7 +3,6 @@ import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PageContainerComponent } from '../shared/layout/page-container/page-container.component';
 import { HeaderComponent } from '../shared/layout/header/header.component';
 import { FooterComponent } from '../shared/layout/footer/footer.component';
@@ -13,6 +12,7 @@ import { EnneatypeBadgeComponent } from '../shared/components/enneatype-badge/en
 import { ProgressBarComponent } from '../shared/components/progress-bar/progress-bar.component';
 import { EmptyStateComponent } from '../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../shared/components/error-state/error-state.component';
+import { LoadingStateComponent } from '../shared/components/loading-state/loading-state.component';
 
 const PALETTE_TINTS = [
   '50', '100', '200', '300', '400', '500', '600', '700', '800', '900',
@@ -27,7 +27,6 @@ const PALETTE_TINTS = [
     MatButtonModule,
     MatInputModule,
     MatFormFieldModule,
-    MatProgressSpinnerModule,
     PageContainerComponent,
     HeaderComponent,
     FooterComponent,
@@ -37,6 +36,7 @@ const PALETTE_TINTS = [
     ProgressBarComponent,
     EmptyStateComponent,
     ErrorStateComponent,
+    LoadingStateComponent,
   ],
   templateUrl: './styleguide.component.html',
   styleUrl: './styleguide.component.scss',

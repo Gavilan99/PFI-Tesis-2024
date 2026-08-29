@@ -7,6 +7,7 @@ import { TestAttempt } from '../core/models/test-attempt.model';
 import { PageContainerComponent } from '../shared/layout/page-container/page-container.component';
 import { ProgressBarComponent } from '../shared/components/progress-bar/progress-bar.component';
 import { ErrorStateComponent } from '../shared/components/error-state/error-state.component';
+import { LoadingStateComponent } from '../shared/components/loading-state/loading-state.component';
 import { BrandButtonComponent } from '../shared/components/brand-button/brand-button.component';
 import { ScenarioItemComponent } from './scenario-item/scenario-item.component';
 import { LikertItemComponent } from './likert-item/likert-item.component';
@@ -25,6 +26,7 @@ import { FeedbackFormComponent } from '../shared/components/feedback-form/feedba
     PageContainerComponent,
     ProgressBarComponent,
     ErrorStateComponent,
+    LoadingStateComponent,
     BrandButtonComponent,
     ScenarioItemComponent,
     LikertItemComponent,

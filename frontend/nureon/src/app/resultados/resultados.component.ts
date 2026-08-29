@@ -7,6 +7,7 @@ import { AttemptTier, TestAttempt } from '../core/models/test-attempt.model';
 import { AccountType } from '../core/models/user.model';
 import { PageContainerComponent } from '../shared/layout/page-container/page-container.component';
 import { ErrorStateComponent } from '../shared/components/error-state/error-state.component';
+import { LoadingStateComponent } from '../shared/components/loading-state/loading-state.component';
 import { BrandButtonComponent } from '../shared/components/brand-button/brand-button.component';
 import { EnneagramDiagramComponent, ENEATYPE_STRUCTURE } from './enneagram-diagram/enneagram-diagram.component';
 import { ENEATYPE_CONTENT, EneatypeContent, FRAMING_TEXT } from './eneatype-content';
@@ -22,7 +23,13 @@ import { ENEATYPE_CONTENT, EneatypeContent, FRAMING_TEXT } from './eneatype-cont
 @Component({
   selector: 'app-resultados',
   standalone: true,
-  imports: [PageContainerComponent, ErrorStateComponent, BrandButtonComponent, EnneagramDiagramComponent],
+  imports: [
+    PageContainerComponent,
+    ErrorStateComponent,
+    LoadingStateComponent,
+    BrandButtonComponent,
+    EnneagramDiagramComponent,
+  ],
   templateUrl: './resultados.component.html',
   styleUrl: './resultados.component.scss',
 })

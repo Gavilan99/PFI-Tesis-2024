@@ -6,5 +6,9 @@
   font-size: var(--nureon-text-caption-size);
   font-weight: var(--nureon-text-caption-weight);
   background: var(--nureon-orange);
-  color: white;
+  // White-on-orange is the same ~2.80:1 ratio orange-on-white failed at in
+  // the Etapa 1 audit (contrast is symmetric between a color pair) — well
+  // under the 4.5:1 this caption-sized text needs. Dark text on orange
+  // measures ~7.5:1.
+  color: rgba(black, 0.87);
 }

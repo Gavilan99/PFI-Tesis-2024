@@ -9,6 +9,8 @@ import { AccountType } from '../core/models/user.model';
 import { TestAttempt } from '../core/models/test-attempt.model';
 import { PageContainerComponent } from '../shared/layout/page-container/page-container.component';
 import { EmptyStateComponent } from '../shared/components/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../shared/components/error-state/error-state.component';
+import { LoadingStateComponent } from '../shared/components/loading-state/loading-state.component';
 import { BrandButtonComponent } from '../shared/components/brand-button/brand-button.component';
 import { FeedbackFormComponent } from '../shared/components/feedback-form/feedback-form.component';
 
@@ -63,6 +65,8 @@ const COUNTRIES = [
     DatePipe,
     PageContainerComponent,
     EmptyStateComponent,
+    ErrorStateComponent,
+    LoadingStateComponent,
     BrandButtonComponent,
     FeedbackFormComponent,
   ],
@@ -90,6 +94,7 @@ export class ProfileComponent implements OnInit {
   saved = false;
 
   historyLoading = true;
+  historyError: string | null = null;
   history: HistoryEntry[] = [];
 
   constructor(
@@ -142,8 +147,13 @@ export class ProfileComponent implements OnInit {
       });
   }
 
+  retryHistory(): void {
+    this.loadHistory();
+  }
+
   private loadHistory(): void {
     this.historyLoading = true;
+    this.historyError = null;
     const userId = this.auth.currentUser?.id;
     if (!userId) {
       this.history = [];
@@ -180,8 +190,8 @@ export class ProfileComponent implements OnInit {
         });
       },
       error: () => {
-        this.history = [];
         this.historyLoading = false;
+        this.historyError = 'No pudimos cargar tu historial.';
       },
     });
   }
