@@ -7,6 +7,7 @@ import { RegistroComponent } from './registro/registro.component';
 import { IngresarComponent } from './ingresar/ingresar.component';
 import { TestComponent } from './test/test.component';
 import { ResultadosComponent } from './resultados/resultados.component';
+import { ProfileComponent } from './profile/profile.component';
 import { sessionGuard } from './core/guards/session.guard';
 import { resultAvailableGuard } from './core/guards/result-available.guard';
 import { environment } from '../environments/environment';
@@ -35,13 +36,13 @@ const routes: Routes = [
   },
   {
     path: 'resultados/:attemptId',
-    component: PlaceholderComponent,
+    component: ResultadosComponent,
     data: { title: 'Resultado de intento' },
     canActivate: [resultAvailableGuard],
   },
   {
     path: 'perfil',
-    component: PlaceholderComponent,
+    component: ProfileComponent,
     data: { title: 'Perfil' },
     canActivate: [sessionGuard],
   },
