@@ -10,6 +10,7 @@ import { Result } from '../models/result.model';
 import { User, UpdateProfileInput, withEmptyProfile } from '../models/user.model';
 import { LoginInput, RegisterInput } from '../models/auth.model';
 import { SubmitFeedbackInput } from '../models/feedback.model';
+import { SubmitContactMessageInput } from '../models/contact-message.model';
 
 // Seeded so the error paths (duplicate email on registro, wrong credentials
 // on ingreso) are testable without having to register twice by hand.
@@ -43,12 +44,21 @@ interface FeedbackRecord {
   submittedAt: string;
 }
 
+interface ContactMessageRecord {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  submittedAt: string;
+}
+
 interface PersistedState {
   attempts: Record<string, TestAttempt>;
   responsesByAttempt: Record<string, TestResponse[]>;
   resultsByAttempt: Record<string, Result>;
   usersByEmail: Record<string, { password: string; user: User }>;
   feedback: FeedbackRecord[];
+  contactMessages: ContactMessageRecord[];
   // Keyed by userId — was a single global value until Stage 7 added real
   // multi-account registration and exposed the bug: with only one implicit
   // session, nobody noticed every user's attempts lived in one shared space.
@@ -58,23 +68,57 @@ interface PersistedState {
 
 const STORAGE_KEY = 'nureon_mock_api_state';
 
+const DEMO_USER_ID = 'user-demo';
+const DEMO_ATTEMPT_ID = 'attempt-demo-seed';
+
+// Stage 10: `demo@nureon.ai` starts with a completed attempt + result
+// already in place, not just an empty account — a build:demo deploy (or a
+// dev poking at MockApiService) needs to reach /resultados without
+// answering 40 questions first. Starting a fresh attempt from /inicio's
+// "Hacer el test de nuevo" still works normally; this only seeds the
+// initial state, same as DEMO_ACCOUNT_EMAIL itself.
+function seedDemoAttempt(): { attempt: TestAttempt; eneatype: number } {
+  const attempt: TestAttempt = {
+    id: DEMO_ATTEMPT_ID,
+    userId: DEMO_USER_ID,
+    subjectId: null,
+    tier: 'free_reduced',
+    questionnaireVersion: 1,
+    status: 'completed',
+    startedAt: '2026-01-01T12:00:00.000Z',
+    completedAt: '2026-01-01T12:15:00.000Z',
+  };
+  const eneatype = (Math.abs(hashCode(DEMO_ATTEMPT_ID)) % 9) + 1;
+  return { attempt, eneatype };
+}
+
 function defaultState(): PersistedState {
+  const { attempt, eneatype } = seedDemoAttempt();
   return {
-    attempts: {},
-    responsesByAttempt: {},
-    resultsByAttempt: {},
+    attempts: { [attempt.id]: attempt },
+    responsesByAttempt: { [attempt.id]: [] },
+    resultsByAttempt: {
+      [attempt.id]: {
+        id: `result-${attempt.id}`,
+        testAttemptId: attempt.id,
+        eneatype,
+        descriptionText: `Descripción de ejemplo para el eneatipo ${eneatype}. Contenido real pendiente (Etapa 6).`,
+        generatedAt: attempt.completedAt!,
+      },
+    },
     usersByEmail: {
       [DEMO_ACCOUNT_EMAIL]: {
         password: DEMO_ACCOUNT_PASSWORD,
         user: withEmptyProfile({
-          id: 'user-demo',
+          id: DEMO_USER_ID,
           displayName: 'Cuenta demo',
           email: DEMO_ACCOUNT_EMAIL,
         }),
       },
     },
     feedback: [],
-    latestAttemptIdByUser: {},
+    contactMessages: [],
+    latestAttemptIdByUser: { [DEMO_USER_ID]: attempt.id },
     nextId: 1,
   };
 }
@@ -263,6 +307,18 @@ export class MockApiService implements ApiService {
       testAttemptId: input.testAttemptId,
       rating: input.rating,
       comment: input.comment,
+      submittedAt: new Date().toISOString(),
+    });
+    this.saveState();
+    return of(undefined).pipe(delay(MOCK_DELAY_MS));
+  }
+
+  submitContactMessage(input: SubmitContactMessageInput): Observable<void> {
+    this.state.contactMessages.push({
+      id: `contact-${this.state.nextId++}`,
+      name: input.name,
+      email: input.email,
+      message: input.message,
       submittedAt: new Date().toISOString(),
     });
     this.saveState();
