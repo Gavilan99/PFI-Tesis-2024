@@ -1,0 +1,19 @@
+.test__back {
+  align-self: flex-start;
+  margin-bottom: var(--nureon-space-sm);
+  border: none;
+  background: none;
+  color: var(--nureon-green-dark);
+  font-family: var(--nureon-font-body);
+  font-size: var(--nureon-text-body-sm-size);
+  cursor: pointer;
+  padding: var(--nureon-space-2xs) 0;
+}
+
+.test-done {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--nureon-space-sm);
+  padding: var(--nureon-space-xl) 0;
+}
