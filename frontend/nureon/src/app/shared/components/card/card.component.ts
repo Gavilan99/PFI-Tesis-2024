@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
   standalone: true,
   imports: [MatCardModule],
   templateUrl: './card.component.html',
+  styleUrl: './card.component.scss',
 })
 export class CardComponent {
   @Input() title: string | null = null;
