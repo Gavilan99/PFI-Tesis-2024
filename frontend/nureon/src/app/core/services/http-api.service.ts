@@ -6,6 +6,8 @@ import { Question } from '../models/question.model';
 import { TestAttempt } from '../models/test-attempt.model';
 import { NewResponseInput, TestResponse } from '../models/response.model';
 import { Result } from '../models/result.model';
+import { User } from '../models/user.model';
+import { LoginInput, RegisterInput } from '../models/auth.model';
 
 // Real backend implementation. Not built yet — Flask/Cognito integration is
 // a later stage (see the redesign plan's "Dependencias externas"). Exists
@@ -16,6 +18,14 @@ import { Result } from '../models/result.model';
 @Injectable()
 export class HttpApiService implements ApiService {
   constructor(private readonly http: HttpClient) {}
+
+  register(_input: RegisterInput): Observable<User> {
+    return this.notImplemented('register');
+  }
+
+  login(_input: LoginInput): Observable<User> {
+    return this.notImplemented('login');
+  }
 
   createTestAttempt(): Observable<TestAttempt> {
     return this.notImplemented('createTestAttempt');

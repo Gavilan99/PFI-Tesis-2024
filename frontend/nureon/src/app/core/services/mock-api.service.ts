@@ -5,6 +5,13 @@ import { Question } from '../models/question.model';
 import { TestAttempt } from '../models/test-attempt.model';
 import { NewResponseInput, TestResponse } from '../models/response.model';
 import { Result } from '../models/result.model';
+import { User } from '../models/user.model';
+import { LoginInput, RegisterInput } from '../models/auth.model';
+
+// Seeded so the error paths (duplicate email on registro, wrong credentials
+// on ingreso) are testable without having to register twice by hand.
+const DEMO_ACCOUNT_EMAIL = 'demo@nureon.ai';
+const DEMO_ACCOUNT_PASSWORD = 'Demo1234';
 
 // In-memory fixture, not the real Question Bank v1 content — that lands in
 // Stage 5 once the CSV companion is available. Just enough variety (both
@@ -109,8 +116,39 @@ export class MockApiService implements ApiService {
   private readonly attempts = new Map<string, TestAttempt>();
   private readonly responsesByAttempt = new Map<string, TestResponse[]>();
   private readonly resultsByAttempt = new Map<string, Result>();
+  private readonly usersByEmail = new Map<string, { password: string; user: User }>([
+    [
+      DEMO_ACCOUNT_EMAIL,
+      {
+        password: DEMO_ACCOUNT_PASSWORD,
+        user: { id: 'user-demo', displayName: 'Cuenta demo', email: DEMO_ACCOUNT_EMAIL },
+      },
+    ],
+  ]);
   private latestAttemptId: string | null = null;
   private nextId = 1;
+
+  register(input: RegisterInput): Observable<User> {
+    const email = input.email.toLowerCase();
+    if (this.usersByEmail.has(email)) {
+      return throwError(() => new Error('Ese email ya está registrado.'));
+    }
+    const user: User = {
+      id: `user-${this.nextId++}`,
+      displayName: input.username,
+      email: input.email,
+    };
+    this.usersByEmail.set(email, { password: input.password, user });
+    return of(user).pipe(delay(MOCK_DELAY_MS));
+  }
+
+  login(input: LoginInput): Observable<User> {
+    const record = this.usersByEmail.get(input.email.toLowerCase());
+    if (!record || record.password !== input.password) {
+      return throwError(() => new Error('Email o contraseña incorrectos.'));
+    }
+    return of(record.user).pipe(delay(MOCK_DELAY_MS));
+  }
 
   createTestAttempt(): Observable<TestAttempt> {
     const id = `attempt-${this.nextId++}`;
