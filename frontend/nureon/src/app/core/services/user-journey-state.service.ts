@@ -15,12 +15,12 @@ export class UserJourneyStateService {
     @Inject(API_SERVICE) private readonly api: ApiService,
   ) {}
 
-  readonly state$: Observable<UserJourneyState> = this.auth.isAuthenticated$.pipe(
-    switchMap((isAuthenticated) => {
-      if (!isAuthenticated) {
+  readonly state$: Observable<UserJourneyState> = this.auth.currentUserChanges.pipe(
+    switchMap((user) => {
+      if (!user) {
         return of<UserJourneyState>('no-account');
       }
-      return this.api.getLatestAttempt().pipe(
+      return this.api.getLatestAttempt(user.id).pipe(
         map((attempt): UserJourneyState => {
           if (!attempt) {
             return 'account-no-attempts';

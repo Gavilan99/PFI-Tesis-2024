@@ -8,6 +8,11 @@
       <h1 class="nureon-heading">¡Listo! Terminaste el test.</h1>
       <p>Ya podés ver tu resultado.</p>
       <app-brand-button variant="primary" routerLink="/resultados">Ver mi resultado</app-brand-button>
+
+      <div class="test-done__feedback">
+        <h2>¿Qué te pareció el test?</h2>
+        <app-feedback-form [testAttemptId]="attemptId"></app-feedback-form>
+      </div>
     </section>
   } @else if (currentQuestion) {
     <app-progress-bar [current]="currentIndex + 1" [total]="questions.length"></app-progress-bar>

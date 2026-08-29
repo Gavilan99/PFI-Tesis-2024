@@ -1,6 +1,7 @@
 import { Component, HostListener, Inject, OnInit } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { API_SERVICE, ApiService } from '../core/services/api.service';
+import { AuthService } from '../core/services/auth.service';
 import { Question } from '../core/models/question.model';
 import { TestAttempt } from '../core/models/test-attempt.model';
 import { PageContainerComponent } from '../shared/layout/page-container/page-container.component';
@@ -9,6 +10,7 @@ import { ErrorStateComponent } from '../shared/components/error-state/error-stat
 import { BrandButtonComponent } from '../shared/components/brand-button/brand-button.component';
 import { ScenarioItemComponent } from './scenario-item/scenario-item.component';
 import { LikertItemComponent } from './likert-item/likert-item.component';
+import { FeedbackFormComponent } from '../shared/components/feedback-form/feedback-form.component';
 
 // CU003 — El test. One item per screen, auto-advance on select (the one
 // thing rescued from the old test component), progress always visible,
@@ -26,6 +28,7 @@ import { LikertItemComponent } from './likert-item/likert-item.component';
     BrandButtonComponent,
     ScenarioItemComponent,
     LikertItemComponent,
+    FeedbackFormComponent,
   ],
   templateUrl: './test.component.html',
   styleUrl: './test.component.scss',
@@ -38,10 +41,13 @@ export class TestComponent implements OnInit {
   questions: Question[] = [];
   currentIndex = 0;
 
-  private attemptId: string | null = null;
+  attemptId: string | null = null;
   private readonly selections = new Map<string, string>();
 
-  constructor(@Inject(API_SERVICE) private readonly api: ApiService) {}
+  constructor(
+    @Inject(API_SERVICE) private readonly api: ApiService,
+    private readonly auth: AuthService,
+  ) {}
 
   ngOnInit(): void {
     this.loadOrResume();
@@ -109,12 +115,17 @@ export class TestComponent implements OnInit {
   private loadOrResume(): void {
     this.loading = true;
     this.error = null;
-    this.api.getLatestAttempt().subscribe({
+    const userId = this.auth.currentUser?.id;
+    if (!userId) {
+      this.fail();
+      return;
+    }
+    this.api.getLatestAttempt(userId).subscribe({
       next: (attempt) => {
         if (attempt && attempt.status === 'in_progress') {
           this.resume(attempt);
         } else {
-          this.startNew();
+          this.startNew(userId);
         }
       },
       error: () => this.fail(),
@@ -143,8 +154,8 @@ export class TestComponent implements OnInit {
     });
   }
 
-  private startNew(): void {
-    this.api.createTestAttempt().subscribe({
+  private startNew(userId: string): void {
+    this.api.createTestAttempt(userId).subscribe({
       next: (attempt) => {
         this.attemptId = attempt.id;
         this.api.getQuestions(attempt.id).subscribe({

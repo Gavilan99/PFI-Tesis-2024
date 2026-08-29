@@ -17,3 +17,14 @@
   gap: var(--nureon-space-sm);
   padding: var(--nureon-space-xl) 0;
 }
+
+.test-done__feedback {
+  margin-top: var(--nureon-space-lg);
+  width: 100%;
+}
+
+.test-done__feedback h2 {
+  font: var(--nureon-text-h3-weight) var(--nureon-text-h3-size) / var(--nureon-text-h3-line-height)
+    var(--nureon-text-h3-font);
+  margin-bottom: var(--nureon-space-xs);
+}

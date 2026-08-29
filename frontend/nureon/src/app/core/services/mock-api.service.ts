@@ -7,8 +7,9 @@ import { Question, QuestionType } from '../models/question.model';
 import { TestAttempt } from '../models/test-attempt.model';
 import { NewResponseInput, TestResponse } from '../models/response.model';
 import { Result } from '../models/result.model';
-import { User } from '../models/user.model';
+import { User, UpdateProfileInput, withEmptyProfile } from '../models/user.model';
 import { LoginInput, RegisterInput } from '../models/auth.model';
+import { SubmitFeedbackInput } from '../models/feedback.model';
 
 // Seeded so the error paths (duplicate email on registro, wrong credentials
 // on ingreso) are testable without having to register twice by hand.
@@ -34,12 +35,24 @@ interface QuestionFixtureFile {
   }>;
 }
 
+interface FeedbackRecord {
+  id: string;
+  testAttemptId: string | null;
+  rating: number;
+  comment: string | null;
+  submittedAt: string;
+}
+
 interface PersistedState {
   attempts: Record<string, TestAttempt>;
   responsesByAttempt: Record<string, TestResponse[]>;
   resultsByAttempt: Record<string, Result>;
   usersByEmail: Record<string, { password: string; user: User }>;
-  latestAttemptId: string | null;
+  feedback: FeedbackRecord[];
+  // Keyed by userId — was a single global value until Stage 7 added real
+  // multi-account registration and exposed the bug: with only one implicit
+  // session, nobody noticed every user's attempts lived in one shared space.
+  latestAttemptIdByUser: Record<string, string>;
   nextId: number;
 }
 
@@ -53,10 +66,15 @@ function defaultState(): PersistedState {
     usersByEmail: {
       [DEMO_ACCOUNT_EMAIL]: {
         password: DEMO_ACCOUNT_PASSWORD,
-        user: { id: 'user-demo', displayName: 'Cuenta demo', email: DEMO_ACCOUNT_EMAIL },
+        user: withEmptyProfile({
+          id: 'user-demo',
+          displayName: 'Cuenta demo',
+          email: DEMO_ACCOUNT_EMAIL,
+        }),
       },
     },
-    latestAttemptId: null,
+    feedback: [],
+    latestAttemptIdByUser: {},
     nextId: 1,
   };
 }
@@ -90,11 +108,11 @@ export class MockApiService implements ApiService {
     if (this.state.usersByEmail[email]) {
       return throwError(() => new Error('Ese email ya está registrado.'));
     }
-    const user: User = {
+    const user = withEmptyProfile({
       id: `user-${this.state.nextId++}`,
       displayName: input.username,
       email: input.email,
-    };
+    });
     this.state.usersByEmail[email] = { password: input.password, user };
     this.saveState();
     return of(user).pipe(delay(MOCK_DELAY_MS));
@@ -108,11 +126,21 @@ export class MockApiService implements ApiService {
     return of(record.user).pipe(delay(MOCK_DELAY_MS));
   }
 
-  createTestAttempt(): Observable<TestAttempt> {
+  updateProfile(userId: string, input: UpdateProfileInput): Observable<User> {
+    const record = Object.values(this.state.usersByEmail).find((r) => r.user.id === userId);
+    if (!record) {
+      return throwError(() => new Error(`MockApiService: unknown user "${userId}"`));
+    }
+    record.user = { ...record.user, ...input };
+    this.saveState();
+    return of(record.user).pipe(delay(MOCK_DELAY_MS));
+  }
+
+  createTestAttempt(userId: string): Observable<TestAttempt> {
     const id = `attempt-${this.state.nextId++}`;
     const attempt: TestAttempt = {
       id,
-      userId: 'mock-user',
+      userId,
       subjectId: null,
       tier: 'free_reduced',
       questionnaireVersion: 1,
@@ -122,7 +150,7 @@ export class MockApiService implements ApiService {
     };
     this.state.attempts[id] = attempt;
     this.state.responsesByAttempt[id] = [];
-    this.state.latestAttemptId = id;
+    this.state.latestAttemptIdByUser[userId] = id;
     this.saveState();
     return of(attempt).pipe(delay(MOCK_DELAY_MS));
   }
@@ -212,11 +240,33 @@ export class MockApiService implements ApiService {
     return of(result).pipe(delay(MOCK_DELAY_MS));
   }
 
-  getLatestAttempt(): Observable<TestAttempt | null> {
-    const attempt = this.state.latestAttemptId
-      ? this.state.attempts[this.state.latestAttemptId] ?? null
-      : null;
+  getLatestAttempt(userId: string): Observable<TestAttempt | null> {
+    const latestId = this.state.latestAttemptIdByUser[userId];
+    const attempt = latestId ? this.state.attempts[latestId] ?? null : null;
     return of(attempt).pipe(delay(MOCK_DELAY_MS));
+  }
+
+  getAttempt(attemptId: string): Observable<TestAttempt | null> {
+    return of(this.state.attempts[attemptId] ?? null).pipe(delay(MOCK_DELAY_MS));
+  }
+
+  getAttemptHistory(userId: string): Observable<TestAttempt[]> {
+    const attempts = Object.values(this.state.attempts)
+      .filter((a) => a.userId === userId)
+      .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+    return of(attempts).pipe(delay(MOCK_DELAY_MS));
+  }
+
+  submitFeedback(input: SubmitFeedbackInput): Observable<void> {
+    this.state.feedback.push({
+      id: `feedback-${this.state.nextId++}`,
+      testAttemptId: input.testAttemptId,
+      rating: input.rating,
+      comment: input.comment,
+      submittedAt: new Date().toISOString(),
+    });
+    this.saveState();
+    return of(undefined).pipe(delay(MOCK_DELAY_MS));
   }
 
   private loadState(): PersistedState {

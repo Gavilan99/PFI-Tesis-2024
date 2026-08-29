@@ -1,3 +1,5 @@
+import { AccountType } from '../core/models/user.model';
+
 // PROVISIONAL — adaptado y traducido de src/assets/data/type_*.txt (en
 // inglés, con formato inconsistente entre archivos: type_1/2 usan un
 // esquema, type_3-9 otro). No es la redacción final del contenido de
@@ -238,17 +240,17 @@ export const ENEATYPE_CONTENT: Record<number, EneatypeContent> = {
 };
 
 // RF09/RF10 encuadre slot: the result is identical for every persona, only
-// the framing sentence around it changes. Only 'individual' has real copy —
+// the framing sentence around it changes. Keyed by the user's own
+// AccountType (Stage 7) — no separate "encuadre" concept, it's literally
+// which persona the account is. Only 'individual' has real copy —
 // 'salud'/'rrhh' are null on purpose (unwritten content, not missing wiring).
 // The component falls back to 'individual' when the specific framing is
 // null, so finishing this later is content work, not structural work.
-export type Encuadre = 'individual' | 'salud' | 'rrhh';
-
 export interface EneatypeFraming {
   intro: string | null;
 }
 
-export const FRAMING_TEXT: Record<Encuadre, EneatypeFraming> = {
+export const FRAMING_TEXT: Record<AccountType, EneatypeFraming> = {
   individual: {
     intro:
       'Este es tu perfil de motivación: te ayuda a entender qué te mueve, no solo cómo actuás.',

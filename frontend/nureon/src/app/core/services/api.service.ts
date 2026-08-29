@@ -4,8 +4,9 @@ import { Question } from '../models/question.model';
 import { TestAttempt } from '../models/test-attempt.model';
 import { NewResponseInput, TestResponse } from '../models/response.model';
 import { Result } from '../models/result.model';
-import { User } from '../models/user.model';
+import { User, UpdateProfileInput } from '../models/user.model';
 import { LoginInput, RegisterInput } from '../models/auth.model';
+import { SubmitFeedbackInput } from '../models/feedback.model';
 
 // Frontend-facing contract only — see PDR — NureonAI Data Model for the full
 // DB schema. Components depend on this interface and the API_SERVICE token,
@@ -20,8 +21,15 @@ export interface ApiService {
   // components shouldn't need to change when it does.
   register(input: RegisterInput): Observable<User>;
   login(input: LoginInput): Observable<User>;
+  // RF07 — profile edits. userId is explicit (unlike register/login, there's
+  // no session token standing in for it yet).
+  updateProfile(userId: string, input: UpdateProfileInput): Observable<User>;
 
-  createTestAttempt(): Observable<TestAttempt>;
+  // userId is explicit on every attempt-scoping method below (createTestAttempt,
+  // getLatestAttempt, getAttemptHistory) for the same reason as updateProfile:
+  // there's no session token standing in for "whose attempts these are" yet.
+  // A real backend would derive it from the auth token instead of a param.
+  createTestAttempt(userId: string): Observable<TestAttempt>;
   // Contract decision: the whole subset (~40 items) arrives in one call when
   // the attempt is created, not one question at a time — the progress bar
   // can say "7 de 40" for real, and going back costs no request.
@@ -33,9 +41,19 @@ export interface ApiService {
   getResponses(attemptId: string): Observable<TestResponse[]>;
   completeTestAttempt(attemptId: string): Observable<TestAttempt>;
   getResult(attemptId: string): Observable<Result>;
-  // Most recent attempt for the current session, or null if none exists yet.
-  // Drives the user-journey state machine (UserJourneyStateService).
-  getLatestAttempt(): Observable<TestAttempt | null>;
+  // Most recent attempt for this user, or null if none exists yet. Drives the
+  // user-journey state machine (UserJourneyStateService).
+  getLatestAttempt(userId: string): Observable<TestAttempt | null>;
+  // A specific attempt by id — /resultados/:attemptId (history, RF08) needs
+  // this instead of "latest" once the user has more than one.
+  getAttempt(attemptId: string): Observable<TestAttempt | null>;
+  // Every attempt this user has ever made, newest first — full history, per
+  // the PDR's "every attempt preserved, never overwritten."
+  getAttemptHistory(userId: string): Observable<TestAttempt[]>;
+
+  // RF06 — never surfaced back to the user; fire-and-forget from the client's
+  // point of view.
+  submitFeedback(input: SubmitFeedbackInput): Observable<void>;
 }
 
 export const API_SERVICE = new InjectionToken<ApiService>('API_SERVICE');

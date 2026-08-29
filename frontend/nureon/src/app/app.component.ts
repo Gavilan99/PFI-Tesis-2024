@@ -27,6 +27,6 @@ export class AppComponent {
   }
 
   onLogoutRequested(): void {
-    this.auth.setAuthenticated(false);
+    this.auth.logout();
   }
 }
