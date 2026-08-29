@@ -1,0 +1,80 @@
+<app-page-container>
+  @if (loading) {
+    <p>Cargando…</p>
+  } @else if (error) {
+    <app-error-state [message]="error" (retry)="retry()"></app-error-state>
+  } @else if (content) {
+    <section class="resultados">
+      <!-- Capa 1: eneatipo y nombre -->
+      <header class="resultados__header">
+        <app-enneagram-diagram [eneatype]="eneatype!"></app-enneagram-diagram>
+        <div class="resultados__heading">
+          <h1 class="nureon-heading">Eneatipo {{ eneatype }} — {{ content.title }}</h1>
+          @if (content.isPlaceholder) {
+            <p class="resultados__placeholder-tag">
+              Contenido de ejemplo — texto final pendiente de redacción.
+            </p>
+          }
+        </div>
+      </header>
+
+      <!-- Capa 2: resumen en una frase -->
+      <p class="resultados__summary">{{ content.summary }}</p>
+
+      <!-- Capa 3: motivación central (con el encuadre según persona) -->
+      <section class="resultados__section">
+        @if (framingIntro) {
+          <p class="resultados__framing">{{ framingIntro }}</p>
+        }
+        <h2>Tu motivación central</h2>
+        <p>{{ content.coreMotivation }}</p>
+      </section>
+
+      <!-- Capa 4: fortalezas y tensiones -->
+      <section class="resultados__section resultados__strengths-tensions">
+        <div>
+          <h2>Fortalezas</h2>
+          <ul>
+            @for (item of content.strengths; track item) {
+              <li>{{ item }}</li>
+            }
+          </ul>
+        </div>
+        <div>
+          <h2>Tensiones</h2>
+          <ul>
+            @for (item of content.tensions; track item) {
+              <li>{{ item }}</li>
+            }
+          </ul>
+        </div>
+      </section>
+
+      <!-- Capa 5: alas -->
+      <section class="resultados__section">
+        <h2>Tus alas</h2>
+        <p>
+          @for (wing of wings; track wing.title; let last = $last) {
+            {{ wing.title }}{{ last ? '' : ' y ' }}
+          }
+        </p>
+      </section>
+
+      <!-- Capa 6: contenido premium, difuminado en su lugar -->
+      <section class="resultados__section">
+        <h2>En crecimiento y bajo estrés</h2>
+        <div class="resultados__premium-body" [class.resultados__premium-body--locked]="!isPaid">
+          <div class="resultados__premium-content">
+            <p>{{ content.growth }}</p>
+            <p>{{ content.stress }}</p>
+          </div>
+          @if (!isPaid) {
+            <div class="resultados__premium-overlay">
+              <app-brand-button variant="primary">Desbloquear mi perfil completo</app-brand-button>
+            </div>
+          }
+        </div>
+      </section>
+    </section>
+  }
+</app-page-container>
