@@ -12,7 +12,10 @@ interface NureonDevTools {
   completeLatestAttempt: () => void;
   goto: (path: string) => void;
   debugState: () => void;
+  breakResultLoading: () => void;
 }
+
+const MOCK_STATE_STORAGE_KEY = 'nureon_mock_api_state';
 
 // Console helpers to exercise the four user-journey states without the real
 // login/test flow (Stages 4/5) built yet. Only called from AppComponent when
@@ -76,11 +79,39 @@ export function installDevTools(injector: Injector): void {
         error: (err) => console.error('journey state errored:', err),
       });
     },
+    // Simulates CU004's alternate flow (error loading the result) — deletes
+    // the persisted result for the latest attempt directly from
+    // localStorage, so MockApiService.getResult() throws next time
+    // /resultados asks for it. There's no ApiService method for this on
+    // purpose: a real backend wouldn't expose "corrupt my own data" either.
+    breakResultLoading: () => {
+      try {
+        const raw = localStorage.getItem(MOCK_STATE_STORAGE_KEY);
+        if (!raw) {
+          console.warn('No hay estado de MockApiService en localStorage todavía.');
+          return;
+        }
+        const state = JSON.parse(raw);
+        const attemptId = state.latestAttemptId;
+        if (!attemptId || !state.resultsByAttempt?.[attemptId]) {
+          console.warn('No hay un resultado para el último intento — completá el test primero.');
+          return;
+        }
+        delete state.resultsByAttempt[attemptId];
+        localStorage.setItem(MOCK_STATE_STORAGE_KEY, JSON.stringify(state));
+        console.log(
+          `Resultado borrado para el intento "${attemptId}". Recargá /resultados para ver el estado de error.`,
+        );
+      } catch (err) {
+        console.error('No se pudo romper el resultado:', err);
+      }
+    },
   };
 
   (window as unknown as { nureonDev: NureonDevTools }).nureonDev = tools;
   console.info(
     'nureonDev tools available: login(), logout(), startAttempt(), completeLatestAttempt(), ' +
-      'goto(path) — use goto() to navigate without a full page reload, or state resets.',
+      'goto(path), breakResultLoading() — use goto() to navigate without a full page reload, ' +
+      'or state resets.',
   );
 }
