@@ -6,6 +6,7 @@ import { LandingComponent } from './landing/landing.component';
 import { RegistroComponent } from './registro/registro.component';
 import { IngresarComponent } from './ingresar/ingresar.component';
 import { TestComponent } from './test/test.component';
+import { ResultadosComponent } from './resultados/resultados.component';
 import { sessionGuard } from './core/guards/session.guard';
 import { resultAvailableGuard } from './core/guards/result-available.guard';
 import { environment } from '../environments/environment';
@@ -28,7 +29,7 @@ const routes: Routes = [
   },
   {
     path: 'resultados',
-    component: PlaceholderComponent,
+    component: ResultadosComponent,
     data: { title: 'Resultados' },
     canActivate: [resultAvailableGuard],
   },
