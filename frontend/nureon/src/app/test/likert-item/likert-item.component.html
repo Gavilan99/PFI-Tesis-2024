@@ -1,6 +1,6 @@
-<h2 class="likert-item__prompt">{{ question.promptText }}</h2>
+<h2 class="likert-item__prompt" id="likert-prompt">{{ question.promptText }}</h2>
 
-<div class="likert-item__scale" role="radiogroup">
+<div class="likert-item__scale" role="radiogroup" aria-labelledby="likert-prompt">
   @for (option of question.answerOptions; track option.id; let i = $index) {
     <button
       type="button"
@@ -11,7 +11,7 @@
       [attr.aria-keyshortcuts]="i + 1"
       (click)="select.emit(option.id)"
     >
-      <span class="likert-item__option-index">{{ i + 1 }}</span>
+      <span class="likert-item__option-index" aria-hidden="true">{{ i + 1 }}</span>
       <span class="likert-item__option-text">{{ option.optionText }}</span>
     </button>
   }
