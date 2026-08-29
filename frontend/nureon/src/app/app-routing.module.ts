@@ -1,13 +1,16 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { PlaceholderComponent } from './placeholder/placeholder.component';
 import { NotFoundComponent } from './not-found/not-found.component';
 import { LandingComponent } from './landing/landing.component';
 import { RegistroComponent } from './registro/registro.component';
 import { IngresarComponent } from './ingresar/ingresar.component';
+import { InicioComponent } from './inicio/inicio.component';
 import { TestComponent } from './test/test.component';
 import { ResultadosComponent } from './resultados/resultados.component';
 import { ProfileComponent } from './profile/profile.component';
+import { EneagramaComponent } from './eneagrama/eneagrama.component';
+import { NosotrosComponent } from './nosotros/nosotros.component';
+import { ContactoComponent } from './contacto/contacto.component';
 import { sessionGuard } from './core/guards/session.guard';
 import { resultAvailableGuard } from './core/guards/result-available.guard';
 import { environment } from '../environments/environment';
@@ -18,7 +21,7 @@ const routes: Routes = [
   { path: 'ingresar', component: IngresarComponent, data: { title: 'Ingresar' } },
   {
     path: 'inicio',
-    component: PlaceholderComponent,
+    component: InicioComponent,
     data: { title: 'Inicio' },
     canActivate: [sessionGuard],
   },
@@ -46,9 +49,9 @@ const routes: Routes = [
     data: { title: 'Perfil' },
     canActivate: [sessionGuard],
   },
-  { path: 'eneagrama', component: PlaceholderComponent, data: { title: 'Sobre el eneagrama' } },
-  { path: 'nosotros', component: PlaceholderComponent, data: { title: 'Nosotros' } },
-  { path: 'contacto', component: PlaceholderComponent, data: { title: 'Contacto' } },
+  { path: 'eneagrama', component: EneagramaComponent, data: { title: 'Sobre el eneagrama' } },
+  { path: 'nosotros', component: NosotrosComponent, data: { title: 'Nosotros' } },
+  { path: 'contacto', component: ContactoComponent, data: { title: 'Contacto' } },
 ];
 
 // Dev-only: guarded by environment.production (a compile-time constant once

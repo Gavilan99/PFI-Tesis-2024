@@ -5,9 +5,7 @@ import { filter, map, mergeMap } from 'rxjs';
 
 const BRAND_SUFFIX = 'NureonAI';
 
-// Keeps document.title in sync with the active route's data.title — the
-// same value PlaceholderComponent renders as its on-page heading, so there's
-// one source for both. Works identically during SSR/prerender: Angular's
+// Keeps document.title in sync with the active route's data.title. Works identically during SSR/prerender: Angular's
 // Title service mutates the server-rendered document, which then gets
 // serialized into the prerendered HTML, giving every route its own <title>.
 @Injectable({ providedIn: 'root' })

@@ -1,0 +1,47 @@
+<app-page-container>
+  @if (sent) {
+    <section class="confirmation">
+      <h1 class="nureon-heading">¡Gracias por escribirnos!</h1>
+      <p>Recibimos tu mensaje. Te vamos a responder a la brevedad.</p>
+    </section>
+  } @else {
+    <section class="contacto-form">
+      <h1 class="nureon-heading">Contacto</h1>
+      <p class="contacto-form__lead">¿Preguntas, comentarios o algo que quieras contarnos? Escribinos.</p>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline">
+          <mat-label>Nombre</mat-label>
+          <input matInput formControlName="name" autocomplete="name" />
+          @if (nameError) {
+            <mat-error>{{ nameError }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" autocomplete="email" />
+          @if (emailError) {
+            <mat-error>{{ emailError }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Mensaje</mat-label>
+          <textarea matInput formControlName="message" rows="5"></textarea>
+          @if (messageError) {
+            <mat-error>{{ messageError }}</mat-error>
+          }
+        </mat-form-field>
+
+        @if (submitError) {
+          <p class="contacto-form__error" role="alert">{{ submitError }}</p>
+        }
+
+        <app-brand-button variant="primary" type="submit" [disabled]="submitting">
+          {{ submitting ? 'Enviando…' : 'Enviar mensaje' }}
+        </app-brand-button>
+      </form>
+    </section>
+  }
+</app-page-container>
