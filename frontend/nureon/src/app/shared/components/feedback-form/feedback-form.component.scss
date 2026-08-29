@@ -26,7 +26,7 @@ form {
   transition: border-color var(--nureon-duration-base) var(--nureon-easing-standard);
 
   &:hover {
-    border-color: var(--nureon-green-mint);
+    border-color: var(--nureon-green-dark);
   }
 
   &--selected {
@@ -34,6 +34,11 @@ form {
     background: var(--nureon-green-dark);
     color: white;
   }
+}
+
+.feedback-form__comment-label {
+  font-size: var(--nureon-text-body-sm-size);
+  color: rgba(black, 0.7);
 }
 
 .feedback-form__comment {

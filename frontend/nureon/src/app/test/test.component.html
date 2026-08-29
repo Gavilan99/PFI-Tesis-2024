@@ -1,6 +1,6 @@
 <app-page-container>
   @if (loading) {
-    <p>Cargando…</p>
+    <app-loading-state message="Cargando el test…"></app-loading-state>
   } @else if (error) {
     <app-error-state [message]="error" (retry)="retry()"></app-error-state>
   } @else if (done) {

@@ -1,0 +1,8 @@
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: var(--nureon-space-sm);
+  padding: var(--nureon-space-lg);
+  color: rgba(black, 0.6);
+  font-size: var(--nureon-text-body-sm-size);
+}
