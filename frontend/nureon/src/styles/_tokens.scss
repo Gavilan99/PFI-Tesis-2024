@@ -83,6 +83,12 @@
   --nureon-duration-base: 200ms; // default transitions
   --nureon-duration-slow: 320ms; // panels, route transitions
   --nureon-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  // ---- Feedback ----
+  // Matches $nureon-warn (mat.$red-palette). For inline error text that
+  // isn't inside a mat-form-field (mat-error handles that case on its own) —
+  // e.g. a form-level submit error like "Ese email ya está registrado."
+  --nureon-color-danger: #c62828;
 }
 
 // ---- Breakpoints ----
