@@ -41,16 +41,38 @@ export function installDevTools(injector: Injector): void {
   const journeyState = injector.get(UserJourneyStateService);
 
   const tools: NureonDevTools = {
-    login: () => zone.run(() => auth.setAuthenticated(true)),
-    logout: () => zone.run(() => auth.setAuthenticated(false)),
+    // Logs in as the seeded demo account (MockApiService) — real login, not
+    // a bare boolean flip, since AuthService now holds the whole User and
+    // Stage 7's profile screen needs a real one to edit.
+    login: () => {
+      zone.run(() => {
+        auth.login({ email: 'demo@nureon.ai', password: 'Demo1234' }).subscribe({
+          next: (user) => console.log('Logged in as:', user),
+          error: (err) => console.error('Login failed:', err),
+        });
+      });
+    },
+    logout: () => zone.run(() => auth.logout()),
     startAttempt: () => {
       zone.run(() => {
-        api.createTestAttempt().subscribe((attempt) => console.log('Attempt started:', attempt));
+        const userId = auth.currentUser?.id;
+        if (!userId) {
+          console.warn('No hay usuario logueado — llamá a nureonDev.login() primero.');
+          return;
+        }
+        api
+          .createTestAttempt(userId)
+          .subscribe((attempt) => console.log('Attempt started:', attempt));
       });
     },
     completeLatestAttempt: () => {
       zone.run(() => {
-        api.getLatestAttempt().subscribe((attempt) => {
+        const userId = auth.currentUser?.id;
+        if (!userId) {
+          console.warn('No hay usuario logueado — llamá a nureonDev.login() primero.');
+          return;
+        }
+        api.getLatestAttempt(userId).subscribe((attempt) => {
           if (!attempt) {
             console.warn('No attempt to complete — call nureonDev.startAttempt() first.');
             return;
@@ -73,7 +95,7 @@ export function installDevTools(injector: Injector): void {
       });
     },
     debugState: () => {
-      console.log('auth.isAuthenticated (raw):', auth.isAuthenticated);
+      console.log('auth.currentUser:', auth.currentUser);
       journeyState.state$.pipe(take(1)).subscribe({
         next: (state) => console.log('journey state:', state),
         error: (err) => console.error('journey state errored:', err),
@@ -86,13 +108,18 @@ export function installDevTools(injector: Injector): void {
     // purpose: a real backend wouldn't expose "corrupt my own data" either.
     breakResultLoading: () => {
       try {
+        const userId = auth.currentUser?.id;
+        if (!userId) {
+          console.warn('No hay usuario logueado — llamá a nureonDev.login() primero.');
+          return;
+        }
         const raw = localStorage.getItem(MOCK_STATE_STORAGE_KEY);
         if (!raw) {
           console.warn('No hay estado de MockApiService en localStorage todavía.');
           return;
         }
         const state = JSON.parse(raw);
-        const attemptId = state.latestAttemptId;
+        const attemptId = state.latestAttemptIdByUser?.[userId];
         if (!attemptId || !state.resultsByAttempt?.[attemptId]) {
           console.warn('No hay un resultado para el último intento — completá el test primero.');
           return;
