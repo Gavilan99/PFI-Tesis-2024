@@ -2,14 +2,17 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { PlaceholderComponent } from './placeholder/placeholder.component';
 import { NotFoundComponent } from './not-found/not-found.component';
+import { LandingComponent } from './landing/landing.component';
+import { RegistroComponent } from './registro/registro.component';
+import { IngresarComponent } from './ingresar/ingresar.component';
 import { sessionGuard } from './core/guards/session.guard';
 import { resultAvailableGuard } from './core/guards/result-available.guard';
 import { environment } from '../environments/environment';
 
 const routes: Routes = [
-  { path: '', component: PlaceholderComponent },
-  { path: 'registro', component: PlaceholderComponent, data: { title: 'Registro' } },
-  { path: 'ingresar', component: PlaceholderComponent, data: { title: 'Ingresar' } },
+  { path: '', component: LandingComponent, data: { title: 'Descubrí tu eneatipo' } },
+  { path: 'registro', component: RegistroComponent, data: { title: 'Registro' } },
+  { path: 'ingresar', component: IngresarComponent, data: { title: 'Ingresar' } },
   {
     path: 'inicio',
     component: PlaceholderComponent,
