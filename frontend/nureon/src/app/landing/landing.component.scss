@@ -1,3 +1,5 @@
+@use '../../styles/palette';
+
 .hero {
   display: flex;
   flex-direction: column;
@@ -28,10 +30,12 @@ section h2 {
 
 // Alternating tinted panels so the page doesn't read as one flat white
 // surface — same primary-50 tint the palette already reserves for light
-// backgrounds.
+// backgrounds. --nureon-primary-50 doesn't exist as a CSS custom property
+// (the palette is only ever emitted as an SCSS map for Material's theme
+// mixins) — read the map directly at compile time instead.
 .differentiators,
 .how-it-works {
-  background: var(--nureon-primary-50);
+  background: map-get(palette.$nureon-primary-palette, 50);
   border-radius: var(--nureon-radius-lg);
   padding: var(--nureon-space-lg);
 }

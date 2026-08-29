@@ -1,0 +1,17 @@
+<h2 class="scenario-item__prompt">{{ question.promptText }}</h2>
+
+<div class="scenario-item__options">
+  @for (option of question.answerOptions; track option.id; let i = $index) {
+    <button
+      type="button"
+      class="scenario-item__option"
+      [class.scenario-item__option--selected]="option.id === selectedOptionId"
+      [attr.aria-pressed]="option.id === selectedOptionId"
+      [attr.aria-keyshortcuts]="i + 1"
+      (click)="select.emit(option.id)"
+    >
+      <span class="scenario-item__option-index">{{ i + 1 }}</span>
+      <span class="scenario-item__option-text">{{ option.optionText }}</span>
+    </button>
+  }
+</div>

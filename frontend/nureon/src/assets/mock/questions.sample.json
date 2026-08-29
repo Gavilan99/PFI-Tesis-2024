@@ -1,0 +1,1004 @@
+{
+  "_placeholder": true,
+  "_warning": "CONTENIDO DE RELLENO. No son ítems del banco v1 ni de ningún instrumento real. Sirven solo para verificar layout y longitudes de texto. No usar en capturas para el documento, ni en pruebas piloto, ni como base para escribir ítems reales. Regenerar con --csv apenas esté disponible el CSV del banco v1.",
+  "attempt": {
+    "id": "708c1c35-2789-42fc-aa29-e5b01aa88f32",
+    "tier": "free_reduced",
+    "questionnaireVersion": 1,
+    "status": "in_progress",
+    "startedAt": "2026-08-29T12:00:00Z",
+    "completedAt": null
+  },
+  "questions": [
+    {
+      "id": "a9d002c0-9e78-4006-bd89-6ced7216aa93",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 1,
+      "options": [
+        {
+          "id": "f379839a-0e90-4136-8b56-05aa7c6fe604",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "87a80188-287e-4e1c-982e-68b1ab661f2a",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "172c3252-b543-405c-a113-b6f649b3838d",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "5435e19e-e61b-4050-ab14-50b0b6253a00",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 2,
+      "options": [
+        {
+          "id": "dbc6e03c-1be2-480a-85c5-3ff6ada851d4",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "2e210e17-12cb-4c6d-ab5f-8c633cb03b94",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "3ed45df4-dc95-4874-a970-4589a4111ca1",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "56b01db6-98a2-46b0-81d5-501dbfe1a3f6",
+      "questionType": "multiple_choice",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 3,
+      "options": [
+        {
+          "id": "b68ab29f-0758-4b84-b20c-76cc65b4abcc",
+          "optionText": "Nada de acuerdo",
+          "displayOrder": 1
+        },
+        {
+          "id": "fcedfc1e-96fb-460d-930a-c3b30a1b7944",
+          "optionText": "Poco de acuerdo",
+          "displayOrder": 2
+        },
+        {
+          "id": "d4a5c7b4-9540-40e1-9c7a-f52f8eba8ffb",
+          "optionText": "Ni de acuerdo ni en desacuerdo",
+          "displayOrder": 3
+        },
+        {
+          "id": "6adb2a59-7e87-4431-8baa-d4398d1bd181",
+          "optionText": "Bastante de acuerdo",
+          "displayOrder": 4
+        },
+        {
+          "id": "cc16dafe-3d00-4e3c-b9c6-ec9611a2141e",
+          "optionText": "Completamente de acuerdo",
+          "displayOrder": 5
+        }
+      ]
+    },
+    {
+      "id": "e7a0a09e-7b06-4690-b488-5987b53b7193",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo deliberadamente largo, por encima del peor caso esperado del banco real, para comprobar que el bloque de la pregunta no desborda ni empuja las opciones fuera de la pantalla cuando el texto ocupa varias líneas seguidas en pantallas angostas.",
+      "displayOrder": 4,
+      "options": [
+        {
+          "id": "63649431-a4a7-4206-982b-1d177dc66333",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "489b8ae4-7c80-4972-9d79-92e247a8eedf",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "685c5bc2-3776-4dfd-a288-d76ce1e6ceb2",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "7082b516-cc61-475a-9e1b-bb8d5da9a0a3",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo deliberadamente largo, por encima del peor caso esperado del banco real, para comprobar que el bloque de la pregunta no desborda ni empuja las opciones fuera de la pantalla cuando el texto ocupa varias líneas seguidas en pantallas angostas.",
+      "displayOrder": 5,
+      "options": [
+        {
+          "id": "4322483f-4539-4514-b436-a07faf8cac49",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "9b4a3626-342c-46e0-9513-f3e1ae4c7625",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "cb106661-f3b3-4684-a7c3-6b0b1a265042",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "7742c0b5-5c9a-4d83-8d7e-bff4ad02030c",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 6,
+      "options": [
+        {
+          "id": "9e83380c-e9a4-4428-aa96-b71ea1ee5561",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "d6d14003-d0fc-4c3d-a6b2-fd49dff49365",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "f7a63c58-4df2-471e-b641-81a54077c3dd",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "12c51904-029c-4125-814b-b343005b74dd",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 7,
+      "options": [
+        {
+          "id": "25ea91b1-2468-49dd-b0d5-25149505ddb5",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "a6011e23-cda0-4068-96bf-dea0b0a803ca",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 2
+        },
+        {
+          "id": "46e87a54-d06b-41ba-ac03-619e12b00f63",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0a6fde6c-ac18-4448-9e81-2f13598b1afb",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo, corto, solo para verificar el layout.",
+      "displayOrder": 8,
+      "options": [
+        {
+          "id": "6d5826b0-d954-4eb7-a33e-8f0f58b8cb71",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "00249959-2c99-4642-ac15-d2e96dbd517b",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "080eedf1-7bed-4deb-88e9-5378451d2e9d",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "13dd0fbe-87f0-4766-82f7-fe3480176102",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 9,
+      "options": [
+        {
+          "id": "6f0e9ec5-3459-4101-8bca-b6b6b21c3372",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "ea871dca-687d-4a26-960c-7624bc60312b",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "9646782f-eb21-46e2-a61b-ede537a8e8a7",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "e2527ac9-330b-46df-a84f-ec20db615e6e",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 10,
+      "options": [
+        {
+          "id": "16861db7-394f-40ef-b0f3-be761c4a1871",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "02f019db-61b9-43ec-ab7a-be16d7c528b0",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "110f99d0-6d93-4158-a574-720ac6b82912",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "a08f65b9-3d36-4df9-8783-7ba2600138c4",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo deliberadamente largo, por encima del peor caso esperado del banco real, para comprobar que el bloque de la pregunta no desborda ni empuja las opciones fuera de la pantalla cuando el texto ocupa varias líneas seguidas en pantallas angostas.",
+      "displayOrder": 11,
+      "options": [
+        {
+          "id": "f9de4f87-6470-440a-bbad-7667446806fa",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "464a56d2-1901-40a9-9255-23bf8cdb4033",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "5dedeb04-dfa2-4824-aa0c-01a520a669e4",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0f93cb1d-7e3c-4f3f-a776-8ae158546589",
+      "questionType": "multiple_choice",
+      "promptText": "Enunciado de ejemplo, corto, solo para verificar el layout.",
+      "displayOrder": 12,
+      "options": [
+        {
+          "id": "e6945686-2623-4089-b40f-01e5f6eaf97e",
+          "optionText": "Nada de acuerdo",
+          "displayOrder": 1
+        },
+        {
+          "id": "75bd5034-f09c-4632-bbb0-32994a9dbda1",
+          "optionText": "Poco de acuerdo",
+          "displayOrder": 2
+        },
+        {
+          "id": "1bcba967-e6b4-4a8f-962f-85c0edc4a0f4",
+          "optionText": "Ni de acuerdo ni en desacuerdo",
+          "displayOrder": 3
+        },
+        {
+          "id": "26f1b029-a535-4079-8aff-0c06835f3d9b",
+          "optionText": "Bastante de acuerdo",
+          "displayOrder": 4
+        },
+        {
+          "id": "0b20080b-aa70-4eaf-8377-d5f603be048f",
+          "optionText": "Completamente de acuerdo",
+          "displayOrder": 5
+        }
+      ]
+    },
+    {
+      "id": "ed3234ff-16f0-435b-b0e7-78d3afe727d7",
+      "questionType": "multiple_choice",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 13,
+      "options": [
+        {
+          "id": "601d4c6a-5fd9-4204-96b5-e023ff72e71f",
+          "optionText": "Nada de acuerdo",
+          "displayOrder": 1
+        },
+        {
+          "id": "0340336a-4e27-4aba-bc58-555b6c2e54f9",
+          "optionText": "Poco de acuerdo",
+          "displayOrder": 2
+        },
+        {
+          "id": "eaff3435-1baf-4cae-8a20-26dd52e885bf",
+          "optionText": "Ni de acuerdo ni en desacuerdo",
+          "displayOrder": 3
+        },
+        {
+          "id": "72b6b0ed-e8d1-434d-bc56-a667f53cd0c9",
+          "optionText": "Bastante de acuerdo",
+          "displayOrder": 4
+        },
+        {
+          "id": "1d17787c-724b-4f96-911c-3320720651f4",
+          "optionText": "Completamente de acuerdo",
+          "displayOrder": 5
+        }
+      ]
+    },
+    {
+      "id": "202f0fc5-e55d-4b95-83dc-28f55ec54d6f",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 14,
+      "options": [
+        {
+          "id": "e6c1fa7f-197a-4659-b9ee-500876e7953f",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "757a6cba-c263-4fa7-9449-07d8174ad91d",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 2
+        },
+        {
+          "id": "a07e87d8-8768-42e1-a54b-57631db3d357",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "74744163-7ce2-4348-bee4-4f37a3c572a2",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo, corto, solo para verificar el layout.",
+      "displayOrder": 15,
+      "options": [
+        {
+          "id": "34227e52-48aa-4416-a9ee-236a3c6b6d55",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 1
+        },
+        {
+          "id": "62ff99eb-20e5-49ea-b095-4e452f05922b",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "5001e6c0-61c1-4005-be64-85d6ad8db0e4",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "e80d10c5-399c-42ce-a64d-4f22fe45bc2e",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo, corto, solo para verificar el layout.",
+      "displayOrder": 16,
+      "options": [
+        {
+          "id": "58d317bd-22b4-4b4c-a8f9-97a4649b07db",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "e8766592-8cfa-419f-8941-ae4d02ca86b0",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "cdc08c00-5ba3-4273-8f59-167bd69f86d0",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "9c035ec8-0bfb-4b22-a883-5730d06968ba",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 17,
+      "options": [
+        {
+          "id": "e58c3d1f-7e25-40bd-934e-3f26955346b3",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "cd64615f-f0bd-49a3-a465-47316ba39605",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 2
+        },
+        {
+          "id": "d0e437a8-3204-4f24-baf7-6ddfc69367e9",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "fcfe4aee-46fc-4060-a737-898e90d70752",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 18,
+      "options": [
+        {
+          "id": "f021d1d3-12ed-4076-abec-281082a79992",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "7d33d30a-f850-4cd9-8d76-3aec45fe89ef",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "5904535c-c113-444f-89fe-87168c2a715c",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "e0f561df-9e79-4833-b3fd-b8282624e71f",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 19,
+      "options": [
+        {
+          "id": "460409da-6678-4a30-9365-3bf6d35e3c7d",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "e3e0b7f6-e3ce-476d-a91c-057977665686",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "4817b1a7-7ea6-4394-818c-8f067c814bd0",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "84a07fc1-7ae1-4217-b4cd-70701c80c442",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo deliberadamente largo, por encima del peor caso esperado del banco real, para comprobar que el bloque de la pregunta no desborda ni empuja las opciones fuera de la pantalla cuando el texto ocupa varias líneas seguidas en pantallas angostas.",
+      "displayOrder": 20,
+      "options": [
+        {
+          "id": "f63079e8-d45f-47dd-af88-eace5ddf4a2c",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "51b89453-94b9-4e32-ab58-5efff09c57d2",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "ecda25b4-5031-4733-b6c3-caa73c7c1518",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "8c3aa1f0-d8dd-4b3b-9326-c09f84c430d8",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 21,
+      "options": [
+        {
+          "id": "b7a6b297-7154-4282-8097-bef586a6e705",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "da985a33-aa6d-4f73-9f71-bde6be493404",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 2
+        },
+        {
+          "id": "0590b0ee-4adc-4556-8077-ac9b64c3757b",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "dd3c092c-032c-4e07-ac82-137a745b2e0c",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 22,
+      "options": [
+        {
+          "id": "66489075-3660-401d-942c-d9bbc6230243",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "d445c39d-f387-4054-a603-0ff861e3ebf2",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "0ccb2734-c786-479b-a2ba-726722350501",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "c3e04970-cd14-4fac-90b1-f2c68c170d86",
+      "questionType": "multiple_choice",
+      "promptText": "Enunciado de ejemplo deliberadamente largo, por encima del peor caso esperado del banco real, para comprobar que el bloque de la pregunta no desborda ni empuja las opciones fuera de la pantalla cuando el texto ocupa varias líneas seguidas en pantallas angostas.",
+      "displayOrder": 23,
+      "options": [
+        {
+          "id": "48e1ca65-5720-4521-8c3b-0793ba7d901f",
+          "optionText": "Nada de acuerdo",
+          "displayOrder": 1
+        },
+        {
+          "id": "90474ab1-258f-4571-8132-9fb449f15fc3",
+          "optionText": "Poco de acuerdo",
+          "displayOrder": 2
+        },
+        {
+          "id": "83ada448-2bc4-4421-a3c2-c1f70566238a",
+          "optionText": "Ni de acuerdo ni en desacuerdo",
+          "displayOrder": 3
+        },
+        {
+          "id": "2e00120b-3e84-4a9f-b596-f9f328b3cba7",
+          "optionText": "Bastante de acuerdo",
+          "displayOrder": 4
+        },
+        {
+          "id": "fd1fddc4-82ed-4d06-a47c-ecff6d7db7e4",
+          "optionText": "Completamente de acuerdo",
+          "displayOrder": 5
+        }
+      ]
+    },
+    {
+      "id": "232c6846-7837-418a-8c09-4c2f74bdbed0",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 24,
+      "options": [
+        {
+          "id": "77f00957-1603-4ced-aa57-e1afc5ed6212",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "a9ed11c6-7af1-4865-b4ac-57a784ed81b2",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "f0620e82-0180-458c-9644-f4c6de834b70",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "90132df2-a17e-4833-ac91-1e6580d31071",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 25,
+      "options": [
+        {
+          "id": "e1ed41bf-b352-4968-8995-e3fcda5b1986",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "d6f59ef5-c760-4be9-b213-f84e12139493",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "f8d095ee-8aae-4ea4-88b8-9d9933b685ce",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "00e9471e-32c6-47cf-a517-76b331daf7c5",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 26,
+      "options": [
+        {
+          "id": "26225f8b-af51-4fcf-b2b6-d520029e40d2",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 1
+        },
+        {
+          "id": "3ad0a1d8-ee0f-4473-841c-4d70617945f5",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "caf635e2-3489-4a6a-b3d2-4a34f6fcaa23",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "a2febfd5-424b-47f3-9fe6-068d8c6cab17",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 27,
+      "options": [
+        {
+          "id": "5c7782bb-5396-4b91-98bb-cdc3224c2cfd",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "fdaef05f-b978-4b83-9839-eaf12723f811",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "6a1dbfa3-b780-4b3e-9d64-febe2e234145",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "e105eeeb-ff26-4f3d-a589-602cc13f21f4",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 28,
+      "options": [
+        {
+          "id": "ed891834-5603-4a5b-a190-7394cb889ca8",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "d67a5a20-2147-4989-b9fb-8984202a6a79",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "d13d2c27-ac45-4d50-a4da-efe3b231f76c",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "c7032b8d-e572-481d-be5d-b3ae3a5c2a14",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo deliberadamente largo, por encima del peor caso esperado del banco real, para comprobar que el bloque de la pregunta no desborda ni empuja las opciones fuera de la pantalla cuando el texto ocupa varias líneas seguidas en pantallas angostas.",
+      "displayOrder": 29,
+      "options": [
+        {
+          "id": "9d0a2839-3e9b-4278-81f6-b25f4033d52f",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 1
+        },
+        {
+          "id": "ae60cd52-6310-46b6-a32b-59282dd01224",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "19e87d19-dc1b-4c23-ac6b-e8358646caaf",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "639be010-f63c-405f-b826-43b73d565fa0",
+      "questionType": "multiple_choice",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 30,
+      "options": [
+        {
+          "id": "675866ad-1329-4cb9-b7a1-98ecda7ee157",
+          "optionText": "Nada de acuerdo",
+          "displayOrder": 1
+        },
+        {
+          "id": "f523087f-857a-430d-a6bf-03055b9507c6",
+          "optionText": "Poco de acuerdo",
+          "displayOrder": 2
+        },
+        {
+          "id": "8f75ce0b-dc3f-487d-9564-e6560bf1e745",
+          "optionText": "Ni de acuerdo ni en desacuerdo",
+          "displayOrder": 3
+        },
+        {
+          "id": "12e900df-7edd-4e59-a934-112f0b2334d3",
+          "optionText": "Bastante de acuerdo",
+          "displayOrder": 4
+        },
+        {
+          "id": "b7ce3f22-3367-4896-8600-9878d58c4a6a",
+          "optionText": "Completamente de acuerdo",
+          "displayOrder": 5
+        }
+      ]
+    },
+    {
+      "id": "7b8db290-098b-44c5-9a43-5104e6037674",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 31,
+      "options": [
+        {
+          "id": "8c34b1f9-20d4-49c4-a76b-1186173dd0c4",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 1
+        },
+        {
+          "id": "40082a7c-e0fb-4bdc-a936-36b79cf10574",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "78ccd8b4-d675-4eba-8c10-b3b2c455b6cb",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "1342a6e6-64a0-477f-83c7-a1a360fb429d",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 32,
+      "options": [
+        {
+          "id": "5449ba8f-fa01-4786-8eec-e7186ce27343",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "511e4a97-2f4e-4ac1-a17e-bddaea647baa",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "49a77e1c-9693-4c35-a18e-6a9748c4fdae",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "433648f9-6ddf-455f-aace-6b78b1cf6bcd",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 33,
+      "options": [
+        {
+          "id": "ae623cd3-d855-404b-be24-25f571197235",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "702bbeac-df92-4181-bc5e-207bf2595171",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "b1656767-ba47-4428-ae9b-9fee75b3bd40",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "1318efc4-4a90-4773-a4be-9c450ee3fc6b",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo deliberadamente largo, por encima del peor caso esperado del banco real, para comprobar que el bloque de la pregunta no desborda ni empuja las opciones fuera de la pantalla cuando el texto ocupa varias líneas seguidas en pantallas angostas.",
+      "displayOrder": 34,
+      "options": [
+        {
+          "id": "e64f4955-4e60-4c78-869d-ba41027656a0",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "0e63c68d-89ce-48b6-ba85-a3e19176402b",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "54ca4e05-81f8-4d2e-8ae9-1fe2f4d78590",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "24b46540-228f-4b38-8dff-faebf0ebde5e",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 35,
+      "options": [
+        {
+          "id": "999f939f-515d-4586-afb4-402acc5e50ca",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "aef4cbe9-2b10-4e42-ac67-4129c9a30134",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "5a75ccf2-c189-4c7c-9fee-977f53d5be3d",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "9445bc6c-8e45-4b4e-bb9d-082f82665215",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 36,
+      "options": [
+        {
+          "id": "195c77ec-93d2-45a9-927e-e938fdf0386e",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 1
+        },
+        {
+          "id": "d4fe75c0-3b9d-4f9b-996b-ba7a268cdf32",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "fda8f269-8010-4fd9-9058-d964d7eb6c95",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "569cca40-78a3-4b2d-83bf-bb9b42f93a35",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo, corto, solo para verificar el layout.",
+      "displayOrder": 37,
+      "options": [
+        {
+          "id": "bd41507d-1a24-4a85-a955-d608c357336a",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "c9de306b-4aee-4853-83ca-63a52194b14e",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 2
+        },
+        {
+          "id": "4d9a7f78-9278-4a4b-854c-eba261e8238f",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "c9461c23-cf87-4460-8eb3-fea278c310bb",
+      "questionType": "multiple_choice",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 38,
+      "options": [
+        {
+          "id": "3b49a92b-cce2-4fc0-9cee-e253a9bd8237",
+          "optionText": "Nada de acuerdo",
+          "displayOrder": 1
+        },
+        {
+          "id": "6d06f7fd-8665-4d49-957e-8147c0a43942",
+          "optionText": "Poco de acuerdo",
+          "displayOrder": 2
+        },
+        {
+          "id": "864d62a1-a501-484d-ba74-d446c47c5f23",
+          "optionText": "Ni de acuerdo ni en desacuerdo",
+          "displayOrder": 3
+        },
+        {
+          "id": "07ad3a50-b7d1-4717-94d7-a54cf4511ca5",
+          "optionText": "Bastante de acuerdo",
+          "displayOrder": 4
+        },
+        {
+          "id": "d6fdca89-a64e-4376-bfad-65a6ff723b4f",
+          "optionText": "Completamente de acuerdo",
+          "displayOrder": 5
+        }
+      ]
+    },
+    {
+      "id": "8e688fc8-dadc-49ea-b846-eb2981ffc0b5",
+      "questionType": "multiple_choice",
+      "promptText": "Enunciado de ejemplo de longitud media, escrito para ocupar aproximadamente lo mismo que un ítem real del banco y verificar cómo se comporta la tipografía.",
+      "displayOrder": 39,
+      "options": [
+        {
+          "id": "a9d0394c-18df-4872-ab49-1e2ab32435fb",
+          "optionText": "Nada de acuerdo",
+          "displayOrder": 1
+        },
+        {
+          "id": "adb27fe7-e40a-4ff6-b084-d5120fb5821b",
+          "optionText": "Poco de acuerdo",
+          "displayOrder": 2
+        },
+        {
+          "id": "a90ce4dc-1959-476d-908a-e40b4978a08b",
+          "optionText": "Ni de acuerdo ni en desacuerdo",
+          "displayOrder": 3
+        },
+        {
+          "id": "1326010f-a3e4-4ee0-97ac-a66544175914",
+          "optionText": "Bastante de acuerdo",
+          "displayOrder": 4
+        },
+        {
+          "id": "70d3f3cb-2f64-41cc-b3a4-9a79f9d7b746",
+          "optionText": "Completamente de acuerdo",
+          "displayOrder": 5
+        }
+      ]
+    },
+    {
+      "id": "3cd0b833-2f4b-4f49-9602-7ec0e9d4fb90",
+      "questionType": "scenario",
+      "promptText": "Enunciado de ejemplo deliberadamente largo, por encima del peor caso esperado del banco real, para comprobar que el bloque de la pregunta no desborda ni empuja las opciones fuera de la pantalla cuando el texto ocupa varias líneas seguidas en pantallas angostas.",
+      "displayOrder": 40,
+      "options": [
+        {
+          "id": "a4e56b87-1811-4ec5-b31f-39e90be69fee",
+          "optionText": "Opción de ejemplo de longitud media, para ver cómo cae el texto dentro de la tarjeta.",
+          "displayOrder": 1
+        },
+        {
+          "id": "07df5c23-0d62-45ec-b1d0-501b26b83a5e",
+          "optionText": "Opción de ejemplo corta.",
+          "displayOrder": 2
+        },
+        {
+          "id": "bb87c817-6125-4184-a9d4-aae15f55e3df",
+          "optionText": "Opción de ejemplo larga, pensada para exceder el peor caso del banco real y confirmar que la tarjeta crece en altura sin romper la grilla ni recortar el texto.",
+          "displayOrder": 3
+        }
+      ]
+    }
+  ]
+}

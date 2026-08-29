@@ -22,8 +22,15 @@ export interface ApiService {
   login(input: LoginInput): Observable<User>;
 
   createTestAttempt(): Observable<TestAttempt>;
+  // Contract decision: the whole subset (~40 items) arrives in one call when
+  // the attempt is created, not one question at a time — the progress bar
+  // can say "7 de 40" for real, and going back costs no request.
   getQuestions(attemptId: string): Observable<Question[]>;
   submitResponse(attemptId: string, response: NewResponseInput): Observable<TestResponse>;
+  // Responses already recorded for this attempt — resuming a closed-and-
+  // reopened test needs this to know which questions are already answered
+  // and what was selected, without re-deriving it from anything else.
+  getResponses(attemptId: string): Observable<TestResponse[]>;
   completeTestAttempt(attemptId: string): Observable<TestAttempt>;
   getResult(attemptId: string): Observable<Result>;
   // Most recent attempt for the current session, or null if none exists yet.
