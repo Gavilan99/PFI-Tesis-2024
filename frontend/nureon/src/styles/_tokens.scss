@@ -1,0 +1,118 @@
+// NureonAI design system — non-color tokens.
+//
+// Brand colors and the Material theme live in custom-theme.scss; this file
+// covers everything else the design system needs: type scale, spacing,
+// radii, elevation, motion, and named breakpoints.
+//
+// Consumed via `@use 'styles/tokens';` from custom-theme.scss, so the
+// :root block below reaches the compiled CSS. Component styles read the
+// custom properties directly (`var(--nureon-space-md)`); only the
+// breakpoint mixins need `@use '.../styles/tokens' as tokens;` plus
+// `@include tokens.nureon-from-tablet { ... }`, since media query
+// conditions must be known at compile time.
+
+:root {
+  // ---- Type scale ----
+  // MuseoModerno appears in exactly two places: the brand logotype
+  // (`.nureon-brand-font`) and top-level page headings (`h1.nureon-heading`).
+  // Every other level below uses Inter (--nureon-font-body).
+  --nureon-text-display-size: 3rem; // 48px
+  --nureon-text-display-weight: 600;
+  --nureon-text-display-line-height: 1.1;
+  --nureon-text-display-font: var(--nureon-font-display); // MuseoModerno
+
+  --nureon-text-h1-size: 2.25rem; // 36px
+  --nureon-text-h1-weight: 600;
+  --nureon-text-h1-line-height: 1.2;
+  --nureon-text-h1-font: var(--nureon-font-display); // MuseoModerno
+
+  --nureon-text-h2-size: 1.75rem; // 28px
+  --nureon-text-h2-weight: 600;
+  --nureon-text-h2-line-height: 1.25;
+  --nureon-text-h2-font: var(--nureon-font-body);
+
+  --nureon-text-h3-size: 1.375rem; // 22px
+  --nureon-text-h3-weight: 600;
+  --nureon-text-h3-line-height: 1.3;
+  --nureon-text-h3-font: var(--nureon-font-body);
+
+  --nureon-text-body-lg-size: 1.125rem; // 18px
+  --nureon-text-body-lg-weight: 400;
+  --nureon-text-body-lg-line-height: 1.5;
+
+  --nureon-text-body-size: 1rem; // 16px
+  --nureon-text-body-weight: 400;
+  --nureon-text-body-line-height: 1.5;
+
+  --nureon-text-body-sm-size: 0.875rem; // 14px
+  --nureon-text-body-sm-weight: 400;
+  --nureon-text-body-sm-line-height: 1.45;
+
+  --nureon-text-caption-size: 0.75rem; // 12px
+  --nureon-text-caption-weight: 500;
+  --nureon-text-caption-line-height: 1.4;
+
+  // ---- Spacing scale ----
+  // Named, not raw px/rem, so a component style reads intent
+  // (`padding: var(--nureon-space-md)`), not a magic number.
+  --nureon-space-3xs: 0.25rem; // 4px
+  --nureon-space-2xs: 0.5rem; // 8px
+  --nureon-space-xs: 0.75rem; // 12px
+  --nureon-space-sm: 1rem; // 16px
+  --nureon-space-md: 1.5rem; // 24px
+  --nureon-space-lg: 2rem; // 32px
+  --nureon-space-xl: 3rem; // 48px
+  --nureon-space-2xl: 4rem; // 64px
+  --nureon-space-3xl: 6rem; // 96px
+
+  // ---- Radii ----
+  --nureon-radius-sm: 4px; // inputs, small chips
+  --nureon-radius-md: 8px; // cards, buttons
+  --nureon-radius-lg: 16px; // panels, dialogs
+  --nureon-radius-full: 999px; // pills, avatar badges
+
+  // ---- Elevation ----
+  --nureon-elevation-0: none;
+  --nureon-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --nureon-elevation-2: 0 2px 4px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.06);
+  --nureon-elevation-3: 0 4px 8px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.08);
+  --nureon-elevation-4: 0 8px 16px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.1);
+
+  // ---- Motion ----
+  --nureon-duration-fast: 100ms; // hover/focus feedback
+  --nureon-duration-base: 200ms; // default transitions
+  --nureon-duration-slow: 320ms; // panels, route transitions
+  --nureon-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  // ---- Feedback ----
+  // Matches $nureon-warn (mat.$red-palette). For inline error text that
+  // isn't inside a mat-form-field (mat-error handles that case on its own) —
+  // e.g. a form-level submit error like "Ese email ya está registrado."
+  --nureon-color-danger: #c62828;
+}
+
+// ---- Breakpoints ----
+// SCSS variables + mixins, not custom properties: media query conditions
+// are resolved at compile time, custom properties can't drive them.
+$nureon-breakpoint-mobile: 0;
+$nureon-breakpoint-tablet: 600px;
+$nureon-breakpoint-desktop: 960px;
+$nureon-breakpoint-wide: 1280px;
+
+@mixin nureon-from-tablet {
+  @media (min-width: $nureon-breakpoint-tablet) {
+    @content;
+  }
+}
+
+@mixin nureon-from-desktop {
+  @media (min-width: $nureon-breakpoint-desktop) {
+    @content;
+  }
+}
+
+@mixin nureon-from-wide {
+  @media (min-width: $nureon-breakpoint-wide) {
+    @content;
+  }
+}

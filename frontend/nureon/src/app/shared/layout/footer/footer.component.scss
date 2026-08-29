@@ -1,0 +1,17 @@
+.footer-bar {
+  width: 100%;
+  border-top: 1px solid rgba(black, 0.08);
+}
+
+.footer {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: var(--nureon-space-lg) var(--nureon-space-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--nureon-space-2xs);
+  text-align: center;
+  font-size: var(--nureon-text-caption-size);
+  color: rgba(black, 0.6);
+}

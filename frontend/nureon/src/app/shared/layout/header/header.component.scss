@@ -1,0 +1,51 @@
+@use '../../../../styles/tokens' as tokens;
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--nureon-space-md);
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.header__brand {
+  font-size: var(--nureon-text-h3-size);
+  color: inherit;
+  text-decoration: none;
+  margin-right: auto;
+}
+
+.header__nav {
+  display: none;
+  gap: var(--nureon-space-sm);
+
+  @include tokens.nureon-from-tablet {
+    display: flex;
+  }
+}
+
+.header__link {
+  color: inherit;
+  text-decoration: none;
+  font-size: var(--nureon-text-body-sm-size);
+
+  &--active {
+    font-weight: 600;
+  }
+}
+
+.header__account {
+  display: none;
+  gap: var(--nureon-space-2xs);
+
+  @include tokens.nureon-from-tablet {
+    display: flex;
+  }
+}
+
+.header__menu-trigger {
+  @include tokens.nureon-from-tablet {
+    display: none;
+  }
+}

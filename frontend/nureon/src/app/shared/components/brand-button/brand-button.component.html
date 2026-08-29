@@ -1,0 +1,48 @@
+<!--
+  Exactly one <ng-content> in the whole file, on purpose: Angular only
+  distributes projected content into the FIRST unnamed <ng-content> it finds
+  in the template — every other one silently renders empty, even if the
+  branches are mutually exclusive (confirmed live: every button here showed
+  no text once a second, unreachable <ng-content> existed in another
+  branch). Captured once here and stamped out via ngTemplateOutlet wherever
+  it's actually needed below.
+-->
+<ng-template #content><ng-content></ng-content></ng-template>
+
+@if (routerLink) {
+  @switch (variant) {
+    @case ('primary') {
+      <a mat-raised-button color="primary" [routerLink]="routerLink">
+        <ng-container *ngTemplateOutlet="content"></ng-container>
+      </a>
+    }
+    @case ('secondary') {
+      <a mat-stroked-button color="primary" [routerLink]="routerLink">
+        <ng-container *ngTemplateOutlet="content"></ng-container>
+      </a>
+    }
+    @default {
+      <a mat-button color="primary" [routerLink]="routerLink">
+        <ng-container *ngTemplateOutlet="content"></ng-container>
+      </a>
+    }
+  }
+} @else {
+  @switch (variant) {
+    @case ('primary') {
+      <button mat-raised-button color="primary" [disabled]="disabled" [type]="type">
+        <ng-container *ngTemplateOutlet="content"></ng-container>
+      </button>
+    }
+    @case ('secondary') {
+      <button mat-stroked-button color="primary" [disabled]="disabled" [type]="type">
+        <ng-container *ngTemplateOutlet="content"></ng-container>
+      </button>
+    }
+    @default {
+      <button mat-button color="primary" [disabled]="disabled" [type]="type">
+        <ng-container *ngTemplateOutlet="content"></ng-container>
+      </button>
+    }
+  }
+}
