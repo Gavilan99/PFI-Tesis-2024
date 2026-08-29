@@ -1,0 +1,39 @@
+@if (sent) {
+  <p class="feedback-form__thanks">¡Gracias por tu comentario!</p>
+} @else {
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <p class="feedback-form__label" id="feedback-rating-label">¿Qué te pareció la experiencia?</p>
+    <div class="feedback-form__ratings" role="radiogroup" aria-labelledby="feedback-rating-label">
+      @for (value of ratings; track value) {
+        <button
+          type="button"
+          class="feedback-form__rating"
+          [class.feedback-form__rating--selected]="form.controls.rating.value === value"
+          role="radio"
+          [attr.aria-checked]="form.controls.rating.value === value"
+          [attr.aria-label]="value + ' de 5'"
+          (click)="selectRating(value)"
+        >
+          {{ value }}
+        </button>
+      }
+    </div>
+
+    <label class="feedback-form__comment-label" for="feedback-comment">Comentario (opcional)</label>
+    <textarea
+      id="feedback-comment"
+      formControlName="comment"
+      class="feedback-form__comment"
+      rows="3"
+      placeholder="Contanos qué mejorarías"
+    ></textarea>
+
+    @if (error) {
+      <p class="feedback-form__error" role="alert">{{ error }}</p>
+    }
+
+    <app-brand-button variant="primary" type="submit" [disabled]="submitting">
+      {{ submitting ? 'Enviando…' : 'Enviar comentario' }}
+    </app-brand-button>
+  </form>
+}

@@ -1,0 +1,63 @@
+@use '../../../styles/tokens' as tokens;
+@use '../../../styles/palette';
+
+.likert-item__prompt {
+  font: var(--nureon-text-h2-weight) var(--nureon-text-h2-size) / var(--nureon-text-h2-line-height)
+    var(--nureon-text-h2-font);
+  margin-bottom: var(--nureon-space-md);
+}
+
+.likert-item__scale {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-xs);
+
+  @include tokens.nureon-from-tablet {
+    flex-direction: row;
+    align-items: stretch;
+  }
+}
+
+.likert-item__option {
+  display: flex;
+  align-items: center;
+  gap: var(--nureon-space-xs);
+  flex: 1;
+  padding: var(--nureon-space-sm);
+  border: 2px solid rgba(black, 0.16);
+  border-radius: var(--nureon-radius-md);
+  background: white;
+  font-family: var(--nureon-font-body);
+  font-size: var(--nureon-text-body-sm-size);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--nureon-duration-base) var(--nureon-easing-standard);
+
+  @include tokens.nureon-from-tablet {
+    flex-direction: column;
+    text-align: center;
+    justify-content: center;
+  }
+
+  &:hover {
+    border-color: var(--nureon-green-dark);
+  }
+
+  &--selected {
+    border-color: var(--nureon-green-dark);
+    background: map-get(palette.$nureon-primary-palette, 50);
+  }
+}
+
+.likert-item__option-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: var(--nureon-radius-full);
+  background: rgba(black, 0.08);
+  font-size: var(--nureon-text-caption-size);
+  font-weight: 600;
+}

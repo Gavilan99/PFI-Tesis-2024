@@ -1,8 +1,35 @@
 /* You can add global styles to this file, and also import other style files */
 
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body { margin: 0; font-family: var(--nureon-font-body); }
 
+/* Museo Moderno is reserved for the logo and top-level headings only —
+   Inter (body font) stays the default everywhere else. */
+.nureon-brand-font,
+h1.nureon-heading {
+  font-family: var(--nureon-font-display);
+}
 
+/* Visible focus on every interactive element, app-wide. Nothing in the app
+   removes the browser default outline (verified — no `outline: none`
+   anywhere), so this only makes it consistent and on-brand rather than
+   fixing a missing one. :focus-visible (not :focus) so it only shows for
+   keyboard/assistive-tech navigation, not every mouse click. */
+:focus-visible {
+  outline: 2px solid var(--nureon-green-dark);
+  outline-offset: 2px;
+}
 
-  
+/* Stage 8 — RNF03 accessibility pass. Kills all animation/transition
+   duration app-wide for users who've asked the OS for reduced motion,
+   instead of hunting down every transition individually. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

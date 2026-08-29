@@ -1,72 +1,105 @@
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+<app-page-container>
+  <h1 class="nureon-heading">Mi perfil</h1>
 
-<h2 mat-dialog-title class="title">User Profile</h2>
-<div mat-dialog-content>
-  <div class="profile-container">
-    <div class="profile-image">
-      <img src="path/to/profile-image.jpg" alt="Profile Picture" class="pfp">
-      <button mat-icon-button (click)="editProfilePicture()" class="edit-button">
-        <mat-icon>edit</mat-icon>
-      </button>
-      <button mat-icon-button (click)="changeFrameColor()" class="color-button">
-        <div class="color-icon"></div>
-      </button>
-    </div>
+  <section class="profile__section">
+    <h2>Editar datos</h2>
+    <form [formGroup]="form" (ngSubmit)="onSave()" class="profile__form">
+      <label class="profile__field">
+        <span>Nombre de usuario</span>
+        <input formControlName="displayName" />
+      </label>
 
-    <div class="input-container">
-      <mat-form-field appearance="fill" class="flex-input">
-        <mat-label>Username</mat-label>
-        <input matInput [(ngModel)]="username" [readonly]="!editMode">
-      </mat-form-field>
-      <button mat-icon-button *ngIf="!editMode" (click)="editField('username')">
-        <mat-icon>edit</mat-icon>
-      </button>
-      <button mat-icon-button *ngIf="editMode" (click)="cancelEdit()">
-        <mat-icon>close</mat-icon>
-      </button>
-      <button mat-icon-button *ngIf="editMode" (click)="confirmEdit()">
-        <mat-icon>check</mat-icon>
-      </button>
-    </div>
+      <label class="profile__field">
+        <span>Tipo de cuenta</span>
+        <select formControlName="accountType">
+          <option [ngValue]="null">Sin especificar</option>
+          @for (type of accountTypes; track type) {
+            <option [ngValue]="type">{{ accountTypeLabel[type] }}</option>
+          }
+        </select>
+      </label>
 
-    <div class="input-container">
-      <mat-form-field appearance="fill" class="flex-input">
-        <mat-label>Email</mat-label>
-        <input matInput [(ngModel)]="email" [readonly]="!editMode">
-      </mat-form-field>
-      <button mat-icon-button *ngIf="!editMode" (click)="editField('email')">
-        <mat-icon>edit</mat-icon>
-      </button>
-      <button mat-icon-button *ngIf="editMode" (click)="cancelEdit()">
-        <mat-icon>close</mat-icon>
-      </button>
-      <button mat-icon-button *ngIf="editMode" (click)="confirmEdit()">
-        <mat-icon>check</mat-icon>
-      </button>
-    </div>
+      <label class="profile__field">
+        <span>Rango etario</span>
+        <select formControlName="ageRange">
+          <option value="">Sin especificar</option>
+          @for (range of ageRanges; track range) {
+            <option [value]="range">{{ range }}</option>
+          }
+        </select>
+      </label>
 
-    <div class="input-container">
-      <mat-form-field appearance="fill" class="flex-input">
-        <mat-label>Password</mat-label>
-        <input matInput type="password" [(ngModel)]="password" [readonly]="!editMode">
-      </mat-form-field>
-      <button mat-icon-button *ngIf="!editMode" (click)="editField('password')">
-        <mat-icon>edit</mat-icon>
-      </button>
-      <button mat-icon-button *ngIf="editMode" (click)="cancelEdit()">
-        <mat-icon>close</mat-icon>
-      </button>
-      <button mat-icon-button *ngIf="editMode" (click)="confirmEdit()">
-        <mat-icon>check</mat-icon>
-      </button>
-    </div>
-  </div>
-</div>
+      <label class="profile__field">
+        <span>Género</span>
+        <select formControlName="gender">
+          <option value="">Sin especificar</option>
+          @for (option of genders; track option) {
+            <option [value]="option">{{ option }}</option>
+          }
+        </select>
+      </label>
 
-<div mat-dialog-actions>
-  <button mat-button (click)="onClose()" style="background-color: #FF6D33; font-family: 'Inter'; color: aliceblue;">
-    Close
-  </button>
-</div>
+      <label class="profile__field">
+        <span>País</span>
+        <select formControlName="country">
+          <option value="">Sin especificar</option>
+          @for (option of countries; track option) {
+            <option [value]="option">{{ option }}</option>
+          }
+        </select>
+      </label>
+
+      @if (form.controls.accountType.value !== 'individual') {
+        <label class="profile__field">
+          <span>Contexto profesional</span>
+          <input formControlName="professionContext" placeholder="ej. Psicóloga clínica" />
+        </label>
+      }
+
+      @if (saveError) {
+        <p class="profile__error" role="alert">{{ saveError }}</p>
+      }
+      @if (saved) {
+        <p class="profile__saved">Cambios guardados.</p>
+      }
+
+      <app-brand-button variant="primary" type="submit" [disabled]="saving">
+        {{ saving ? 'Guardando…' : 'Guardar cambios' }}
+      </app-brand-button>
+    </form>
+  </section>
+
+  <section class="profile__section">
+    <h2>Historial de intentos</h2>
+    @if (historyLoading) {
+      <app-loading-state message="Cargando tu historial…"></app-loading-state>
+    } @else if (historyError) {
+      <app-error-state [message]="historyError" (retry)="retryHistory()"></app-error-state>
+    } @else if (history.length === 0) {
+      <app-empty-state message="Todavía no hiciste ningún test."></app-empty-state>
+    } @else {
+      <ul class="profile__history">
+        @for (entry of history; track entry.attempt.id) {
+          <li class="profile__history-item">
+            @if (entry.eneatype) {
+              <a [routerLink]="['/resultados', entry.attempt.id]" class="profile__history-link">
+                {{ entry.attempt.completedAt || entry.attempt.startedAt | date: 'dd/MM/yyyy' }}
+                — Eneatipo {{ entry.eneatype }}
+              </a>
+            } @else {
+              <span class="profile__history-pending">
+                {{ entry.attempt.startedAt | date: 'dd/MM/yyyy' }}
+                — {{ entry.attempt.status === 'in_progress' ? 'En curso' : 'Abandonado' }}
+              </span>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section class="profile__section">
+    <h2>Contanos tu experiencia</h2>
+    <app-feedback-form [testAttemptId]="null"></app-feedback-form>
+  </section>
+</app-page-container>

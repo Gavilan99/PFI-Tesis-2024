@@ -1,0 +1,86 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { ApiService } from './api.service';
+import { Question } from '../models/question.model';
+import { TestAttempt } from '../models/test-attempt.model';
+import { NewResponseInput, TestResponse } from '../models/response.model';
+import { Result } from '../models/result.model';
+import { User, UpdateProfileInput } from '../models/user.model';
+import { LoginInput, RegisterInput } from '../models/auth.model';
+import { SubmitFeedbackInput } from '../models/feedback.model';
+import { SubmitContactMessageInput } from '../models/contact-message.model';
+
+// Real backend implementation. Not built yet — Flask/Cognito integration is
+// a later stage (see the redesign plan's "Dependencias externas"). Exists
+// now purely so the API_SERVICE provider in app.module.ts has a real class
+// to switch to when environment.useMockApi is false, without any component
+// needing to change once these methods are actually implemented against
+// environment.apiBaseUrl.
+@Injectable()
+export class HttpApiService implements ApiService {
+  constructor(private readonly http: HttpClient) {}
+
+  register(_input: RegisterInput): Observable<User> {
+    return this.notImplemented('register');
+  }
+
+  login(_input: LoginInput): Observable<User> {
+    return this.notImplemented('login');
+  }
+
+  updateProfile(_userId: string, _input: UpdateProfileInput): Observable<User> {
+    return this.notImplemented('updateProfile');
+  }
+
+  createTestAttempt(_userId: string): Observable<TestAttempt> {
+    return this.notImplemented('createTestAttempt');
+  }
+
+  getQuestions(_attemptId: string): Observable<Question[]> {
+    return this.notImplemented('getQuestions');
+  }
+
+  submitResponse(_attemptId: string, _response: NewResponseInput): Observable<TestResponse> {
+    return this.notImplemented('submitResponse');
+  }
+
+  getResponses(_attemptId: string): Observable<TestResponse[]> {
+    return this.notImplemented('getResponses');
+  }
+
+  completeTestAttempt(_attemptId: string): Observable<TestAttempt> {
+    return this.notImplemented('completeTestAttempt');
+  }
+
+  getResult(_attemptId: string): Observable<Result> {
+    return this.notImplemented('getResult');
+  }
+
+  getLatestAttempt(_userId: string): Observable<TestAttempt | null> {
+    return this.notImplemented('getLatestAttempt');
+  }
+
+  getAttempt(_attemptId: string): Observable<TestAttempt | null> {
+    return this.notImplemented('getAttempt');
+  }
+
+  getAttemptHistory(_userId: string): Observable<TestAttempt[]> {
+    return this.notImplemented('getAttemptHistory');
+  }
+
+  submitFeedback(_input: SubmitFeedbackInput): Observable<void> {
+    return this.notImplemented('submitFeedback');
+  }
+
+  submitContactMessage(_input: SubmitContactMessageInput): Observable<void> {
+    return this.notImplemented('submitContactMessage');
+  }
+
+  private notImplemented<T>(method: string): Observable<T> {
+    throw new Error(
+      `HttpApiService.${method}() is not implemented yet — backend integration is a later ` +
+        'stage. Set environment.useMockApi = true to use MockApiService instead.',
+    );
+  }
+}

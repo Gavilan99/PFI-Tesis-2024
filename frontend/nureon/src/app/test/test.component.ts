@@ -1,176 +1,200 @@
-import { Component } from '@angular/core';
-import { trigger, transition, style, animate } from '@angular/animations';
-import { HttpClient } from '@angular/common/http'; // Import HttpClient to send requests
-import { Router } from '@angular/router'; // Import Router for navigation
+import { Component, HostListener, Inject, OnInit } from '@angular/core';
+import { forkJoin } from 'rxjs';
+import { API_SERVICE, ApiService } from '../core/services/api.service';
+import { AuthService } from '../core/services/auth.service';
+import { Question } from '../core/models/question.model';
+import { TestAttempt } from '../core/models/test-attempt.model';
+import { PageContainerComponent } from '../shared/layout/page-container/page-container.component';
+import { ProgressBarComponent } from '../shared/components/progress-bar/progress-bar.component';
+import { ErrorStateComponent } from '../shared/components/error-state/error-state.component';
+import { LoadingStateComponent } from '../shared/components/loading-state/loading-state.component';
+import { BrandButtonComponent } from '../shared/components/brand-button/brand-button.component';
+import { ScenarioItemComponent } from './scenario-item/scenario-item.component';
+import { LikertItemComponent } from './likert-item/likert-item.component';
+import { FeedbackFormComponent } from '../shared/components/feedback-form/feedback-form.component';
 
+// CU003 — El test. One item per screen, auto-advance on select (the one
+// thing rescued from the old test component), progress always visible,
+// back navigation with the previous answer shown marked, keyboard
+// shortcuts, save-as-you-go so a reload resumes. Dispatches to a renderer
+// per questionType — adding 'ordering'/'text' later means adding a
+// renderer, not touching this component.
 @Component({
   selector: 'app-test',
+  standalone: true,
+  imports: [
+    PageContainerComponent,
+    ProgressBarComponent,
+    ErrorStateComponent,
+    LoadingStateComponent,
+    BrandButtonComponent,
+    ScenarioItemComponent,
+    LikertItemComponent,
+    FeedbackFormComponent,
+  ],
   templateUrl: './test.component.html',
-  styleUrls: ['./test.component.css'],
-  animations: [
-    trigger('slideInOut', [
-      transition(':enter', [
-        style({ transform: 'translateY(100%)', opacity: 0 }),
-        animate('600ms ease-in-out', style({ transform: 'translateY(0)', opacity: 1 }))
-      ]),
-      transition(':leave', [
-        animate('600ms ease-in-out', style({ transform: 'translateY(-100%)', opacity: 0 }))
-      ])
-    ])
-  ]
+  styleUrl: './test.component.scss',
 })
-export class TestComponent {
+export class TestComponent implements OnInit {
+  loading = true;
+  error: string | null = null;
+  done = false;
 
+  questions: Question[] = [];
+  currentIndex = 0;
 
-  currentQuestionIndex = 0;
-  showSlide = true;
+  attemptId: string | null = null;
+  private readonly selections = new Map<string, string>();
 
-  // Store user's selected answers
-  userAnswers: any = {
-    hornevian: '',
-    harmonic: '',
-    harmony: '',
-    triad: ''
-  };
+  constructor(
+    @Inject(API_SERVICE) private readonly api: ApiService,
+    private readonly auth: AuthService,
+  ) {}
 
-  // Property to hold the logged-in user's username
-  username: string = 'some_username'; // Replace this with actual logic to get the logged-in username
+  ngOnInit(): void {
+    this.loadOrResume();
+  }
 
-  questions = [
-    {
-      question: 'En una situación en la que tus ideas son cuestionadas, ¿cómo respondes habitualmente?',
-      key: 'hornevian',
-      answers: [
-        { text: 'Afirmo mi punto de vista y mantengo mi postura', value: '1' },
-        { text: 'Intento conciliar las diferencias y mantener la armonía', value: '2' },
-        { text: 'Tomo distancia para reflexionar y reconsiderar mi posición', value: '3' }
-      ]
-    },
-    {
-      question: 'Imagina que te enfrentas con un obstáculo en tu camino hacia un objetivo, ¿cómo reaccionarías?',
-      key: 'harmonic',
-      answers: [
-        { text: 'Me concentro en encontrar una solución y seguir adelante', value: '1' },
-        { text: 'Mantengo una actitud positiva y busco el lado bueno', value: '2' },
-        { text: 'Reacciono emocionalmente y expreso mi frustración', value: '3' }
-      ]
-    },
-    {
-      question: 'Cuando trabajas en un proyecto grupal, ¿qué es lo que más motiva tu comportamiento?',
-      key: 'harmony',
-      answers: [
-        { text: 'Asegurarme de que todos se sientan involucrados', value: '1' },
-        { text: 'Asegurarme de que el proyecto cumpla con un alto estándar', value: '2' },
-        { text: 'Tomar decisiones difíciles para mantener el proyecto en marcha', value: '3' }
-      ]
-    },
-    {
-      question: 'Cuando alguien te critica, ¿cuál es tu reacción inicial?',
-      key: 'triad',
-      answers: [
-        { text: 'Me siento herido o rechazado', value: '1' },
-        { text: 'Me defiendo instintivamente', value: '2' },
-        { text: 'Analizo la validez de la crítica', value: '3' }
-      ]
+  get currentQuestion(): Question | null {
+    return this.questions[this.currentIndex] ?? null;
+  }
+
+  get selectedOptionId(): string | null {
+    const question = this.currentQuestion;
+    return question ? this.selections.get(question.id) ?? null : null;
+  }
+
+  retry(): void {
+    this.loadOrResume();
+  }
+
+  onSelect(optionId: string): void {
+    const question = this.currentQuestion;
+    if (!question || !this.attemptId) {
+      return;
     }
-  ];
-
-  constructor(private http: HttpClient, private router: Router) {}
-
-  get currentQuestion() {
-    return this.questions[this.currentQuestionIndex];
-  }
-
-  // Capture user's answer and jump to next question
-  selectAnswer(answerValue: string) {
-    const currentKey = this.questions[this.currentQuestionIndex].key;
-    this.userAnswers[currentKey] = answerValue; // Store answer based on question key
-    this.nextQuestion(); // Move to the next question after selection
-  }
-
-  // Move to the next question or submit answers if the last question is reached
-  nextQuestion() {
-    if (this.currentQuestionIndex < this.questions.length - 1) {
-      this.triggerSlideChange(() => {
-        this.currentQuestionIndex++;
+    this.selections.set(question.id, optionId);
+    this.api
+      .submitResponse(this.attemptId, {
+        questionId: question.id,
+        selectedOptionId: optionId,
+        freeTextResponse: null,
+        orderingResponse: null,
+      })
+      .subscribe({
+        next: () => this.advance(),
+        error: () => this.fail(),
       });
-    } else {
-      this.submitAnswers(); // Submit answers when all questions are answered
+  }
+
+  goBack(): void {
+    if (this.currentIndex > 0) {
+      this.currentIndex--;
     }
   }
 
-  previousQuestion() {
-    if (this.currentQuestionIndex > 0) {
-      this.triggerSlideChange(() => {
-        this.currentQuestionIndex--;
-      });
+  // Digits select the option at that position (1-indexed, matching the
+  // small index badge each renderer shows); ArrowLeft goes back. No
+  // on-screen legend — the badges are the only hint.
+  @HostListener('window:keydown', ['$event'])
+  onKeydown(event: KeyboardEvent): void {
+    if (this.loading || this.error || this.done) {
+      return;
+    }
+    if (event.key === 'ArrowLeft') {
+      this.goBack();
+      return;
+    }
+    const digit = Number(event.key);
+    if (Number.isInteger(digit) && digit >= 1) {
+      const option = this.currentQuestion?.answerOptions[digit - 1];
+      if (option) {
+        this.onSelect(option.id);
+      }
     }
   }
 
-  private triggerSlideChange(callback: () => void) {
-    this.showSlide = false;
-    setTimeout(() => {
-      callback();
-      this.showSlide = true;
-    }, 600);
-  }
-
-  // Check if all questions have been answered
-  allQuestionsAnswered(): boolean {
-    return this.questions.every(question => this.userAnswers[question.key] !== '');
-  }
-
-  // Log the user's answers to the console
-  submitAnswers() {
-    const username = localStorage.getItem('username');
-    
-    // Prepare answers based on user input
-    const answers = {
-        Hornevian_Assertive: this.userAnswers.hornevian === '1',
-        Hornevian_Compliant: this.userAnswers.hornevian === '2',
-        Hornevian_Withdrawn: this.userAnswers.hornevian === '3',
-        Harmonic_Competency: this.userAnswers.harmonic === '1',
-        Harmonic_Positive: this.userAnswers.harmonic === '2',
-        Harmonic_Reactive: this.userAnswers.harmonic === '3',
-        Harmony_Attachment: this.userAnswers.harmony === '1',
-        Harmony_Frustration: this.userAnswers.harmony === '2',
-        Harmony_Rejection: this.userAnswers.harmony === '3',
-        Triad_Feeling: this.userAnswers.triad === '1',
-        Triad_Intuition: this.userAnswers.triad === '2',
-        Triad_Thought: this.userAnswers.triad === '3',
-    };
-
-    // Create the payload for the HTTP POST request
-    const payload = {
-        answers: answers, // Directly assign the answers object
-        username: username // Include the username
-    };
-
-    // Send the HTTP POST request to the Flask endpoint
-    this.http.post<any>('http://localhost:5000/sendAnswers', payload)
-      .subscribe(
-        (response) => {
-          // Handle successful response
-          console.log('Prediction result:', response.predicted_enneatype);
-          localStorage.setItem('enneatype', response.predicted_enneatype); 
-
-          // Navigate to the results component
-          this.router.navigate(['main-screen/results']); // Adjust the path as necessary
-        },
-        (error) => {
-          // Handle error response
-          console.error('Error during prediction:', error);
-          // No alert needed
+  private loadOrResume(): void {
+    this.loading = true;
+    this.error = null;
+    const userId = this.auth.currentUser?.id;
+    if (!userId) {
+      this.fail();
+      return;
+    }
+    this.api.getLatestAttempt(userId).subscribe({
+      next: (attempt) => {
+        if (attempt && attempt.status === 'in_progress') {
+          this.resume(attempt);
+        } else {
+          this.startNew(userId);
         }
-      );
+      },
+      error: () => this.fail(),
+    });
+  }
 
-    // Log the user answers for debugging
-    console.log('User Answers:', payload);
-}
+  private resume(attempt: TestAttempt): void {
+    this.attemptId = attempt.id;
+    forkJoin({
+      questions: this.api.getQuestions(attempt.id),
+      responses: this.api.getResponses(attempt.id),
+    }).subscribe({
+      next: ({ questions, responses }) => {
+        this.questions = [...questions].sort((a, b) => a.displayOrder - b.displayOrder);
+        this.selections.clear();
+        for (const response of responses) {
+          if (response.selectedOptionId) {
+            this.selections.set(response.questionId, response.selectedOptionId);
+          }
+        }
+        const firstUnanswered = this.questions.findIndex((q) => !this.selections.has(q.id));
+        this.currentIndex = firstUnanswered === -1 ? this.questions.length - 1 : firstUnanswered;
+        this.loading = false;
+      },
+      error: () => this.fail(),
+    });
+  }
 
-  // Check if the answer is selected to keep it marked
-  isSelected(answerValue: string): boolean {
-    const currentKey = this.questions[this.currentQuestionIndex].key;
-    return this.userAnswers[currentKey] === answerValue;
+  private startNew(userId: string): void {
+    this.api.createTestAttempt(userId).subscribe({
+      next: (attempt) => {
+        this.attemptId = attempt.id;
+        this.api.getQuestions(attempt.id).subscribe({
+          next: (questions) => {
+            this.questions = [...questions].sort((a, b) => a.displayOrder - b.displayOrder);
+            this.currentIndex = 0;
+            this.loading = false;
+          },
+          error: () => this.fail(),
+        });
+      },
+      error: () => this.fail(),
+    });
+  }
+
+  private advance(): void {
+    if (this.currentIndex < this.questions.length - 1) {
+      this.currentIndex++;
+    } else {
+      this.finish();
+    }
+  }
+
+  private finish(): void {
+    if (!this.attemptId) {
+      return;
+    }
+    this.api.completeTestAttempt(this.attemptId).subscribe({
+      next: () => {
+        this.done = true;
+      },
+      error: () => this.fail(),
+    });
+  }
+
+  private fail(): void {
+    this.loading = false;
+    this.error = 'No pudimos cargar el test.';
   }
 }

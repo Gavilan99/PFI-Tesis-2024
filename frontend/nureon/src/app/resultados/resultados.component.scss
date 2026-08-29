@@ -1,0 +1,116 @@
+@use '../../styles/tokens' as tokens;
+
+.resultados {
+  display: flex;
+  flex-direction: column;
+  // Tighter than the old flat xl-everywhere rhythm: the intro block reads
+  // as one unit (header+summary+motivación), so it only needs sm between
+  // its own parts (see .resultados__intro-text); this gap is for the
+  // distinct sections after it (fortalezas/tensiones, alas, premium).
+  gap: var(--nureon-space-lg);
+  padding: var(--nureon-space-lg) 0;
+}
+
+// Capas 1-3 (diagrama, título, resumen, motivación) as one unit. On mobile
+// this stacks like the old .resultados__header did; from desktop the
+// diagram gets a fixed column and the text fills the space that used to
+// sit empty beside it while the rest of the page continued in one column
+// below (docs/screenshots/06-resultados-desktop.jpg, Stage 9).
+.resultados__intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--nureon-space-md);
+  text-align: center;
+
+  @include tokens.nureon-from-desktop {
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+    gap: var(--nureon-space-lg);
+  }
+}
+
+.resultados__diagram {
+  display: block;
+
+  @include tokens.nureon-from-desktop {
+    flex: 0 0 300px;
+    width: 300px;
+  }
+}
+
+.resultados__intro-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-sm);
+  min-width: 0;
+}
+
+.resultados__intro-text .resultados__section {
+  margin: 0;
+}
+
+.resultados__placeholder-tag {
+  font-size: var(--nureon-text-caption-size);
+  font-style: italic;
+  color: rgba(black, 0.5);
+}
+
+.resultados__summary {
+  font: var(--nureon-text-body-lg-weight) var(--nureon-text-body-lg-size) /
+    var(--nureon-text-body-lg-line-height) var(--nureon-font-body);
+  color: rgba(black, 0.75);
+}
+
+.resultados__section h2 {
+  font: var(--nureon-text-h2-weight) var(--nureon-text-h2-size) / var(--nureon-text-h2-line-height)
+    var(--nureon-text-h2-font);
+  margin-bottom: var(--nureon-space-xs);
+}
+
+.resultados__framing {
+  font-size: var(--nureon-text-body-sm-size);
+  color: rgba(black, 0.6);
+  margin-bottom: var(--nureon-space-sm);
+}
+
+.resultados__strengths-tensions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--nureon-space-lg);
+
+  @include tokens.nureon-from-tablet {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  ul {
+    padding-left: var(--nureon-space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--nureon-space-3xs);
+  }
+}
+
+.resultados__premium-body {
+  position: relative;
+}
+
+.resultados__premium-content {
+  transition: filter var(--nureon-duration-base) var(--nureon-easing-standard);
+}
+
+.resultados__premium-body--locked .resultados__premium-content {
+  filter: blur(5px);
+  user-select: none;
+  pointer-events: none;
+}
+
+.resultados__premium-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--nureon-space-md);
+}

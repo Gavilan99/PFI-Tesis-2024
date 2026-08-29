@@ -1,0 +1,42 @@
+<svg
+  [attr.viewBox]="'0 0 ' + size + ' ' + size"
+  class="enneagram-diagram"
+  role="img"
+  [attr.aria-label]="'Diagrama del eneagrama con el eneatipo ' + eneatype + ' destacado'"
+>
+  <circle
+    [attr.cx]="size / 2"
+    [attr.cy]="size / 2"
+    [attr.r]="size * 0.4"
+    class="enneagram-diagram__circle"
+  ></circle>
+
+  @for (edge of edges; track $index) {
+    <line
+      [attr.x1]="edge.x1"
+      [attr.y1]="edge.y1"
+      [attr.x2]="edge.x2"
+      [attr.y2]="edge.y2"
+      class="enneagram-diagram__edge"
+      [class.enneagram-diagram__edge--integration]="edge.kind === 'integration'"
+      [class.enneagram-diagram__edge--disintegration]="edge.kind === 'disintegration'"
+    ></line>
+  }
+
+  @for (point of points; track point.n) {
+    <circle
+      [attr.cx]="point.x"
+      [attr.cy]="point.y"
+      [attr.r]="pointRadius(point.n)"
+      class="enneagram-diagram__point"
+      [class.enneagram-diagram__point--wing]="isWing(point.n)"
+      [class.enneagram-diagram__point--result]="isResult(point.n)"
+    ></circle>
+    <text
+      [attr.x]="point.x"
+      [attr.y]="point.y"
+      class="enneagram-diagram__label"
+      [class.enneagram-diagram__label--result]="isResult(point.n)"
+    >{{ point.n }}</text>
+  }
+</svg>
