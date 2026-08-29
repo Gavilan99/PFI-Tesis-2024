@@ -17,25 +17,27 @@
   } @else if (currentQuestion) {
     <app-progress-bar [current]="currentIndex + 1" [total]="questions.length"></app-progress-bar>
 
-    @if (currentIndex > 0) {
-      <button type="button" class="test__back" (click)="goBack()">← Volver</button>
-    }
+    <div class="test__question">
+      @if (currentIndex > 0) {
+        <button type="button" class="test__back" (click)="goBack()">← Volver</button>
+      }
 
-    @switch (currentQuestion.questionType) {
-      @case ('scenario') {
-        <app-scenario-item
-          [question]="currentQuestion"
-          [selectedOptionId]="selectedOptionId"
-          (select)="onSelect($event)"
-        ></app-scenario-item>
+      @switch (currentQuestion.questionType) {
+        @case ('scenario') {
+          <app-scenario-item
+            [question]="currentQuestion"
+            [selectedOptionId]="selectedOptionId"
+            (select)="onSelect($event)"
+          ></app-scenario-item>
+        }
+        @case ('multiple_choice') {
+          <app-likert-item
+            [question]="currentQuestion"
+            [selectedOptionId]="selectedOptionId"
+            (select)="onSelect($event)"
+          ></app-likert-item>
+        }
       }
-      @case ('multiple_choice') {
-        <app-likert-item
-          [question]="currentQuestion"
-          [selectedOptionId]="selectedOptionId"
-          (select)="onSelect($event)"
-        ></app-likert-item>
-      }
-    }
+    </div>
   }
 </app-page-container>
