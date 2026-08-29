@@ -6,8 +6,9 @@ import { Question } from '../models/question.model';
 import { TestAttempt } from '../models/test-attempt.model';
 import { NewResponseInput, TestResponse } from '../models/response.model';
 import { Result } from '../models/result.model';
-import { User } from '../models/user.model';
+import { User, UpdateProfileInput } from '../models/user.model';
 import { LoginInput, RegisterInput } from '../models/auth.model';
+import { SubmitFeedbackInput } from '../models/feedback.model';
 
 // Real backend implementation. Not built yet — Flask/Cognito integration is
 // a later stage (see the redesign plan's "Dependencias externas"). Exists
@@ -27,7 +28,11 @@ export class HttpApiService implements ApiService {
     return this.notImplemented('login');
   }
 
-  createTestAttempt(): Observable<TestAttempt> {
+  updateProfile(_userId: string, _input: UpdateProfileInput): Observable<User> {
+    return this.notImplemented('updateProfile');
+  }
+
+  createTestAttempt(_userId: string): Observable<TestAttempt> {
     return this.notImplemented('createTestAttempt');
   }
 
@@ -51,8 +56,20 @@ export class HttpApiService implements ApiService {
     return this.notImplemented('getResult');
   }
 
-  getLatestAttempt(): Observable<TestAttempt | null> {
+  getLatestAttempt(_userId: string): Observable<TestAttempt | null> {
     return this.notImplemented('getLatestAttempt');
+  }
+
+  getAttempt(_attemptId: string): Observable<TestAttempt | null> {
+    return this.notImplemented('getAttempt');
+  }
+
+  getAttemptHistory(_userId: string): Observable<TestAttempt[]> {
+    return this.notImplemented('getAttemptHistory');
+  }
+
+  submitFeedback(_input: SubmitFeedbackInput): Observable<void> {
+    return this.notImplemented('submitFeedback');
   }
 
   private notImplemented<T>(method: string): Observable<T> {
