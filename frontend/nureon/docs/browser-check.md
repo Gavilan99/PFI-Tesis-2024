@@ -73,3 +73,41 @@ se recorrieron a mano siguiendo el mismo guion.
   ("Enunciado de ejemplo…"), no el banco real — ver `mvp-status.md`. No afecta la comparación
   entre navegadores (todos renderizan el mismo relleno igual), pero si se recapturan estas
   pantallas más adelante con el banco real, conviene repetir esta verificación.
+
+## Etapa 10 — recorrido de punta a punta contra `build:demo`
+
+Objetivo distinto al de arriba: no cross-browser, sino confirmar que el build **desplegable**
+(`npm run build:demo`, servido como estático + SSR, sin `ng serve`) completa el recorrido entero
+sin tocar ninguna pantalla en construcción — ver `docs/mvp-status.md` para el detalle de qué
+cerró esta etapa (`/inicio` real, `/eneagrama`, `/nosotros`, `/contacto`).
+
+Verificado en Chrome contra `localhost:4400` sirviendo `dist/nureon` compilado con
+`--configuration demo`:
+
+- **Cuenta demo preseedeada**: `demo@nureon.ai` / `Demo1234` entra directo a `/inicio` con un
+  resultado ya completo ("Ya tenés un resultado esperándote") — no hace falta responder 40
+  preguntas para ver `/resultados`.
+- **Cuenta nueva de punta a punta**: `/` → "Empezar gratis" → registro → confirmación
+  ("Empezar el test", ya no "Ir a mi cuenta") → test completo (40 ítems, teclado) →
+  "¡Listo! Terminaste el test" → resultado. Sin pasar por ningún placeholder en ningún punto.
+- **Los tres links del header** (`/eneagrama`, `/nosotros`, `/contacto`) llevan a contenido real,
+  no al placeholder de Etapa 2.
+- **Freemium**: "Desbloquear mi perfil completo" abre el panel de niveles (`Escape`, click en
+  backdrop y botón "Cerrar" lo cierran; el foco vuelve al botón que lo abrió). No desbloquea nada
+  ni simula un pago — dice explícitamente que el flujo de pago está en desarrollo.
+- **Contacto**: formulario completo contra `MockApiService.submitContactMessage` → confirmación
+  en pantalla.
+- **`npm run build`** (producción normal) sigue compilando sin warnings de budget después de los
+  cambios de esta etapa.
+
+### Pendiente de esta etapa
+
+- Las capturas mobile `05-test-item-mobile.jpg` y `07-resultados-mobile.jpg` en
+  `docs/screenshots/` **son las de Etapa 9** — el device toolbar de Chrome DevTools no volvió a
+  responder de forma confiable en esta sesión (varios intentos, incluso en tabs nuevos) para
+  recapturarlas con el footer oculto y el layout de resultados nuevo. Las versiones desktop
+  (`04`, `06`) sí están actualizadas. Quedan desactualizadas hasta la próxima sesión con la
+  herramienta funcionando, o hasta que alguien las saque a mano.
+- No se repitió la pasada de Firefox/Edge/Brave para esta etapa — el objetivo acá era el build
+  demo de punta a punta, no cross-browser otra vez. Si hace falta, se puede repetir el mismo
+  guion (cuenta demo → `/inicio` → resto del recorrido) en los otros tres navegadores.
