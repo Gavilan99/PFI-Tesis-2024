@@ -5,30 +5,32 @@
     <app-error-state [message]="error" (retry)="retry()"></app-error-state>
   } @else if (content) {
     <section class="resultados">
-      <!-- Capa 1: eneatipo y nombre -->
-      <header class="resultados__header">
-        <app-enneagram-diagram [eneatype]="eneatype!"></app-enneagram-diagram>
-        <div class="resultados__heading">
-          <h1 class="nureon-heading">Eneatipo {{ eneatype }} — {{ content.title }}</h1>
-          @if (content.isPlaceholder) {
-            <p class="resultados__placeholder-tag">
-              Contenido de ejemplo — texto final pendiente de redacción.
-            </p>
-          }
+      <!-- Capas 1-3: eneatipo, resumen y motivación central comparten el
+           alto del diagrama en desktop en vez de apilarse una abajo de la
+           otra — ver la nota de layout en el .scss. -->
+      <div class="resultados__intro">
+        <app-enneagram-diagram [eneatype]="eneatype!" class="resultados__diagram"></app-enneagram-diagram>
+        <div class="resultados__intro-text">
+          <div class="resultados__heading">
+            <h1 class="nureon-heading">Eneatipo {{ eneatype }} — {{ content.title }}</h1>
+            @if (content.isPlaceholder) {
+              <p class="resultados__placeholder-tag">
+                Contenido de ejemplo — texto final pendiente de redacción.
+              </p>
+            }
+          </div>
+
+          <p class="resultados__summary">{{ content.summary }}</p>
+
+          <section class="resultados__section">
+            @if (framingIntro) {
+              <p class="resultados__framing">{{ framingIntro }}</p>
+            }
+            <h2>Tu motivación central</h2>
+            <p>{{ content.coreMotivation }}</p>
+          </section>
         </div>
-      </header>
-
-      <!-- Capa 2: resumen en una frase -->
-      <p class="resultados__summary">{{ content.summary }}</p>
-
-      <!-- Capa 3: motivación central (con el encuadre según persona) -->
-      <section class="resultados__section">
-        @if (framingIntro) {
-          <p class="resultados__framing">{{ framingIntro }}</p>
-        }
-        <h2>Tu motivación central</h2>
-        <p>{{ content.coreMotivation }}</p>
-      </section>
+      </div>
 
       <!-- Capa 4: fortalezas y tensiones -->
       <section class="resultados__section resultados__strengths-tensions">
@@ -70,11 +72,17 @@
           </div>
           @if (!isPaid) {
             <div class="resultados__premium-overlay">
-              <app-brand-button variant="primary">Desbloquear mi perfil completo</app-brand-button>
+              <app-brand-button variant="primary" (click)="openFreemiumInfo()">
+                Desbloquear mi perfil completo
+              </app-brand-button>
             </div>
           }
         </div>
       </section>
     </section>
+
+    @if (showFreemiumInfo) {
+      <app-freemium-info-dialog (closed)="closeFreemiumInfo()"></app-freemium-info-dialog>
+    }
   }
 </app-page-container>

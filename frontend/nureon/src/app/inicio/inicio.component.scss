@@ -1,0 +1,14 @@
+.inicio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--nureon-space-md);
+  padding: var(--nureon-space-xl) 0;
+}
+
+.inicio__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--nureon-space-sm);
+}

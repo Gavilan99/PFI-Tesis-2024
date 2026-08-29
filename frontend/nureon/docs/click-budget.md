@@ -16,21 +16,39 @@ que las pantallas reales (Etapas 4-6) reemplazan los placeholders de la Etapa 2.
 
 ### Landing → primera pregunta del test (usuario nuevo)
 
-**Parcial (Etapa 4).** Landing → `/registro` (1 click, CTA "Empezar gratis") → completar el
-formulario (tipeo, no cuenta) → "Crear cuenta" (2do click) → confirmación → "Ir a mi cuenta"
-(3er click) → `/inicio`. Llega exactamente a 3 clicks, en el límite. Falta cerrar el tramo
-`/inicio` → primera pregunta real del test, que hoy es un placeholder — se termina de auditar
-en la Etapa 5.
+**Cerrado (Etapa 10).** Landing → `/registro` (1 click, CTA "Empezar gratis") → completar el
+formulario (tipeo, no cuenta) → "Crear cuenta" (2do click) → confirmación → "Empezar el test"
+(3er click) → `/test`, primera pregunta. Llega exactamente a 3 clicks, en el límite.
+
+Hasta Etapa 9 el botón de confirmación mandaba a `/inicio` en vez de `/test` — una vez que
+`/inicio` dejó de ser placeholder y ganó su propio botón "Iniciar test" (Etapa 10), ese hop
+extra hubiera sumado un 4to click y roto el presupuesto. Se resolvió mandando la confirmación
+del registro directo a `/test`: para una cuenta recién creada (sin intentos) el destino es
+idéntico al que ofrecería `/inicio` de todas formas, solo que sin el paso intermedio.
 
 ### Login → primera pregunta del test
 
-**Parcial (Etapa 4).** Post-ingreso, el login manda directo a `/inicio` (0 clicks extra —
-no hay pantalla de confirmación intermedia, a diferencia del registro). Falta el tramo
-`/inicio` → primera pregunta real, igual que la fila de arriba — se cierra en la Etapa 5.
+**Cerrado (Etapa 10).** Post-ingreso, el login manda directo a `/inicio` (0 clicks extra) →
+"Iniciar test" o "Retomar test" según el estado (1 click) → primera pregunta (o la pregunta
+donde había quedado, si el intento estaba en curso). Cumple el objetivo de ≤ 2 clicks
+post-ingreso con margen.
 
-### El resto
+### Responder el test completo
 
-Sin auditar todavía — las rutas de test/resultados siguen siendo placeholders (Etapas 5-6).
+**Cumple, sin cambios.** 1 click (o 1 tecla) por ítem, auto-advance, sin botón "Siguiente" —
+así desde la Etapa 5.
+
+### Fin del test → resultado en pantalla
+
+**Cumple, sin cambios.** "Ver mi resultado" en la pantalla de cierre del test, 1 click — así
+desde la Etapa 6.
+
+### Entrar a la app → ver resultado anterior
+
+**Cerrado (Etapa 10).** No se podía auditar hasta que `/inicio` existiera de verdad: una cuenta
+con un intento completado entra a `/inicio` y ve "Ver mi resultado" como acción primaria — 1
+click. `/inicio` clasifica el estado leyendo `getLatestAttempt`, la misma lógica que
+`UserJourneyStateService` ya modelaba desde la Etapa 2.
 
 ## Cómo se audita
 

@@ -1,0 +1,36 @@
+<app-page-container>
+  <section class="intro">
+    <h1 class="nureon-heading">Sobre el eneagrama</h1>
+    <p class="intro__lead">
+      El eneagrama es un mapa de nueve tipos de personalidad interconectados. Cada tipo describe
+      una motivación central distinta — el porqué detrás de la conducta, no la conducta en sí —
+      y cómo esa motivación se relaciona con la de los demás tipos.
+    </p>
+  </section>
+
+  <section class="types">
+    <h2>Los 9 tipos</h2>
+    <div class="card-grid">
+      @for (type of eneatypes; track type.number) {
+        <app-card [title]="'Eneatipo ' + type.number + ' — ' + type.name"></app-card>
+      }
+    </div>
+  </section>
+
+  <section class="difference">
+    <h2>Qué distingue a NureonAI</h2>
+    <p>
+      La mayoría de los tests de eneagrama miran qué hacés — tus comportamientos y preferencias
+      declaradas. NureonAI mira por qué lo hacés: identifica tu eneatipo a partir de tu motivación
+      central, usando un modelo de machine learning entrenado sobre un banco de ítems diseñado
+      para eso.
+    </p>
+    <p>
+      La clasificación se apoya en cuatro conjuntos de triadas complementarias, además de los
+      nueve tipos: los <strong>Centros de Inteligencia</strong>, el <strong>Horneviano</strong>,
+      el <strong>Armónico</strong> y las <strong>Relaciones Objetales</strong>. No publicamos qué
+      preguntas u opciones del test corresponden a cada grupo — es la clave de corrección del
+      instrumento.
+    </p>
+  </section>
+</app-page-container>

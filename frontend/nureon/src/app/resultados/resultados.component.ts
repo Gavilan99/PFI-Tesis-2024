@@ -10,6 +10,7 @@ import { ErrorStateComponent } from '../shared/components/error-state/error-stat
 import { LoadingStateComponent } from '../shared/components/loading-state/loading-state.component';
 import { BrandButtonComponent } from '../shared/components/brand-button/brand-button.component';
 import { EnneagramDiagramComponent, ENEATYPE_STRUCTURE } from './enneagram-diagram/enneagram-diagram.component';
+import { FreemiumInfoDialogComponent } from './freemium-info-dialog/freemium-info-dialog.component';
 import { ENEATYPE_CONTENT, EneatypeContent, FRAMING_TEXT } from './eneatype-content';
 
 // CU004 — layered reading, top to bottom: eneatype + name, one-line summary,
@@ -29,6 +30,7 @@ import { ENEATYPE_CONTENT, EneatypeContent, FRAMING_TEXT } from './eneatype-cont
     LoadingStateComponent,
     BrandButtonComponent,
     EnneagramDiagramComponent,
+    FreemiumInfoDialogComponent,
   ],
   templateUrl: './resultados.component.html',
   styleUrl: './resultados.component.scss',
@@ -38,6 +40,10 @@ export class ResultadosComponent implements OnInit {
   error: string | null = null;
   eneatype: number | null = null;
   private tier: AttemptTier | null = null;
+
+  // See FreemiumInfoDialogComponent for what "Desbloquear mi perfil
+  // completo" (RF09/RF10) actually opens.
+  showFreemiumInfo = false;
 
   constructor(
     @Inject(API_SERVICE) private readonly api: ApiService,
@@ -77,6 +83,14 @@ export class ResultadosComponent implements OnInit {
 
   retry(): void {
     this.load();
+  }
+
+  openFreemiumInfo(): void {
+    this.showFreemiumInfo = true;
+  }
+
+  closeFreemiumInfo(): void {
+    this.showFreemiumInfo = false;
   }
 
   private load(): void {

@@ -7,6 +7,7 @@ import { Result } from '../models/result.model';
 import { User, UpdateProfileInput } from '../models/user.model';
 import { LoginInput, RegisterInput } from '../models/auth.model';
 import { SubmitFeedbackInput } from '../models/feedback.model';
+import { SubmitContactMessageInput } from '../models/contact-message.model';
 
 // Frontend-facing contract only — see PDR — NureonAI Data Model for the full
 // DB schema. Components depend on this interface and the API_SERVICE token,
@@ -54,6 +55,9 @@ export interface ApiService {
   // RF06 — never surfaced back to the user; fire-and-forget from the client's
   // point of view.
   submitFeedback(input: SubmitFeedbackInput): Observable<void>;
+
+  // /contacto (Stage 10) — same fire-and-forget shape as submitFeedback.
+  submitContactMessage(input: SubmitContactMessageInput): Observable<void>;
 }
 
 export const API_SERVICE = new InjectionToken<ApiService>('API_SERVICE');

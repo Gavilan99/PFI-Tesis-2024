@@ -9,6 +9,7 @@ import { Result } from '../models/result.model';
 import { User, UpdateProfileInput } from '../models/user.model';
 import { LoginInput, RegisterInput } from '../models/auth.model';
 import { SubmitFeedbackInput } from '../models/feedback.model';
+import { SubmitContactMessageInput } from '../models/contact-message.model';
 
 // Real backend implementation. Not built yet — Flask/Cognito integration is
 // a later stage (see the redesign plan's "Dependencias externas"). Exists
@@ -70,6 +71,10 @@ export class HttpApiService implements ApiService {
 
   submitFeedback(_input: SubmitFeedbackInput): Observable<void> {
     return this.notImplemented('submitFeedback');
+  }
+
+  submitContactMessage(_input: SubmitContactMessageInput): Observable<void> {
+    return this.notImplemented('submitContactMessage');
   }
 
   private notImplemented<T>(method: string): Observable<T> {
