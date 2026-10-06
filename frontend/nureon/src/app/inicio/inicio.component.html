@@ -1,0 +1,37 @@
+<app-page-container>
+  @if (loading) {
+    <app-loading-state message="Cargando…"></app-loading-state>
+  } @else if (error) {
+    <app-error-state [message]="error" (retry)="retry()"></app-error-state>
+  } @else {
+    <section class="inicio">
+      <h1 class="nureon-heading">Hola, {{ displayName }}</h1>
+
+      @switch (state) {
+        @case ('no-attempts') {
+          <p>Todavía no hiciste el test. Arrancá cuando quieras — dura unos minutos.</p>
+          <app-brand-button variant="primary" routerLink="/test">Iniciar test</app-brand-button>
+        }
+        @case ('in-progress') {
+          <p>Tenés un test en curso.</p>
+          <app-progress-bar [current]="answered" [total]="total"></app-progress-bar>
+          <div class="inicio__actions">
+            <app-brand-button variant="primary" routerLink="/test">Retomar test</app-brand-button>
+            <app-brand-button variant="text" [disabled]="startingOver" (click)="startOver()">
+              {{ startingOver ? 'Empezando…' : 'Empezar de nuevo' }}
+            </app-brand-button>
+          </div>
+        }
+        @case ('completed') {
+          <p>Ya tenés un resultado esperándote.</p>
+          <div class="inicio__actions">
+            <app-brand-button variant="primary" routerLink="/resultados">Ver mi resultado</app-brand-button>
+            <app-brand-button variant="text" [disabled]="startingOver" (click)="startOver()">
+              {{ startingOver ? 'Empezando…' : 'Hacer el test de nuevo' }}
+            </app-brand-button>
+          </div>
+        }
+      }
+    </section>
+  }
+</app-page-container>

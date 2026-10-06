@@ -1,119 +1,198 @@
-import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { MatDialogRef } from '@angular/material/dialog';
-import { MatDialog } from '@angular/material/dialog';
+import { Component, Inject, OnInit } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { catchError, forkJoin, map, of } from 'rxjs';
+import { API_SERVICE, ApiService } from '../core/services/api.service';
+import { AuthService } from '../core/services/auth.service';
+import { AccountType } from '../core/models/user.model';
+import { TestAttempt } from '../core/models/test-attempt.model';
+import { PageContainerComponent } from '../shared/layout/page-container/page-container.component';
+import { EmptyStateComponent } from '../shared/components/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../shared/components/error-state/error-state.component';
+import { LoadingStateComponent } from '../shared/components/loading-state/loading-state.component';
+import { BrandButtonComponent } from '../shared/components/brand-button/brand-button.component';
+import { FeedbackFormComponent } from '../shared/components/feedback-form/feedback-form.component';
 
+interface HistoryEntry {
+  attempt: TestAttempt;
+  eneatype: number | null;
+}
+
+const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
+  individual: 'Individual',
+  salud: 'Salud mental',
+  rrhh: 'RRHH',
+};
+
+const AGE_RANGES = ['Menos de 18', '18-24', '25-34', '35-44', '45-54', '55-64', '65 o más'];
+
+const GENDERS = ['Femenino', 'Masculino', 'Prefiero no decir'];
+
+const COUNTRIES = [
+  'Argentina',
+  'Bolivia',
+  'Chile',
+  'Colombia',
+  'Costa Rica',
+  'Cuba',
+  'Ecuador',
+  'El Salvador',
+  'España',
+  'Estados Unidos',
+  'Guatemala',
+  'Honduras',
+  'México',
+  'Nicaragua',
+  'Panamá',
+  'Paraguay',
+  'Perú',
+  'República Dominicana',
+  'Uruguay',
+  'Venezuela',
+  'Otro',
+];
+
+// RF06 (comentarios), RF07 (perfil), RF08 (historial). The old ProfileComponent
+// was an orphan — dialog markup, never routed or opened from anywhere. This
+// is a screen at /perfil, not a dialog.
 @Component({
   selector: 'app-profile',
+  standalone: true,
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    DatePipe,
+    PageContainerComponent,
+    EmptyStateComponent,
+    ErrorStateComponent,
+    LoadingStateComponent,
+    BrandButtonComponent,
+    FeedbackFormComponent,
+  ],
   templateUrl: './profile.component.html',
-  styleUrls: ['./profile.component.css']
+  styleUrl: './profile.component.scss',
 })
 export class ProfileComponent implements OnInit {
-  username: string = ''; // Initially empty, will be set from the API
-  email: string = ''; // Initially empty, will be set from the API
-  password: string = ''; // Password will be fetched from the API
-  showPassword: boolean = false;
+  readonly accountTypes: AccountType[] = ['individual', 'salud', 'rrhh'];
+  readonly accountTypeLabel = ACCOUNT_TYPE_LABEL;
+  readonly ageRanges = AGE_RANGES;
+  readonly genders = GENDERS;
+  readonly countries = COUNTRIES;
 
-  // To hold the original values before editing
-  originalUsername: string = this.username;
-  originalEmail: string = this.email;
-  originalPassword: string = this.password;
+  readonly form = this.fb.group({
+    displayName: [''],
+    accountType: this.fb.control<AccountType | null>(null),
+    ageRange: [''],
+    gender: [''],
+    country: [''],
+    professionContext: [''],
+  });
 
-  editMode: boolean = false; // To toggle between edit and view modes
-  userId: number | undefined; // Store user ID
+  saving = false;
+  saveError: string | null = null;
+  saved = false;
+
+  historyLoading = true;
+  historyError: string | null = null;
+  history: HistoryEntry[] = [];
 
   constructor(
-    public dialogRef: MatDialogRef<ProfileComponent>, 
-    private dialog: MatDialog,
-    private http: HttpClient
+    private readonly fb: NonNullableFormBuilder,
+    @Inject(API_SERVICE) private readonly api: ApiService,
+    private readonly auth: AuthService,
   ) {}
 
   ngOnInit(): void {
-    // Get the logged-in username from localStorage
-    const storedUsername = localStorage.getItem('username');
-    if (storedUsername) {
-      this.fetchUserProfile(storedUsername);
+    const user = this.auth.currentUser;
+    if (user) {
+      this.form.patchValue({
+        displayName: user.displayName,
+        accountType: user.accountType,
+        ageRange: user.ageRange ?? '',
+        gender: user.gender ?? '',
+        country: user.country ?? '',
+        professionContext: user.professionContext ?? '',
+      });
     }
+    this.loadHistory();
   }
 
-  fetchUserProfile(username: string): void {
-    this.http.get<any>(`http://localhost:5000/getUserByUsername/${username}`).subscribe(
-      (response) => {
-        const user = response.usuarios[0]; // Assuming response contains an array of users
-        this.userId = user[0]; // Assuming user[0] is the user ID
-        this.username = user[1];  // Assuming user[1] is the username
-        this.email = user[2];     // Assuming user[2] is the email
-        this.password = user[3];  // Assuming user[3] is the password
-
-        // Set original values to the fetched data
-        this.originalUsername = this.username;
-        this.originalEmail = this.email;
-        this.originalPassword = this.password;
-      },
-      (error) => {
-        console.error('Error fetching user profile:', error);
-      }
-    );
-  }
-
-  // New method to update user information
-  updateUserProfile(): void {
-    const updatedUserData = {
-      id: this.userId, // Include the user ID in the update request
-      username: this.username,
-      email: this.email,
-      password: this.password
-    };
-
-    this.http.put('http://localhost:5000/updateUser', updatedUserData).subscribe(
-      (response) => {
-        console.log('User updated successfully:', response);
-        // Update original values after a successful update
-        this.originalUsername = this.username;
-        this.originalEmail = this.email;
-        this.originalPassword = this.password;
-        this.editMode = false; // Exit edit mode
-      },
-      (error) => {
-        console.error('Error updating user profile:', error);
-        alert('An error occurred while updating the profile. Please try again.');
-      }
-    );
-  }
-
-  // Method to enable editing for specific fields
-  editField(field: string) {
-    this.editMode = true;
-    if (field === 'password') {
-      this.showPassword = true;
+  onSave(): void {
+    if (this.saving) {
+      return;
     }
+    this.saving = true;
+    this.saveError = null;
+    this.saved = false;
+    const raw = this.form.getRawValue();
+    this.auth
+      .updateProfile({
+        displayName: raw.displayName,
+        accountType: raw.accountType,
+        ageRange: raw.ageRange || null,
+        gender: raw.gender || null,
+        country: raw.country || null,
+        professionContext: raw.professionContext || null,
+      })
+      .subscribe({
+        next: () => {
+          this.saving = false;
+          this.saved = true;
+        },
+        error: () => {
+          this.saving = false;
+          this.saveError = 'No pudimos guardar los cambios. Probá de nuevo.';
+        },
+      });
   }
 
-  // Method to confirm changes
-  confirmEdit() {
-    this.updateUserProfile();
-    this.showPassword = false;
+  retryHistory(): void {
+    this.loadHistory();
   }
 
-  // Method to cancel editing and revert to original values
-  cancelEdit() {
-    this.editMode = false;
-    this.username = this.originalUsername;
-    this.email = this.originalEmail;
-    this.password = this.originalPassword;
-    this.showPassword = false; // Ideally, you'd reset to masked state
-  }
-
-  // Method to close the dialog
-  onClose(): void {
-    this.dialogRef.close();
-  }
-
-  editProfilePicture(): void {
-    // Add code to open a dialog for editing profile picture
-  }
-
-  changeFrameColor(): void {
-    // Add code to change the frame color of the profile picture
+  private loadHistory(): void {
+    this.historyLoading = true;
+    this.historyError = null;
+    const userId = this.auth.currentUser?.id;
+    if (!userId) {
+      this.history = [];
+      this.historyLoading = false;
+      return;
+    }
+    this.api.getAttemptHistory(userId).subscribe({
+      next: (attempts) => {
+        const completed = attempts.filter((a) => a.status === 'completed');
+        if (completed.length === 0) {
+          this.history = attempts.map((attempt) => ({ attempt, eneatype: null }));
+          this.historyLoading = false;
+          return;
+        }
+        // Each fetch is independently resilient: one attempt with a missing/
+        // corrupted result (e.g. simulated via nureonDev.breakResultLoading())
+        // must not blank out every OTHER attempt's result — forkJoin as a
+        // whole errors if any single inner observable does, so each one
+        // catches its own failure instead of propagating it.
+        forkJoin(
+          completed.map((a) =>
+            this.api.getResult(a.id).pipe(
+              map((result) => ({ attemptId: a.id, eneatype: result.eneatype as number | null })),
+              catchError(() => of({ attemptId: a.id, eneatype: null })),
+            ),
+          ),
+        ).subscribe((results) => {
+          const eneatypeByAttempt = new Map(results.map((r) => [r.attemptId, r.eneatype]));
+          this.history = attempts.map((attempt) => ({
+            attempt,
+            eneatype: eneatypeByAttempt.get(attempt.id) ?? null,
+          }));
+          this.historyLoading = false;
+        });
+      },
+      error: () => {
+        this.historyLoading = false;
+        this.historyError = 'No pudimos cargar tu historial.';
+      },
+    });
   }
 }
