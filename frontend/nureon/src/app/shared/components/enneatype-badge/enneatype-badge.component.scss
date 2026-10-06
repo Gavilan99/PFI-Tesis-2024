@@ -1,0 +1,14 @@
+// Orange = result emphasis, per its documented semantic role in custom-theme.scss.
+.enneatype-badge {
+  display: inline-block;
+  border-radius: var(--nureon-radius-full);
+  padding: var(--nureon-space-3xs) var(--nureon-space-xs);
+  font-size: var(--nureon-text-caption-size);
+  font-weight: var(--nureon-text-caption-weight);
+  background: var(--nureon-orange);
+  // White-on-orange is the same ~2.80:1 ratio orange-on-white failed at in
+  // the Etapa 1 audit (contrast is symmetric between a color pair) — well
+  // under the 4.5:1 this caption-sized text needs. Dark text on orange
+  // measures ~7.5:1.
+  color: rgba(black, 0.87);
+}

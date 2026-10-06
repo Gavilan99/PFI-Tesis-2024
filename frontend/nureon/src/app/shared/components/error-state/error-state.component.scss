@@ -1,0 +1,12 @@
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--nureon-space-sm);
+  padding: var(--nureon-space-lg);
+  text-align: center;
+}
+
+.error-state__message {
+  color: rgba(black, 0.6);
+}

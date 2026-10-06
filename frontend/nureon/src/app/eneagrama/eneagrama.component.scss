@@ -1,0 +1,45 @@
+@use '../../styles/palette';
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-md);
+  padding: var(--nureon-space-xl) 0;
+}
+
+.intro__lead {
+  font: var(--nureon-text-body-lg-weight) var(--nureon-text-body-lg-size) /
+    var(--nureon-text-body-lg-line-height) var(--nureon-font-body);
+  max-width: 640px;
+  color: rgba(black, 0.7);
+}
+
+section h2 {
+  font: var(--nureon-text-h2-weight) var(--nureon-text-h2-size) / var(--nureon-text-h2-line-height)
+    var(--nureon-text-h2-font);
+  margin-bottom: var(--nureon-space-md);
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--nureon-space-md);
+  align-items: stretch;
+}
+
+.types {
+  background: map-get(palette.$nureon-primary-palette, 50);
+  border-radius: var(--nureon-radius-lg);
+  padding: var(--nureon-space-lg);
+}
+
+.difference {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-sm);
+  padding: var(--nureon-space-lg) 0;
+
+  p {
+    max-width: 720px;
+  }
+}

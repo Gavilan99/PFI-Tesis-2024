@@ -1,0 +1,49 @@
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-md);
+  padding: var(--nureon-space-xl) 0;
+}
+
+.intro__lead {
+  font: var(--nureon-text-body-lg-weight) var(--nureon-text-body-lg-size) /
+    var(--nureon-text-body-lg-line-height) var(--nureon-font-body);
+  max-width: 640px;
+  color: rgba(black, 0.7);
+}
+
+.team {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-sm);
+  padding-bottom: var(--nureon-space-xl);
+}
+
+.team__draft-tag {
+  font-size: var(--nureon-text-caption-size);
+  font-style: italic;
+  color: rgba(black, 0.5);
+}
+
+.team h2 {
+  font: var(--nureon-text-h2-weight) var(--nureon-text-h2-size) / var(--nureon-text-h2-line-height)
+    var(--nureon-text-h2-font);
+}
+
+.team__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--nureon-space-md);
+}
+
+.team__member {
+  border: 1px dashed rgba(black, 0.2);
+  border-radius: var(--nureon-radius-md);
+  padding: var(--nureon-space-md);
+}
+
+.team__member h3 {
+  font: var(--nureon-text-h3-weight) var(--nureon-text-h3-size) / var(--nureon-text-h3-line-height)
+    var(--nureon-text-h3-font);
+  margin-bottom: var(--nureon-space-3xs);
+}

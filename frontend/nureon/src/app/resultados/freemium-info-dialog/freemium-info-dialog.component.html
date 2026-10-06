@@ -1,0 +1,28 @@
+<div class="freemium-dialog__backdrop" (click)="close()">
+  <div
+    class="freemium-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="freemium-dialog-title"
+    tabindex="-1"
+    #dialog
+    (click)="$event.stopPropagation()"
+  >
+    <h2 id="freemium-dialog-title">Niveles de NureonAI</h2>
+    <div class="freemium-dialog__tiers">
+      <article>
+        <h3>Perfil reducido — gratis</h3>
+        <p>Eneatipo, motivación central, fortalezas, tensiones y alas.</p>
+      </article>
+      <article>
+        <h3>Perfil completo — pago</h3>
+        <p>Todo lo del perfil reducido, más tu comportamiento en crecimiento y bajo estrés.</p>
+      </article>
+    </div>
+    <p class="freemium-dialog__note">
+      El flujo de pago todavía está en desarrollo — esto es una vista previa de los niveles, no
+      podés comprar el perfil completo todavía.
+    </p>
+    <app-brand-button variant="secondary" (click)="close()">Cerrar</app-brand-button>
+  </div>
+</div>
