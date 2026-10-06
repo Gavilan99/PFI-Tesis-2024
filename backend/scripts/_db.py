@@ -1,6 +1,7 @@
 """Database session for command-line scripts, using the same configuration as the app."""
 
 import os
+import sys
 from contextlib import contextmanager
 
 from sqlalchemy import create_engine
@@ -32,3 +33,9 @@ def open_session(url: str):
                 session.rollback()
     finally:
         engine.dispose()
+
+
+def utf8_output() -> None:
+    """Spanish output stays readable when piped on Windows, where the default is cp1252."""
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(encoding="utf-8")

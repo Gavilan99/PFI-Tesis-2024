@@ -35,7 +35,7 @@ from app.services.question_bank import (  # noqa: E402
     format_summary,
     load_bank,
 )
-from scripts._db import database_url, describe, open_session  # noqa: E402
+from scripts._db import database_url, describe, open_session, utf8_output  # noqa: E402
 
 FILLER_VERSION = 0
 DEFAULT_SEED = 20261006
@@ -139,4 +139,5 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    utf8_output()
     sys.exit(main())

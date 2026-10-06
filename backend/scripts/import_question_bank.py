@@ -40,7 +40,7 @@ from app.services.question_bank import (  # noqa: E402
     load_bank,
     validate_bank,
 )
-from scripts._db import database_url, describe, open_session  # noqa: E402
+from scripts._db import database_url, describe, open_session, utf8_output  # noqa: E402
 
 # ---------------------------------------------------------------------------------------------
 # Column map: logical field -> header in the CSV. Adjust the right-hand side to the real headers.
@@ -240,4 +240,5 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    utf8_output()
     sys.exit(main())
