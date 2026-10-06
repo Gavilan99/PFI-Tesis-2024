@@ -8,17 +8,21 @@ from app.config import get_config, load_env_file
 from app.db.base import Base
 
 # Importing app.db.models registers every ORM model on Base.metadata before
-# Alembic compares it against the database. Empty for now; Feature 1 fills it.
+# Alembic compares it against the database.
 import app.db.models  # noqa: F401
 
 config = context.config
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
-load_env_file()
-app_config = get_config(os.environ.get("APP_ENV", "development"))
-config.set_main_option("sqlalchemy.url", app_config.SQLALCHEMY_DATABASE_URI)
+# A caller that already set the URL (the test suite, on its own databases) keeps it.
+if not config.get_main_option("sqlalchemy.url"):
+    load_env_file()
+    app_config = get_config(os.environ.get("APP_ENV", "development"))
+    config.set_main_option(
+        "sqlalchemy.url", app_config.SQLALCHEMY_DATABASE_URI.replace("%", "%%")
+    )
 
 target_metadata = Base.metadata
 
