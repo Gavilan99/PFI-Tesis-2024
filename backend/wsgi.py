@@ -1,8 +1,7 @@
-import os
-
 from app import create_app
 
-app = create_app(os.environ.get("APP_ENV", "development"))
+app = create_app()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    # Loopback only, debugger off: the Werkzeug debugger executes code and must never be reachable from the network.
+    app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)

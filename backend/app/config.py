@@ -1,8 +1,23 @@
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+ENV_FILE = Path(__file__).resolve().parents[1] / ".env"
 
 
 class ConfigError(RuntimeError):
     pass
+
+
+def load_env_file(env_name: str | None = None) -> None:
+    """Load backend/.env for local runs. Variables already in the environment win.
+
+    Skipped for production: there, only what the platform injects is read.
+    """
+    if (env_name or os.environ.get("APP_ENV", "development")) == "production":
+        return
+    load_dotenv(ENV_FILE, override=False)
 
 
 def _require(name: str) -> str:
@@ -31,7 +46,6 @@ class BaseConfig:
 class DevelopmentConfig(BaseConfig):
     def __init__(self) -> None:
         super().__init__()
-        self.DEBUG = True
         self.SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
         self.SQLALCHEMY_DATABASE_URI = os.environ.get(
             "DATABASE_URL",
@@ -47,12 +61,10 @@ class TestConfig(BaseConfig):
     def __init__(self) -> None:
         super().__init__()
         self.SECRET_KEY = os.environ.get("SECRET_KEY", "test-secret-key")
+        # Never falls back to DATABASE_URL: a dev .env must not send the suite to the dev database.
         self.SQLALCHEMY_DATABASE_URI = os.environ.get(
             "TEST_DATABASE_URL",
-            os.environ.get(
-                "DATABASE_URL",
-                "postgresql+psycopg://nureon:nureon@localhost:5433/nureon_test",
-            ),
+            "postgresql+psycopg://nureon:nureon@localhost:5433/nureon_test",
         )
         if not self.CORS_ALLOWED_ORIGINS:
             self.CORS_ALLOWED_ORIGINS = ["http://localhost:4200"]
