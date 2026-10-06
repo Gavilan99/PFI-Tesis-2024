@@ -5,10 +5,9 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key")
 os.environ.setdefault("CORS_ALLOWED_ORIGINS", "http://localhost:4200")
 
 import pytest
-from sqlalchemy import event
 
 from app import create_app
-from app.extensions import Session
+from tests.db_helpers import bound_session
 
 
 @pytest.fixture(scope="session")
@@ -24,26 +23,5 @@ def client(app):
 @pytest.fixture()
 def db_session(app):
     """A session bound to a transaction that is rolled back after each test."""
-    engine = app.extensions["sqlalchemy_engine"]
-    connection = engine.connect()
-    transaction = connection.begin()
-
-    Session.configure(bind=connection)
-    session = Session()
-
-    nested = connection.begin_nested()
-
-    @event.listens_for(session, "after_transaction_end")
-    def _restart_savepoint(sess, trans):
-        nonlocal nested
-        if not nested.is_active:
-            nested = connection.begin_nested()
-
-    try:
+    with bound_session(app) as session:
         yield session
-    finally:
-        event.remove(session, "after_transaction_end", _restart_savepoint)
-        session.close()
-        transaction.rollback()
-        connection.close()
-        Session.remove()

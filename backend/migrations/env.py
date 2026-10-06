@@ -4,7 +4,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from app.config import get_config
+from app.config import get_config, load_env_file
 from app.db.base import Base
 
 # Importing app.db.models registers every ORM model on Base.metadata before
@@ -16,6 +16,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+load_env_file()
 app_config = get_config(os.environ.get("APP_ENV", "development"))
 config.set_main_option("sqlalchemy.url", app_config.SQLALCHEMY_DATABASE_URI)
 

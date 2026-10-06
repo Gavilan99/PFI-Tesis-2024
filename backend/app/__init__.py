@@ -3,13 +3,14 @@ import os
 from flask import Flask
 
 from app.blueprints.core import core_bp
-from app.config import get_config
+from app.config import get_config, load_env_file
 from app.errors import register_error_handlers
 from app.extensions import cors, init_db
 from app.logging_config import configure_logging
 
 
 def create_app(config_name: str | None = None) -> Flask:
+    load_env_file(config_name)
     config_name = config_name or os.environ.get("APP_ENV", "development")
     config = get_config(config_name)
 

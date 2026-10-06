@@ -31,6 +31,13 @@ def test_production_requires_cors_allowed_origins(monkeypatch):
         get_config("production")
 
 
+def test_test_config_never_falls_back_to_the_dev_database(monkeypatch):
+    monkeypatch.delenv("TEST_DATABASE_URL", raising=False)
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://u:p@host/nureon_dev")
+
+    assert get_config("test").SQLALCHEMY_DATABASE_URI.endswith("/nureon_test")
+
+
 def test_unknown_environment_name_fails():
     with pytest.raises(ConfigError):
         get_config("staging")
