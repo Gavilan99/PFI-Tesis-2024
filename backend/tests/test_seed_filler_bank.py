@@ -67,3 +67,33 @@ def test_seed_loads_as_version_zero_and_is_idempotent(db_session):
     assert (second.inserted, second.unchanged) == (0, 200)
     assert question_repository.active_versions(db_session) == [0]
     assert second.counts["options"] == 674
+
+
+def test_seed_leaves_version_zero_alone_once_it_has_responses(db_session, monkeypatch, capsys):
+    from contextlib import contextmanager
+
+    from app.db.models import Question, Response, TestAttempt, User
+    from app.db.models.enums import AttemptTier
+    from scripts import seed_filler_bank
+
+    load_bank(db_session, build_filler_bank(), version=FILLER_VERSION, activate=True)
+    question = db_session.query(Question).filter_by(version=0, display_order=1).one()
+    user = User(cognito_sub="seed-test", email="seed@example.test")
+    db_session.add(user)
+    db_session.flush()
+    attempt = TestAttempt(user_id=user.id, tier=AttemptTier.FREE_REDUCED, questionnaire_version=0)
+    db_session.add(attempt)
+    db_session.flush()
+    db_session.add(Response(test_attempt_id=attempt.id, question_id=question.id, display_order=1))
+    db_session.flush()
+
+    @contextmanager
+    def test_session(url):
+        yield db_session
+
+    monkeypatch.setattr(seed_filler_bank, "open_session", test_session)
+
+    assert seed_filler_bank.main(["--seed", "999"]) == 0
+    assert "La versión 0 ya tiene respuestas: el relleno no se recarga." in capsys.readouterr().out
+    db_session.expire_all()
+    assert question.prompt_text == build_filler_bank()[0].prompt_text

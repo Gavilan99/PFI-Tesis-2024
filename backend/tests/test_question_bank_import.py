@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from app.db.models import AnswerOption, Question, Response, TestAttempt, User
 from app.db.models.enums import AttemptTier, GroupingSystem, QuestionType
@@ -249,7 +249,7 @@ def test_question_with_responses_is_never_modified(db_session, tmp_path):
     with pytest.raises(QuestionBankError) as excinfo:
         load_bank(db_session, read_bank_csv(write_csv(tmp_path, headers, rows)), version=1, activate=False)
 
-    assert "posición 1 de la versión 1 ya tiene respuestas" in str(excinfo.value)
+    assert "La versión 1 ya tiene respuestas" in str(excinfo.value)
     db_session.expire_all()
     assert question.prompt_text == original_text
     assert all("Cambiada" not in o.option_text for o in question.answer_options)
@@ -265,7 +265,7 @@ def test_question_with_responses_is_never_removed(db_session, tmp_path):
     with pytest.raises(QuestionBankError) as excinfo:
         load_bank(db_session, read_bank_csv(write_csv(tmp_path, headers, rows)), version=1, activate=False)
 
-    assert "no está en el banco. No se borra." in str(excinfo.value)
+    assert "La versión 1 ya tiene respuestas" in str(excinfo.value)
     assert db_session.query(Question).filter_by(version=1).count() == 8
 
 
@@ -289,3 +289,92 @@ def test_loading_one_version_leaves_other_versions_alone(db_session):
 
     assert db_session.query(Question).filter_by(version=1).count() == 8
     assert db_session.query(Question).filter_by(version=2).count() == 3
+
+
+# --- identity by (version, display_order) -------------------------------------------------------
+
+
+def _db_state(db_session, version: int) -> list[tuple]:
+    """The whole version as plain tuples, ordered by position, options included."""
+    db_session.expire_all()
+    questions = db_session.scalars(
+        select(Question).where(Question.version == version).order_by(Question.display_order)
+    ).all()
+    return [
+        (
+            q.display_order,
+            q.grouping_system,
+            q.question_type,
+            q.prompt_text,
+            tuple((o.display_order, o.option_text, o.group_label) for o in q.answer_options),
+        )
+        for q in questions
+    ]
+
+
+def _bank_state(bank) -> list[tuple]:
+    return sorted(
+        (
+            q.display_order,
+            q.grouping_system,
+            q.question_type,
+            q.prompt_text,
+            tuple((o.display_order, o.option_text, o.group_label) for o in q.options),
+        )
+        for q in bank
+    )
+
+
+def test_reimporting_a_reordered_csv_without_responses_leaves_exactly_the_new_csv(db_session, tmp_path):
+    load_bank(db_session, read_bank_csv(FIXTURE), version=1, activate=False)
+
+    # Reverse the bank: every question moves to another position, so position 1 now holds what
+    # was position 8 (a Likert item of another system), and so on. Rows are shuffled too.
+    headers, rows = read_rows()
+    for row in rows:
+        row["display_order"] = str(9 - int(row["display_order"]))
+    rows.reverse()
+    reordered = read_bank_csv(write_csv(tmp_path, headers, rows))
+
+    summary = load_bank(db_session, reordered, version=1, activate=False)
+
+    assert (summary.inserted, summary.removed) == (0, 0)
+    assert summary.updated == 8
+    assert _db_state(db_session, 1) == _bank_state(reordered)
+    # No option outlived its question's old content, and none is left dangling.
+    assert db_session.query(AnswerOption).join(Question).filter(Question.version == 1).count() == 32
+    orphans = db_session.execute(
+        text(
+            "SELECT count(*) FROM answer_options o "
+            "LEFT JOIN questions q ON q.id = o.question_id WHERE q.id IS NULL"
+        )
+    ).scalar()
+    assert orphans == 0
+
+
+@pytest.mark.parametrize("change", ["identical", "edit_an_unanswered_question", "reorder"])
+def test_reimporting_a_version_with_responses_is_rejected_whole(db_session, tmp_path, change):
+    load_bank(db_session, read_bank_csv(FIXTURE), version=1, activate=False)
+    answered = db_session.scalars(
+        select(Question).where(Question.display_order == 1, Question.version == 1)
+    ).one()
+    _serve(db_session, answered)
+    before = _db_state(db_session, 1)
+
+    headers, rows = read_rows()
+    if change == "edit_an_unanswered_question":
+        for row in rows:
+            if row["question_id"] == "T05":
+                row["prompt_text"] = "Enunciado de prueba 5, corregido (relleno de test)."
+    elif change == "reorder":
+        for row in rows:
+            row["display_order"] = str(9 - int(row["display_order"]))
+
+    with pytest.raises(QuestionBankError) as excinfo:
+        load_bank(db_session, read_bank_csv(write_csv(tmp_path, headers, rows)), version=1, activate=True)
+
+    message = str(excinfo.value)
+    assert "La versión 1 ya tiene respuestas" in message
+    assert "cargá el banco como una versión nueva" in message
+    assert _db_state(db_session, 1) == before
+    assert question_repository.active_versions(db_session) == []

@@ -18,13 +18,14 @@ def questions_for_version(session: Session, version: int) -> list[Question]:
     )
 
 
-def question_ids_with_responses(session: Session, question_ids: list[uuid.UUID]) -> set[uuid.UUID]:
-    """Questions referenced by any response row, answered or not: a served question counts."""
-    if not question_ids:
-        return set()
-    return set(
-        session.scalars(
-            select(Response.question_id).where(Response.question_id.in_(question_ids)).distinct()
+def version_has_responses(session: Session, version: int) -> bool:
+    """Any response row counts, answered or not: a question served to an attempt is in use."""
+    return session.scalar(
+        select(
+            select(Response.id)
+            .join(Question, Question.id == Response.question_id)
+            .where(Question.version == version)
+            .exists()
         )
     )
 

@@ -16,7 +16,8 @@ be mistaken for it, and it is version 0 so no attempt made against it mixes with
 It never names the grouping system or the group: that would leak the answer key to the browser.
 
 Version 0 is activated only if no version is active yet, so re-seeding never pulls a real bank
-out of service. Re-running is idempotent.
+out of service. Re-running is idempotent. Once an attempt has been served from version 0 it is
+frozen like any other version, and re-seeding leaves it alone.
 """
 
 import argparse
@@ -115,6 +116,10 @@ def main(argv: list[str] | None = None) -> int:
     bank = build_filler_bank(args.seed)
     url = database_url()
     with open_session(url) as session:
+        if question_repository.version_has_responses(session, FILLER_VERSION):
+            print(f"Base: {describe(url)}")
+            print("La versión 0 ya tiene respuestas: el relleno no se recarga.")
+            return 0
         active = question_repository.active_versions(session)
         activate = active in ([], [FILLER_VERSION])
         try:

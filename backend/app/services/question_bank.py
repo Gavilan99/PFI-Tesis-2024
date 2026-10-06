@@ -123,24 +123,30 @@ def load_bank(
 ) -> LoadSummary:
     """Bring `version` in the database to exactly `questions`. Does not commit.
 
-    Idempotent: a question is matched by its position in the bank, and an identical one is left
-    alone. A question that already has responses is never modified or removed; if the bank would
-    require that, nothing is applied and every conflict is reported.
+    A question is identified by its position in the bank: re-importing leaves identical questions
+    alone and rewrites the rest in place. That is only safe while no attempt has been served from
+    the version, so a version with any response row is frozen whole: the load is rejected before
+    anything is compared, and a changed bank has to come in as a new version.
     """
     problems = validate_bank(questions)
     if problems:
         raise QuestionBankError(problems)
 
+    if question_repository.version_has_responses(session, version):
+        raise QuestionBankError(
+            [
+                f"La versión {version} ya tiene respuestas: no se modifica, ni siquiera para "
+                "reordenarla o recargarla igual. Si el banco cambió, cargá el banco como una "
+                "versión nueva."
+            ]
+        )
+
     existing = {q.display_order: q for q in question_repository.questions_for_version(session, version)}
-    with_responses = question_repository.question_ids_with_responses(
-        session, [q.id for q in existing.values()]
-    )
     version_was_active = any(q.is_active for q in existing.values())
 
     inserts: list[BankQuestion] = []
     updates: list[tuple[Question, BankQuestion]] = []
     unchanged = 0
-    conflicts: list[str] = []
 
     for bank_question in questions:
         current = existing.pop(bank_question.display_order, None)
@@ -148,23 +154,9 @@ def load_bank(
             inserts.append(bank_question)
         elif _same_content(current, bank_question):
             unchanged += 1
-        elif current.id in with_responses:
-            conflicts.append(
-                f"La pregunta en la posición {bank_question.display_order} de la versión {version} "
-                "ya tiene respuestas y el banco la modifica. No se toca."
-            )
         else:
             updates.append((current, bank_question))
-
     removals = list(existing.values())
-    for question in removals:
-        if question.id in with_responses:
-            conflicts.append(
-                f"La pregunta en la posición {question.display_order} de la versión {version} "
-                "ya tiene respuestas y no está en el banco. No se borra."
-            )
-    if conflicts:
-        raise QuestionBankError(conflicts)
 
     question_repository.delete_options(session, [q.id for q in removals] + [q.id for q, _ in updates])
     question_repository.delete_questions(session, [q.id for q in removals])

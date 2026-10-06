@@ -15,8 +15,10 @@ Rules that stop the load: an unknown system or group label; a group that does no
 item's system; a scenario item that does not cover its system's three groups exactly once; a
 Likert item without five options or mixing groups.
 
-Idempotent: re-importing the same version leaves identical questions alone. A question that already
-has responses is never modified nor removed; if the CSV would require it, nothing is saved.
+Questions are identified by (version, display_order). Re-importing a version that has no responses
+yet leaves identical questions alone and rewrites the rest in place, so the version ends up exactly
+as the CSV. A version with any response is frozen: re-importing it is rejected whole, even unchanged
+or only reordered, and a changed bank has to be loaded as a new version.
 `--activate` activates this version and deactivates every other one in the same transaction.
 `--dry-run` runs the whole load and rolls it back.
 

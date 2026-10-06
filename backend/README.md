@@ -43,9 +43,9 @@ python scripts/import_question_bank.py --csv banco.csv --version 1 --dry-run
 python scripts/import_question_bank.py --csv banco.csv --version 1 --activate
 ```
 
-Reimportar la misma versión no duplica. Una pregunta que ya tiene respuestas no se modifica ni se
-borra: si el CSV lo pide, no se guarda nada. `--activate` desactiva las demás versiones en la misma
-transacción.
+Reimportar una versión sin respuestas no duplica: la deja igual al CSV. Una versión que ya tiene
+respuestas no se toca más: reimportarla se rechaza entera, y un banco cambiado se carga como versión
+nueva. `--activate` desactiva las demás versiones en la misma transacción.
 
 ## Correr los tests
 
