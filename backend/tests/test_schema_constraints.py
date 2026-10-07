@@ -31,6 +31,7 @@ from app.db.models.enums import (
     SubscriptionStatus,
     SubscriptionTier,
 )
+from tests.db_helpers import option_ids
 
 NOW = datetime(2026, 10, 6, tzinfo=timezone.utc)
 
@@ -177,7 +178,7 @@ def test_completed_attempt_needs_completed_at(db_session):
 
 def test_response_whose_option_belongs_to_another_question_is_rejected(db_session):
     question = make_question(db_session)
-    other_question = make_question(db_session)
+    foreign_option = make_question(db_session).answer_options[0]
     attempt = make_attempt(db_session, make_user(db_session))
     assert_violates(
         db_session,
@@ -185,9 +186,11 @@ def test_response_whose_option_belongs_to_another_question_is_rejected(db_sessio
         Response(
             test_attempt_id=attempt.id,
             question_id=question.id,
-            selected_option_id=other_question.answer_options[0].id,
+            selected_option_id=foreign_option.id,
             answered_at=NOW,
             display_order=1,
+            # Listed as served, so the CHECK on option_order passes and only the foreign key is tested.
+            option_order=[*option_ids(question), foreign_option.id],
         ),
     )
 
@@ -203,6 +206,7 @@ def test_response_with_an_option_of_its_own_question_is_accepted(db_session):
             selected_option_id=question.answer_options[1].id,
             answered_at=NOW,
             display_order=1,
+            option_order=option_ids(question),
         ),
     )
 
@@ -212,7 +216,12 @@ def test_unanswered_response_row_is_accepted(db_session):
     attempt = make_attempt(db_session, make_user(db_session))
     add(
         db_session,
-        Response(test_attempt_id=attempt.id, question_id=question.id, display_order=1),
+        Response(
+            test_attempt_id=attempt.id,
+            question_id=question.id,
+            display_order=1,
+            option_order=option_ids(question),
+        ),
     )
 
 
@@ -220,7 +229,12 @@ def test_unanswered_response_row_is_accepted(db_session):
 def test_selected_option_and_answered_at_go_together(db_session, with_option):
     question = make_question(db_session)
     attempt = make_attempt(db_session, make_user(db_session))
-    response = Response(test_attempt_id=attempt.id, question_id=question.id, display_order=1)
+    response = Response(
+        test_attempt_id=attempt.id,
+        question_id=question.id,
+        display_order=1,
+        option_order=option_ids(question),
+    )
     if with_option:
         response.selected_option_id = question.answer_options[0].id
     else:
@@ -231,22 +245,76 @@ def test_selected_option_and_answered_at_go_together(db_session, with_option):
 def test_one_response_per_question_within_an_attempt(db_session):
     question = make_question(db_session)
     attempt = make_attempt(db_session, make_user(db_session))
-    add(db_session, Response(test_attempt_id=attempt.id, question_id=question.id, display_order=1))
+    add(
+        db_session,
+        Response(
+            test_attempt_id=attempt.id,
+            question_id=question.id,
+            display_order=1,
+            option_order=option_ids(question),
+        ),
+    )
     assert_violates(
         db_session,
         "uq_responses_test_attempt_id_question_id",
-        Response(test_attempt_id=attempt.id, question_id=question.id, display_order=2),
+        Response(
+            test_attempt_id=attempt.id,
+            question_id=question.id,
+            display_order=2,
+            option_order=option_ids(question),
+        ),
     )
 
 
 def test_display_order_is_unique_within_an_attempt(db_session):
     first, second = make_question(db_session), make_question(db_session)
     attempt = make_attempt(db_session, make_user(db_session))
-    add(db_session, Response(test_attempt_id=attempt.id, question_id=first.id, display_order=1))
+    add(
+        db_session,
+        Response(
+            test_attempt_id=attempt.id,
+            question_id=first.id,
+            display_order=1,
+            option_order=option_ids(first),
+        ),
+    )
     assert_violates(
         db_session,
         "uq_responses_test_attempt_id_display_order",
-        Response(test_attempt_id=attempt.id, question_id=second.id, display_order=1),
+        Response(
+            test_attempt_id=attempt.id,
+            question_id=second.id,
+            display_order=1,
+            option_order=option_ids(second),
+        ),
+    )
+
+
+def test_option_order_cannot_be_empty(db_session):
+    question = make_question(db_session)
+    attempt = make_attempt(db_session, make_user(db_session))
+    assert_violates(
+        db_session,
+        "ck_responses_option_order_not_empty",
+        Response(test_attempt_id=attempt.id, question_id=question.id, display_order=1, option_order=[]),
+    )
+
+
+def test_selected_option_must_be_one_of_the_options_served(db_session):
+    question = make_question(db_session)
+    attempt = make_attempt(db_session, make_user(db_session))
+    served, withheld = option_ids(question)[:2], question.answer_options[2]
+    assert_violates(
+        db_session,
+        "ck_responses_selected_option_in_option_order",
+        Response(
+            test_attempt_id=attempt.id,
+            question_id=question.id,
+            selected_option_id=withheld.id,
+            answered_at=NOW,
+            display_order=1,
+            option_order=served,
+        ),
     )
 
 
@@ -273,6 +341,7 @@ def test_deleting_a_parent_of_responses_is_restricted(db_session, table, constra
             selected_option_id=option.id,
             answered_at=NOW,
             display_order=1,
+            option_order=option_ids(question),
         ),
     )
     target = {"test_attempts": attempt.id, "questions": question.id, "answer_options": option.id}[table]

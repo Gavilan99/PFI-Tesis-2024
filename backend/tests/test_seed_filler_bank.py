@@ -4,6 +4,7 @@ from app.db.models.enums import GROUPS_BY_SYSTEM, GroupingSystem, QuestionType
 from app.repositories import question_repository
 from app.services.question_bank import load_bank, validate_bank
 from scripts.seed_filler_bank import FILLER_VERSION, build_filler_bank
+from tests.db_helpers import option_ids
 
 
 def test_filler_has_the_shape_of_bank_v1():
@@ -84,7 +85,14 @@ def test_seed_leaves_version_zero_alone_once_it_has_responses(db_session, monkey
     attempt = TestAttempt(user_id=user.id, tier=AttemptTier.FREE_REDUCED, questionnaire_version=0)
     db_session.add(attempt)
     db_session.flush()
-    db_session.add(Response(test_attempt_id=attempt.id, question_id=question.id, display_order=1))
+    db_session.add(
+        Response(
+            test_attempt_id=attempt.id,
+            question_id=question.id,
+            display_order=1,
+            option_order=option_ids(question),
+        )
+    )
     db_session.flush()
 
     @contextmanager

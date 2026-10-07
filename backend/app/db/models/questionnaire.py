@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Any
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -99,7 +99,8 @@ class Response(Base):
     """One row per question served to an attempt, created with the attempt.
 
     `selected_option_id` NULL means "asked and not answered"; no row means "not asked".
-    `display_order` is the item's position inside that attempt.
+    `display_order` is the item's position inside that attempt. `option_order` is the order its options
+    were served in: shuffled per attempt for scenario items, bank order for Likert items.
     """
 
     __tablename__ = "responses"
@@ -115,6 +116,11 @@ class Response(Base):
             "(selected_option_id IS NULL) = (answered_at IS NULL)",
             name="selected_option_matches_answered_at",
         ),
+        sa.CheckConstraint("cardinality(option_order) > 0", name="option_order_not_empty"),
+        sa.CheckConstraint(
+            "selected_option_id IS NULL OR selected_option_id = ANY (option_order)",
+            name="selected_option_in_option_order",
+        ),
     )
 
     id: Mapped[uuid.UUID] = uuid_pk()
@@ -125,3 +131,4 @@ class Response(Base):
     ordering_response: Mapped[Any | None] = mapped_column(JSONB)
     answered_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
     display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False)
+    option_order: Mapped[list[uuid.UUID]] = mapped_column(ARRAY(UUID(as_uuid=True)), nullable=False)

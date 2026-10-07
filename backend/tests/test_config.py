@@ -50,3 +50,24 @@ def test_create_app_in_production_without_required_vars_fails_naming_the_variabl
 
     with pytest.raises(ConfigError, match="SECRET_KEY"):
         create_app("production")
+
+
+def test_subset_sizes_default_to_20_and_60(monkeypatch):
+    monkeypatch.delenv("SUBSET_SIZE_FREE_REDUCED", raising=False)
+    monkeypatch.delenv("SUBSET_SIZE_PAID_FULL", raising=False)
+    config = get_config("test")
+    assert (config.SUBSET_SIZE_FREE_REDUCED, config.SUBSET_SIZE_PAID_FULL) == (20, 60)
+
+
+def test_subset_sizes_come_from_the_environment(monkeypatch):
+    monkeypatch.setenv("SUBSET_SIZE_FREE_REDUCED", "12")
+    monkeypatch.setenv("SUBSET_SIZE_PAID_FULL", "40")
+    config = get_config("test")
+    assert (config.SUBSET_SIZE_FREE_REDUCED, config.SUBSET_SIZE_PAID_FULL) == (12, 40)
+
+
+@pytest.mark.parametrize("value", ["21", "0", "-4", "veinte", "2.5"])
+def test_a_subset_size_that_does_not_split_across_the_four_systems_fails(monkeypatch, value):
+    monkeypatch.setenv("SUBSET_SIZE_FREE_REDUCED", value)
+    with pytest.raises(ConfigError, match="SUBSET_SIZE_FREE_REDUCED"):
+        get_config("test")

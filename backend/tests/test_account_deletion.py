@@ -23,6 +23,7 @@ from app.db.models import (
 from app.db.models.enums import AttemptStatus, GroupingSystem, SubscriptionStatus, SubscriptionTier
 from app.exceptions import IdentityUnavailable
 from tests.auth_helpers import PASSWORD, assert_error, register, registered
+from tests.db_helpers import option_ids
 from tests.test_schema_constraints import add, make_attempt, make_question
 
 NOW = datetime(2026, 10, 6, tzinfo=timezone.utc)
@@ -66,6 +67,7 @@ def account(api, db_session):
             selected_option_id=question.answer_options[0].id,
             answered_at=NOW,
             display_order=1,
+            option_order=option_ids(question),
         ),
         ClassifierPrediction(
             test_attempt_id=attempt.id,

@@ -36,3 +36,8 @@ def bound_session(app):
         session_factory.configure(bind=original_bind)
         transaction.rollback()
         connection.close()
+
+
+def option_ids(question) -> list:
+    """Bank order: what a response row stores as `option_order` when nothing shuffled it."""
+    return [option.id for option in question.answer_options]

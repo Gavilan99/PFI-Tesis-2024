@@ -11,6 +11,7 @@ from app.repositories import question_repository
 from app.services.question_bank import QuestionBankError, load_bank, validate_bank
 from scripts import import_question_bank
 from scripts.import_question_bank import CsvFormatError, read_bank_csv
+from tests.db_helpers import option_ids
 
 FIXTURE = Path(__file__).parent / "fixtures" / "question_bank_filler.csv"
 
@@ -231,6 +232,7 @@ def _serve(db_session, question: Question) -> None:
             selected_option_id=question.answer_options[0].id,
             answered_at=datetime.now(timezone.utc),
             display_order=1,
+            option_order=option_ids(question),
         )
     )
     db_session.flush()
