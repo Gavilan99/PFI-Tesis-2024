@@ -10,7 +10,8 @@ va en camelCase. Todo error tiene la misma forma:
 ## Autenticación
 
 Toda ruta exige `Authorization: Bearer <accessToken>`, salvo `GET /api/health`,
-`GET /api/health/ready`, `POST /api/auth/register` y `POST /api/auth/login`. Se acepta sólo el access
+`GET /api/health/ready`, `POST /api/auth/register`, `POST /api/auth/login` y
+`POST /api/contact-messages`. Se acepta sólo el access
 token del user pool configurado: se verifican la firma, el emisor, el `client_id`, el vencimiento y
 `token_use = access`. Un token ausente, vencido, mal firmado o de otro pool responde
 `401 UNAUTHORIZED`. La identidad sale del token y de ningún otro lado.
@@ -244,3 +245,51 @@ es ajeno, está `in_progress` o `abandoned`) responde lo mismo:
 | 404 | `RESULT_NOT_FOUND` | El resultado no existe. |
 
 Un `{id}` que no es un UUID responde `404 NOT_FOUND`.
+
+## Feature 5: comentarios y contacto
+
+### `POST /api/feedback` — `submitFeedback(input)`
+
+Cuerpo: exactamente `SubmitFeedbackInput`, con los tres campos:
+
+```json
+{"testAttemptId": "uuid | null", "rating": 4, "comment": "string | null"}
+```
+
+`rating` es un entero de 1 a 5 (ni `4.5`, ni `"4"`, ni `true`). `comment` hasta 2000 caracteres; vacío
+o en blanco se guarda como `null`. `testAttemptId` en `null` es un comentario general (desde el
+perfil); si viene, el intento tiene que ser del usuario, en cualquier estado. El usuario sale del
+token. `204` sin cuerpo: los comentarios no se le vuelven a mostrar a nadie desde la API. Al borrar
+la cuenta, `comment` se anula y `rating` queda.
+
+| Status | `code` | `message` |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | Los datos enviados no son válidos. |
+| 404 | `ATTEMPT_NOT_FOUND` | El intento no existe. (Si no existe o es ajeno.) |
+
+### `POST /api/contact-messages` — `submitContactMessage(input)`
+
+**Pública**: no lleva token. Cuerpo: exactamente `SubmitContactMessageInput`:
+
+```json
+{"name": "string", "email": "string", "message": "string"}
+```
+
+`name` de 1 a 100 caracteres; `email` hasta 254, una dirección ASCII común (`usuario@dominio.tld`);
+`message` de 10 a 5000. Se manda un mail con SES a `CONTACT_MAIL_TO`, desde `CONTACT_MAIL_FROM` (por
+defecto la misma casilla), con `Reply-To` en el email de quien escribe y el asunto
+`Contacto NureonAI: <nombre>`. **No se guarda nada**: ni tabla, ni archivo, ni el contenido en el log.
+Los valores que van a cabeceras se reducen a una línea antes: un nombre con saltos de línea no agrega
+cabeceras. `204` sin cuerpo.
+
+Límite: `CONTACT_RATE_LIMIT` mensajes (5) por dirección de origen cada
+`CONTACT_RATE_WINDOW_SECONDS` (3600). Los cuerpos rechazados por validación no cuentan.
+
+| Status | `code` | `message` |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | Los datos enviados no son válidos. |
+| 429 | `CONTACT_RATE_LIMITED` | Enviaste varios mensajes seguidos. Probá de nuevo más tarde. |
+| 503 | `CONTACT_UNAVAILABLE` | No pudimos enviar tu mensaje. Probá de nuevo en unos minutos. |
+
+El 503 es una falla de SES: queda en el log con el código de error y nada del mensaje. No se encola
+ni se reintenta: la persona lo vuelve a mandar.

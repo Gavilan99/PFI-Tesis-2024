@@ -122,3 +122,17 @@ class QuestionnaireUnavailable(AppError):
     status_code = 503
     code = "QUESTIONNAIRE_UNAVAILABLE"
     message = "El cuestionario no está disponible en este momento. Probá de nuevo más tarde."
+
+
+class ContactRateLimited(AppError):
+    status_code = 429
+    code = "CONTACT_RATE_LIMITED"
+    message = "Enviaste varios mensajes seguidos. Probá de nuevo más tarde."
+
+
+class ContactUnavailable(AppError):
+    """The mail could not be sent. Nothing was kept: the person sends it again."""
+
+    status_code = 503
+    code = "CONTACT_UNAVAILABLE"
+    message = "No pudimos enviar tu mensaje. Probá de nuevo en unos minutos."

@@ -72,6 +72,12 @@ python -m app.ml.pipeline         # el scaffold de cuatro clasificadores, sobre 
 python -m app.ml.legacy.train     # reentrena el árbol de 2024 y lo compara con el guardado; no escribe
 ```
 
+## Formulario de contacto
+
+`POST /api/contact-messages` manda un mail y no guarda nada. Con `MAIL_SENDER=local` (por defecto en
+`development` y `test`) el mail no sale del proceso. Con `MAIL_SENDER=ses` se manda con SES a
+`CONTACT_MAIL_TO`; la configuración de AWS está en [docs/aws-setup.md](./docs/aws-setup.md).
+
 ## Variables de entorno
 
 Ver [.env.example](./.env.example). En `production`, `SECRET_KEY`, `DATABASE_URL` y
