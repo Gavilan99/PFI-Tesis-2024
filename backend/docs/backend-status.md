@@ -8,13 +8,9 @@ anonimización (`DELETE /api/users/me`). Todo testeado contra el doble local.
 
 ### Pendiente
 
-- **El user pool de Cognito no existe todavía.** La implementación real (`CognitoIdentityProvider`)
-  está escrita y testeada contra un cliente boto3 con stubs, pero no se probó contra un pool de
-  verdad. Al crearlo: ingreso por email, sin MFA, app client sin secreto con sólo
-  `ALLOW_ADMIN_USER_PASSWORD_AUTH`, y política de contraseña de mínimo 8 sin exigir tipos de
-  caracter (lo que pide el formulario de registro). El backend necesita
-  `cognito-idp:AdminCreateUser`, `AdminSetUserPassword`, `AdminInitiateAuth`, `AdminGetUser` y
-  `AdminDeleteUser` sobre ese pool.
+- **Verificación manual contra Cognito real.** El user pool y el app client existen desde el
+  2026-10-07 (ver [aws-setup.md](./aws-setup.md)); falta recorrer registro, ingreso y perfil contra
+  ellos.
 - **Credenciales de AWS.** Todo comando lleva `--profile nureon` (el usuario de IAM `nureon-dev`).
   El backend recibe el perfil por `AWS_PROFILE` y se lo pasa a boto3 de forma explícita; `default`
   se rechaza al arrancar, porque en las máquinas de desarrollo tiene acceso completo a la cuenta.
