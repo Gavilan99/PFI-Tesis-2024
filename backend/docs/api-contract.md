@@ -85,3 +85,128 @@ Sin pantalla en el frontend (PA-7). Borrado blando con anonimización según la 
 cuenta" de CLAUDE.md, y borrado del usuario en el proveedor de identidad. `204` sin cuerpo. Después,
 el token viejo responde `401` y el mismo email se puede volver a registrar. Si el proveedor falla,
 `503 IDENTITY_UNAVAILABLE` y no se anonimiza nada.
+
+## Feature 3: intentos
+
+`TestAttempt` (igual a `test-attempt.model.ts`):
+
+```json
+{
+  "id": "uuid",
+  "userId": "uuid | null",
+  "subjectId": "uuid | null",
+  "tier": "free_reduced | paid_full",
+  "questionnaireVersion": 0,
+  "status": "in_progress | completed | abandoned",
+  "startedAt": "2026-10-07T04:39:31.343081Z",
+  "completedAt": "string | null"
+}
+```
+
+Un intento ajeno responde igual que uno que no existe, en todos los endpoints de abajo:
+
+| Status | `code` | `message` |
+|---|---|---|
+| 404 | `ATTEMPT_NOT_FOUND` | El intento no existe. |
+
+Un `{id}` que no es un UUID responde `404 NOT_FOUND`.
+
+### `POST /api/attempts` — `createTestAttempt(userId)`
+
+Sin cuerpo. Si viene uno, sólo puede traer `userId`, que se ignora. El tier lo decide el servidor
+(hoy siempre `free_reduced`; la Feature 6 lo resuelve por suscripción). Si el usuario tenía un intento
+`in_progress`, pasa a `abandoned` en la misma transacción. Se usa la versión más alta con preguntas
+activas, y el subset queda fijado: `SUBSET_SIZE_FREE_REDUCED` (20) o `SUBSET_SIZE_PAID_FULL` (60)
+preguntas, la misma cantidad de cada sistema de agrupamiento, mezcladas. `201` con el `TestAttempt`.
+
+| Status | `code` | `message` |
+|---|---|---|
+| 400 | `TIER_NOT_ACCEPTED` | El tipo de test lo decide el servidor: no se puede elegir al crearlo. |
+| 400 | `VALIDATION_ERROR` | Los datos enviados no son válidos. |
+| 503 | `QUESTIONNAIRE_UNAVAILABLE` | El cuestionario no está disponible en este momento. Probá de nuevo más tarde. |
+
+El 503 es un problema de carga del banco (no hay versión activa, o algún sistema no alcanza para el
+subset), no del usuario: queda en el log como error. No se crea ni se abandona nada.
+
+### `GET /api/attempts/{id}/questions` — `getQuestions(attemptId)`
+
+`200` con **el subset entero**, en el orden del intento. Recargar devuelve lo mismo.
+
+```json
+[
+  {
+    "id": "uuid",
+    "questionType": "scenario | multiple_choice",
+    "promptText": "string",
+    "displayOrder": 1,
+    "answerOptions": [
+      {"id": "uuid", "questionId": "uuid", "optionText": "string", "displayOrder": 1}
+    ]
+  }
+]
+```
+
+Nada más. `displayOrder` es la posición servida, no la del banco: de 1 a N para las preguntas y de 1
+a k para las opciones. Las opciones de los ítems `scenario` salen mezcladas por intento (y siempre en
+el mismo orden para ese intento); las de los Likert (`multiple_choice`), en el orden del banco, que
+es la escala. `grouping_system` y `group_label` no salen nunca.
+
+### `POST /api/attempts/{id}/responses` — `submitResponse(attemptId, response)`
+
+Cuerpo: exactamente `NewResponseInput`, con los cuatro campos:
+
+```json
+{"questionId": "uuid", "selectedOptionId": "uuid", "freeTextResponse": null, "orderingResponse": null}
+```
+
+`freeTextResponse` y `orderingResponse` tienen que venir en `null`. Es un upsert por pregunta:
+responder otra vez reemplaza la respuesta anterior. `200` con el `TestResponse`:
+
+```json
+{
+  "id": "uuid",
+  "testAttemptId": "uuid",
+  "questionId": "uuid",
+  "selectedOptionId": "uuid",
+  "freeTextResponse": null,
+  "orderingResponse": null,
+  "answeredAt": "2026-10-07T04:39:56.012558Z"
+}
+```
+
+| Status | `code` | `message` |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | Los datos enviados no son válidos. |
+| 400 | `QUESTION_NOT_IN_ATTEMPT` | La pregunta no forma parte de este intento. |
+| 400 | `OPTION_NOT_IN_QUESTION` | La opción elegida no corresponde a esa pregunta. |
+| 409 | `ATTEMPT_NOT_IN_PROGRESS` | El intento ya no está en curso. |
+
+### `GET /api/attempts/{id}/responses` — `getResponses(attemptId)`
+
+`200` con los `TestResponse` ya respondidos, en el orden del intento. Las preguntas todavía sin
+responder no aparecen.
+
+### `POST /api/attempts/{id}/complete` — `completeTestAttempt(attemptId)`
+
+Cierra el intento. `200` con el `TestAttempt` en `completed`. Llamarlo otra vez devuelve lo mismo y
+no cambia nada. El resultado no se calcula acá todavía (Feature 4.1).
+
+| Status | `code` | `message` |
+|---|---|---|
+| 409 | `ATTEMPT_INCOMPLETE` | Quedan preguntas sin responder: el test no se puede cerrar todavía. |
+| 409 | `ATTEMPT_NOT_IN_PROGRESS` | El intento ya no está en curso. (Si está `abandoned`.) |
+
+### `GET /api/attempts/latest` — `getLatestAttempt(userId)`
+
+`200` con el intento más reciente del usuario, en cualquier estado. **Sin intentos, `200` con el
+cuerpo `null`**: no tener intentos no es un error, y es lo que el contrato devuelve.
+
+### `GET /api/attempts/{id}` — `getAttempt(attemptId)`
+
+`200` con el `TestAttempt`. Si no existe o es ajeno, `404 ATTEMPT_NOT_FOUND` (decidido el 07-10): el
+`null` del contrato lo produce `HttpApiService` (Feature 7) al recibir el 404. En `/resultados`, null
+y error terminan en el mismo estado de error, así que la pantalla no cambia.
+
+### `GET /api/attempts` — `getAttemptHistory(userId)`
+
+`200` con todos los intentos del usuario, del más nuevo al más viejo. Sin intentos, `[]`.
