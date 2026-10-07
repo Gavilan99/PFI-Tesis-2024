@@ -3,6 +3,8 @@ import logging
 from flask import Flask, jsonify
 from werkzeug.exceptions import HTTPException
 
+from app.exceptions import AppError
+
 logger = logging.getLogger(__name__)
 
 _MESSAGES: dict[int, tuple[str, str]] = {
@@ -24,6 +26,10 @@ def _error_response(status_code: int, code: str, message: str):
 
 
 def register_error_handlers(app: Flask) -> None:
+    @app.errorhandler(AppError)
+    def handle_app_error(exc: AppError):
+        return _error_response(exc.status_code, exc.code, exc.message)
+
     @app.errorhandler(HTTPException)
     def handle_http_exception(exc: HTTPException):
         code, message = _MESSAGES.get(exc.code or 500, _DEFAULT)
