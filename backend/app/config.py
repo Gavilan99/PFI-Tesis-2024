@@ -33,6 +33,23 @@ def _split_origins(raw: str) -> list[str]:
 
 IDENTITY_PROVIDERS = ("cognito", "local")
 
+# The subset is balanced across the four grouping systems, so its size must split evenly among them.
+GROUPING_SYSTEM_COUNT = 4
+
+
+def _subset_size(name: str, default: int) -> int:
+    raw = os.environ.get(name, str(default)).strip()
+    try:
+        size = int(raw)
+    except ValueError:
+        raise ConfigError(f"{name} tiene que ser un número entero; vale '{raw}'.") from None
+    if size <= 0 or size % GROUPING_SYSTEM_COUNT:
+        raise ConfigError(
+            f"{name} tiene que ser un múltiplo positivo de {GROUPING_SYSTEM_COUNT}, "
+            f"para repartirse en partes iguales entre los sistemas de agrupamiento; vale {size}."
+        )
+    return size
+
 
 def _identity_provider(default: str) -> str:
     name = os.environ.get("IDENTITY_PROVIDER", default).strip().lower()
@@ -57,6 +74,10 @@ class BaseConfig:
         self.COGNITO_APP_CLIENT_ID = os.environ.get("COGNITO_APP_CLIENT_ID", "")
 
         self.AWS_PROFILE = os.environ.get("AWS_PROFILE") or None
+
+        # Questions served per attempt tier, split evenly across the grouping systems.
+        self.SUBSET_SIZE_FREE_REDUCED = _subset_size("SUBSET_SIZE_FREE_REDUCED", 20)
+        self.SUBSET_SIZE_PAID_FULL = _subset_size("SUBSET_SIZE_PAID_FULL", 60)
 
     def _set_identity_provider(self, default: str, *, profile_required: bool) -> None:
         self.IDENTITY_PROVIDER = _identity_provider(default)

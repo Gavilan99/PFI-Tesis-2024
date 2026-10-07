@@ -2,6 +2,7 @@ import os
 
 from flask import Flask
 
+from app.blueprints.attempts import attempts_bp
 from app.blueprints.auth import auth_bp
 from app.blueprints.core import core_bp
 from app.blueprints.users import users_bp
@@ -37,5 +38,6 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(core_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(users_bp)
+    app.register_blueprint(attempts_bp)
 
     return app

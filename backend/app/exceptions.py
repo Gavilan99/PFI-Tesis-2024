@@ -60,3 +60,49 @@ class IdentityUnavailable(AppError):
     status_code = 503
     code = "IDENTITY_UNAVAILABLE"
     message = "El servicio de cuentas no está disponible. Probá de nuevo en unos minutos."
+
+
+class TierNotAccepted(AppError):
+    status_code = 400
+    code = "TIER_NOT_ACCEPTED"
+    message = "El tipo de test lo decide el servidor: no se puede elegir al crearlo."
+
+
+class AttemptNotFound(AppError):
+    """Also what someone else's attempt answers: a foreign resource is 404, never 403."""
+
+    status_code = 404
+    code = "ATTEMPT_NOT_FOUND"
+    message = "El intento no existe."
+
+
+class AttemptNotInProgress(AppError):
+    status_code = 409
+    code = "ATTEMPT_NOT_IN_PROGRESS"
+    message = "El intento ya no está en curso."
+
+
+class AttemptIncomplete(AppError):
+    status_code = 409
+    code = "ATTEMPT_INCOMPLETE"
+    message = "Quedan preguntas sin responder: el test no se puede cerrar todavía."
+
+
+class QuestionNotInAttempt(AppError):
+    status_code = 400
+    code = "QUESTION_NOT_IN_ATTEMPT"
+    message = "La pregunta no forma parte de este intento."
+
+
+class OptionNotInQuestion(AppError):
+    status_code = 400
+    code = "OPTION_NOT_IN_QUESTION"
+    message = "La opción elegida no corresponde a esa pregunta."
+
+
+class QuestionnaireUnavailable(AppError):
+    """No active version, or one too small to fill a balanced subset. A setup problem, not the user's."""
+
+    status_code = 503
+    code = "QUESTIONNAIRE_UNAVAILABLE"
+    message = "El cuestionario no está disponible en este momento. Probá de nuevo más tarde."
