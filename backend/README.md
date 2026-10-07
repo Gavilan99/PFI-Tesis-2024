@@ -56,6 +56,22 @@ docker compose up -d
 pytest
 ```
 
+## Clasificación y resultado
+
+Cerrar un intento calcula su resultado con el clasificador que elige `CLASSIFIER_BACKEND`:
+
+- `stub` (por defecto en `development` y `test`): conteo por grupo. Determinístico. No es ML.
+- `legacy_tree`: el árbol de decisión de 2024, el del documento original.
+- `trained`: los cuatro Random Forest. Todavía no existe: la app no arranca con este valor.
+
+Cambiar de uno a otro es cambiar la variable y reiniciar. En `production` es obligatoria. Detalle y
+mediciones en [app/ml/README.md](./app/ml/README.md).
+
+```bash
+python -m app.ml.pipeline         # el scaffold de cuatro clasificadores, sobre datos sintéticos
+python -m app.ml.legacy.train     # reentrena el árbol de 2024 y lo compara con el guardado; no escribe
+```
+
 ## Variables de entorno
 
 Ver [.env.example](./.env.example). En `production`, `SECRET_KEY`, `DATABASE_URL` y

@@ -188,13 +188,18 @@ responder no aparecen.
 
 ### `POST /api/attempts/{id}/complete` — `completeTestAttempt(attemptId)`
 
-Cierra el intento. `200` con el `TestAttempt` en `completed`. Llamarlo otra vez devuelve lo mismo y
-no cambia nada. El resultado no se calcula acá todavía (Feature 4.1).
+Cierra el intento y calcula su resultado, en la misma transacción (Feature 4.1). `200` con el
+`TestAttempt` en `completed`. Llamarlo otra vez devuelve lo mismo y no cambia nada: no vuelve a
+clasificar ni pisa el resultado.
 
 | Status | `code` | `message` |
 |---|---|---|
 | 409 | `ATTEMPT_INCOMPLETE` | Quedan preguntas sin responder: el test no se puede cerrar todavía. |
 | 409 | `ATTEMPT_NOT_IN_PROGRESS` | El intento ya no está en curso. (Si está `abandoned`.) |
+| 500 | `RESULT_NOT_GENERATED` | No pudimos calcular tu resultado. El test sigue abierto: probá cerrarlo de nuevo. |
+
+El 500 es una falla del clasificador: queda en el log, y el intento sigue `in_progress` sin resultado
+ni predicciones, así que se puede volver a cerrar.
 
 ### `GET /api/attempts/latest` — `getLatestAttempt(userId)`
 
@@ -210,3 +215,32 @@ y error terminan en el mismo estado de error, así que la pantalla no cambia.
 ### `GET /api/attempts` — `getAttemptHistory(userId)`
 
 `200` con todos los intentos del usuario, del más nuevo al más viejo. Sin intentos, `[]`.
+
+## Feature 4.1: resultado
+
+`Result` (igual a `result.model.ts`):
+
+```json
+{
+  "id": "uuid",
+  "testAttemptId": "uuid",
+  "eneatype": 9,
+  "descriptionText": "string",
+  "generatedAt": "2026-10-07T20:36:28.372580Z"
+}
+```
+
+Nada más. Las predicciones de los cuatro clasificadores (grupo, probabilidades, versión de modelo) y
+el margen de confianza se guardan y no salen nunca: ni como número, ni derivados, ni en palabras.
+`descriptionText` es por ahora un texto provisorio fijo por eneatipo.
+
+### `GET /api/attempts/{id}/result` — `getResult(attemptId)`
+
+`200` con el `Result` del intento, si es propio y está `completed`. Cualquier otro caso (no existe,
+es ajeno, está `in_progress` o `abandoned`) responde lo mismo:
+
+| Status | `code` | `message` |
+|---|---|---|
+| 404 | `RESULT_NOT_FOUND` | El resultado no existe. |
+
+Un `{id}` que no es un UUID responde `404 NOT_FOUND`.
