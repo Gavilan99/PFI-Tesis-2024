@@ -1,10 +1,10 @@
 from flask import Flask
 from flask_cors import CORS
 from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
 
-session_factory = sessionmaker(autoflush=False, autocommit=False, future=True)
-Session = scoped_session(session_factory)
+from app.db.session import Session, session_factory
+
+__all__ = ["Session", "cors", "init_db", "session_factory"]
 
 cors = CORS()
 

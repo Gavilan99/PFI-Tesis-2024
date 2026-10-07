@@ -18,13 +18,16 @@ class User(Base):
     __table_args__ = (
         # NULLs do not collide, so anonymized rows (cognito_sub NULL) never conflict.
         sa.UniqueConstraint("cognito_sub"),
-        # Deletion anonymizes the email, so uniqueness only holds among live accounts.
+        # Deletion anonymizes the email, so uniqueness only holds among live accounts. Case-insensitive:
+        # `Juan@x.com` and `juan@x.com` are the same account.
         sa.Index(
             "uq_users_email_not_deleted",
-            "email",
+            sa.text("lower(email)"),
             unique=True,
             postgresql_where=sa.text("NOT is_deleted"),
         ),
+        # The application normalizes before writing; this makes a missed normalization fail loudly.
+        sa.CheckConstraint("email = lower(email)", name="email_is_lowercase"),
         sa.CheckConstraint(
             "is_deleted = (deleted_at IS NOT NULL)", name="deleted_at_matches_flag"
         ),

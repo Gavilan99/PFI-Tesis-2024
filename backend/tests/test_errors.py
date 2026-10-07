@@ -18,12 +18,14 @@ def test_405_has_unified_format(client):
 
 def test_unhandled_exception_returns_500_without_leaking_the_stack_trace():
     from app import create_app
+    from app.security import public
 
     # A fresh app instance: Flask refuses new routes once an app has handled
     # its first request, so this can't reuse the shared `app`/`client` fixtures.
     boom_app = create_app("test")
 
     @boom_app.route("/api/_test-only-boom")
+    @public
     def _boom():
         raise RuntimeError("kaboom: this must never reach the client")
 

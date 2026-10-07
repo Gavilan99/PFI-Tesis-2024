@@ -31,6 +31,17 @@ def _split_origins(raw: str) -> list[str]:
     return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
 
+IDENTITY_PROVIDERS = ("cognito", "local")
+
+
+def _identity_provider(default: str) -> str:
+    name = os.environ.get("IDENTITY_PROVIDER", default).strip().lower()
+    if name not in IDENTITY_PROVIDERS:
+        valid = ", ".join(IDENTITY_PROVIDERS)
+        raise ConfigError(f"IDENTITY_PROVIDER desconocido: '{name}'. Opciones válidas: {valid}")
+    return name
+
+
 class BaseConfig:
     TESTING = False
     DEBUG = False
@@ -41,6 +52,26 @@ class BaseConfig:
         self.CORS_ALLOWED_ORIGINS = _split_origins(
             os.environ.get("CORS_ALLOWED_ORIGINS", "")
         )
+        self.COGNITO_REGION = os.environ.get("COGNITO_REGION", "us-east-2")
+        self.COGNITO_USER_POOL_ID = os.environ.get("COGNITO_USER_POOL_ID", "")
+        self.COGNITO_APP_CLIENT_ID = os.environ.get("COGNITO_APP_CLIENT_ID", "")
+
+        self.AWS_PROFILE = os.environ.get("AWS_PROFILE") or None
+
+    def _set_identity_provider(self, default: str, *, profile_required: bool) -> None:
+        self.IDENTITY_PROVIDER = _identity_provider(default)
+        if self.IDENTITY_PROVIDER != "cognito":
+            return
+        self.COGNITO_USER_POOL_ID = _require("COGNITO_USER_POOL_ID")
+        self.COGNITO_APP_CLIENT_ID = _require("COGNITO_APP_CLIENT_ID")
+        # The `default` profile of a developer machine can hold full access to the account: boto3
+        # gets the profile from here, explicitly, and never falls back to it.
+        if self.AWS_PROFILE == "default":
+            raise ConfigError(
+                "AWS_PROFILE=default no está permitido: usá el perfil del proyecto (p. ej. nureon)."
+            )
+        if profile_required and not self.AWS_PROFILE:
+            raise ConfigError("Falta la variable de entorno obligatoria: AWS_PROFILE")
 
 
 class DevelopmentConfig(BaseConfig):
@@ -53,6 +84,7 @@ class DevelopmentConfig(BaseConfig):
         )
         if not self.CORS_ALLOWED_ORIGINS:
             self.CORS_ALLOWED_ORIGINS = ["http://localhost:4200"]
+        self._set_identity_provider(default="local", profile_required=True)
 
 
 class TestConfig(BaseConfig):
@@ -68,6 +100,8 @@ class TestConfig(BaseConfig):
         )
         if not self.CORS_ALLOWED_ORIGINS:
             self.CORS_ALLOWED_ORIGINS = ["http://localhost:4200"]
+        # The suite never talks to AWS, whatever a developer's .env selects.
+        self.IDENTITY_PROVIDER = "local"
 
 
 class ProductionConfig(BaseConfig):
@@ -79,6 +113,13 @@ class ProductionConfig(BaseConfig):
             raise ConfigError(
                 "Falta la variable de entorno obligatoria: CORS_ALLOWED_ORIGINS"
             )
+        if _identity_provider(default="cognito") == "local":
+            raise ConfigError(
+                "IDENTITY_PROVIDER=local es un doble para tests y desarrollo: "
+                "no se puede usar en producción."
+            )
+        # Deployed, credentials come from the platform's role, not from a profile file.
+        self._set_identity_provider(default="cognito", profile_required=False)
 
 
 _CONFIGS = {

@@ -44,6 +44,10 @@ def configure_logging(app: Flask) -> None:
         target.setLevel(level)
         target.propagate = False
 
+    # At DEBUG, botocore logs request parameters, a password among them. Never below WARNING.
+    for noisy in ("boto3", "botocore", "urllib3", "s3transfer"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
+
     @app.before_request
     def assign_request_id() -> None:
         g.request_id = request.headers.get("X-Request-Id", str(uuid.uuid4()))
