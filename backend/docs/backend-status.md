@@ -1,5 +1,50 @@
 # Estado del backend
 
+## Feature 5: comentarios y contacto
+
+Hecho: `POST /api/feedback` guarda el comentario (RF06) y `POST /api/contact-messages` manda el
+formulario de contacto por mail, sin guardarlo. Contrato en [api-contract.md](./api-contract.md).
+
+- **Comentarios.** El usuario sale del token; un intento ajeno es el mismo 404 que uno inexistente.
+  Rating entero estricto de 1 a 5 (además del CHECK de la tabla); comentario hasta 2000 caracteres.
+  No hay endpoint de lectura: alimentan la prueba piloto y se leen de la base.
+- **Borrado de cuenta**, de punta a punta: un usuario comenta por la API, borra su cuenta, y sus
+  comentarios quedan con `comment` en NULL y el `rating` intacto. Los de otros, sin tocar.
+- **Contacto, detrás de una costura** (`app/services/mail/`), igual que la identidad: `SesMailSender`
+  (SES v2, `SendEmail` con el MIME armado por el backend) y `LocalMailSender`, un doble en memoria
+  para tests y desarrollo. `MAIL_SENDER` elige; `test` fuerza `local` y `production` rechaza `local`.
+- **Nada del mensaje se guarda ni se loguea.** Un test vuelca todas las filas de todas las tablas y
+  todo lo que se loguea, a nivel DEBUG y en todos los loggers, y busca un marcador del mensaje.
+- **Inyección de cabeceras.** Nombre y email se reducen a una línea (todo carácter de control pasa a
+  espacio) antes de ir a `Reply-To` y `Subject`; además el email sólo acepta una dirección ASCII
+  común. El sobre de SES sale de la configuración, no del cuerpo.
+- **Límite por origen:** ventana deslizante en memoria (`app/services/rate_limit.py`), 5 por hora
+  por dirección por defecto.
+- **La cadena del historial** (Features 3 y 4.1) tiene su test de punta a punta: dos intentos
+  cerrados y uno en curso, el historial del más nuevo al más viejo, resultado para los cerrados y
+  404 para el abierto.
+
+### SES
+
+**Configurado el 2026-10-07**, por consola (el usuario `nureon-dev` no tiene permisos de SES ni de
+IAM): identidad de la casilla verificada en `us-east-2` y política en línea con `ses:SendEmail` y
+`ses:SendRawEmail` (el contenido raw se autoriza como `SendRawEmail`). Procedimiento en
+[aws-setup.md](./aws-setup.md#3-ses). La casilla va sólo en el `.env` local. Prueba manual con `curl`
+contra SES real: `204`, sin errores en el log.
+
+### Limitaciones declaradas
+
+- **El límite de envíos vive en la memoria de cada proceso.** Con varios workers de gunicorn cada
+  uno permite el límite; reiniciar lo pone en cero.
+- **Detrás del ALB (Feature 8) el origen es el balanceador**, no quien escribe: sin `ProxyFix`
+  configurado para un salto, todos comparten un solo contador. Va con el despliegue.
+- **Emails con caracteres no ASCII se rechazan** en el formulario de contacto. Es el precio de
+  aceptar sólo lo que puede ir a una cabecera sin codificar.
+- **Remitente de Gmail:** los mensajes probablemente caigan en spam hasta tener dominio propio (PA-21).
+- **El frontend no conoce los máximos** (100 / 254 / 5000 en contacto, 2000 en el comentario): un
+  texto más largo recibe el error genérico de envío. Agregar `maxlength` a los formularios es de la
+  Feature 7.
+
 ## Feature 4.1: resultado y ranura de inferencia
 
 Hecho: cerrar un intento lo clasifica y guarda, en la misma transacción, las cuatro filas de
