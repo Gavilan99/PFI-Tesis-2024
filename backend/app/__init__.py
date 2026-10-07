@@ -5,6 +5,7 @@ from flask import Flask
 from app.blueprints.attempts import attempts_bp
 from app.blueprints.auth import auth_bp
 from app.blueprints.core import core_bp
+from app.blueprints.results import results_bp
 from app.blueprints.users import users_bp
 from app.config import ConfigError, get_config, load_env_file
 from app.errors import register_error_handlers
@@ -44,5 +45,6 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(auth_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(attempts_bp)
+    app.register_blueprint(results_bp)
 
     return app

@@ -32,7 +32,9 @@ from app.exceptions import (
     QuestionNotInAttempt,
     QuestionnaireUnavailable,
 )
+from app.ml.classification import Classifier
 from app.repositories import attempt_repository
+from app.services import results
 from app.services.tiers import resolve_attempt_tier
 
 logger = logging.getLogger(__name__)
@@ -164,8 +166,9 @@ def answered_responses(user: User, attempt_id: uuid.UUID) -> list[Response]:
     return attempt_repository.answered_responses(session, attempt.id)
 
 
-def complete_attempt(user: User, attempt_id: uuid.UUID) -> TestAttempt:
-    """Close the attempt. Idempotent: closing a completed attempt returns it unchanged.
+def complete_attempt(user: User, attempt_id: uuid.UUID, classifier: Classifier) -> TestAttempt:
+    """Close the attempt and compute its result. Idempotent: closing a completed attempt returns it
+    unchanged, and neither classifies again nor touches the result it already has.
 
     Rejected while any item of the subset is unanswered: an incomplete attempt marked completed would
     contaminate the dataset. The interface never tries it.
@@ -181,7 +184,7 @@ def complete_attempt(user: User, attempt_id: uuid.UUID) -> TestAttempt:
         if attempt_repository.unanswered_count(session, attempt.id):
             raise AttemptIncomplete()
         attempt_repository.mark_completed(session, attempt)
-        _after_completion(session, attempt)
+        _after_completion(session, attempt, classifier)
         session.commit()
     except Exception:
         session.rollback()
@@ -189,14 +192,14 @@ def complete_attempt(user: User, attempt_id: uuid.UUID) -> TestAttempt:
     return attempt
 
 
-def _after_completion(session, attempt: TestAttempt) -> None:
-    """Feature 4.1 hooks in here: classify the attempt's answers and persist `classifier_predictions`
-    and `results`.
+def _after_completion(session, attempt: TestAttempt, classifier: Classifier) -> None:
+    """Classify the attempt's answers and persist `classifier_predictions` and `results`.
 
     Runs exactly once per attempt, inside the transaction that marks it completed, so an attempt is
-    never left completed without its result. The repeated call of an idempotent complete returns
-    before reaching it. Nothing to do until 4.1: results are not computed in this feature.
+    never left completed without its result: if the classification fails, the whole close is rolled
+    back. The repeated call of an idempotent complete returns before reaching it.
     """
+    results.record_result(session, attempt, classifier)
 
 
 def latest_attempt(user: User) -> TestAttempt | None:
