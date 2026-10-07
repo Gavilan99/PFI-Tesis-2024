@@ -13,7 +13,7 @@ hardcoded if/else branches.
 
 from __future__ import annotations
 
-from models.config import TYPE_TABLE
+from app.ml.config import TYPE_TABLE
 
 
 def score_types(proba_by_taxonomy: dict[str, dict[str, float]]) -> dict[int, float]:
