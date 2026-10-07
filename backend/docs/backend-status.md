@@ -4,13 +4,15 @@
 
 Hecho: registro e ingreso a través del backend, verificación de JWT en toda ruta no pública,
 provisioning de `users` atado a `cognito_sub`, perfil (`GET`/`PATCH /api/users/me`) y borrado con
-anonimización (`DELETE /api/users/me`). Todo testeado contra el doble local.
+anonimización (`DELETE /api/users/me`). Todo testeado contra el doble local y verificado a mano contra Cognito real.
 
-### Pendiente
+### Cognito
 
-- **Verificación manual contra Cognito real.** El user pool y el app client existen desde el
-  2026-10-07 (ver [aws-setup.md](./aws-setup.md)); falta recorrer registro, ingreso y perfil contra
-  ellos.
+- **Verificado contra Cognito real el 2026-10-07** (pool `us-east-2_ZllTXy0w0`, ver
+  [aws-setup.md](./aws-setup.md)): registro (cuenta `CONFIRMED`, `sub` igual a `users.cognito_sub`,
+  email guardado en minúsculas), ingreso, edición de perfil, email duplicado (409), contraseña
+  incorrecta (401), y borrado: fila anonimizada con los demográficos conservados, usuario borrado
+  del pool, token viejo en 401 e ingreso rechazado. Ni la contraseña ni el token aparecen en el log.
 - **Credenciales de AWS.** Todo comando lleva `--profile nureon` (el usuario de IAM `nureon-dev`).
   El backend recibe el perfil por `AWS_PROFILE` y se lo pasa a boto3 de forma explícita; `default`
   se rechaza al arrancar, porque en las máquinas de desarrollo tiene acceso completo a la cuenta.
