@@ -31,6 +31,17 @@ def _split_origins(raw: str) -> list[str]:
     return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
 
+IDENTITY_PROVIDERS = ("cognito", "local")
+
+
+def _identity_provider(default: str) -> str:
+    name = os.environ.get("IDENTITY_PROVIDER", default).strip().lower()
+    if name not in IDENTITY_PROVIDERS:
+        valid = ", ".join(IDENTITY_PROVIDERS)
+        raise ConfigError(f"IDENTITY_PROVIDER desconocido: '{name}'. Opciones válidas: {valid}")
+    return name
+
+
 class BaseConfig:
     TESTING = False
     DEBUG = False
@@ -41,6 +52,15 @@ class BaseConfig:
         self.CORS_ALLOWED_ORIGINS = _split_origins(
             os.environ.get("CORS_ALLOWED_ORIGINS", "")
         )
+        self.COGNITO_REGION = os.environ.get("COGNITO_REGION", "sa-east-1")
+        self.COGNITO_USER_POOL_ID = os.environ.get("COGNITO_USER_POOL_ID", "")
+        self.COGNITO_APP_CLIENT_ID = os.environ.get("COGNITO_APP_CLIENT_ID", "")
+
+    def _set_identity_provider(self, default: str) -> None:
+        self.IDENTITY_PROVIDER = _identity_provider(default)
+        if self.IDENTITY_PROVIDER == "cognito":
+            self.COGNITO_USER_POOL_ID = _require("COGNITO_USER_POOL_ID")
+            self.COGNITO_APP_CLIENT_ID = _require("COGNITO_APP_CLIENT_ID")
 
 
 class DevelopmentConfig(BaseConfig):
@@ -53,6 +73,7 @@ class DevelopmentConfig(BaseConfig):
         )
         if not self.CORS_ALLOWED_ORIGINS:
             self.CORS_ALLOWED_ORIGINS = ["http://localhost:4200"]
+        self._set_identity_provider(default="local")
 
 
 class TestConfig(BaseConfig):
@@ -68,6 +89,8 @@ class TestConfig(BaseConfig):
         )
         if not self.CORS_ALLOWED_ORIGINS:
             self.CORS_ALLOWED_ORIGINS = ["http://localhost:4200"]
+        # The suite never talks to AWS, whatever a developer's .env selects.
+        self.IDENTITY_PROVIDER = "local"
 
 
 class ProductionConfig(BaseConfig):
@@ -79,6 +102,12 @@ class ProductionConfig(BaseConfig):
             raise ConfigError(
                 "Falta la variable de entorno obligatoria: CORS_ALLOWED_ORIGINS"
             )
+        if _identity_provider(default="cognito") == "local":
+            raise ConfigError(
+                "IDENTITY_PROVIDER=local es un doble para tests y desarrollo: "
+                "no se puede usar en producción."
+            )
+        self._set_identity_provider(default="cognito")
 
 
 _CONFIGS = {
