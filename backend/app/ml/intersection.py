@@ -13,17 +13,20 @@ hardcoded if/else branches.
 
 from __future__ import annotations
 
-from models.config import TYPE_TABLE
+from app.ml.config import TYPE_TABLE
 
 
 def score_types(proba_by_taxonomy: dict[str, dict[str, float]]) -> dict[int, float]:
     """proba_by_taxonomy: {taxonomy_name: {class_label: probability}} for ONE sample.
 
     Returns: {eneatype: score}, score in [0, 4].
+
+    The sum keeps the type of the probabilities it is given: exact fractions stay exact, so two
+    types that tie mathematically tie here too, instead of one winning by a float rounding error.
     """
     scores: dict[int, float] = {}
     for eneatype, groups in TYPE_TABLE.items():
-        score = 0.0
+        score = 0
         for taxonomy, group_label in groups.items():
             score += proba_by_taxonomy[taxonomy].get(group_label, 0.0)
         scores[eneatype] = score
@@ -32,6 +35,8 @@ def score_types(proba_by_taxonomy: dict[str, dict[str, float]]) -> dict[int, flo
 
 def predict_eneatype(proba_by_taxonomy: dict[str, dict[str, float]]) -> tuple[int, float, float]:
     """Returns (predicted_eneatype, top_score, margin_over_runner_up).
+
+    Ties go to the lowest eneatype number: the sort is stable and TYPE_TABLE is in type order.
 
     `margin` is a rough confidence signal: a thin margin between the top-2
     candidate types means the result is ambiguous and could be surfaced to

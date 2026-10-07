@@ -1,5 +1,56 @@
 # Estado del backend
 
+## Feature 4.1: resultado y ranura de inferencia
+
+Hecho: cerrar un intento lo clasifica y guarda, en la misma transacción, las cuatro filas de
+`classifier_predictions` y la de `results`; `GET /api/attempts/{id}/result` devuelve el `Result`.
+Contrato en [api-contract.md](./api-contract.md). Detalle de la costura, los backends y las
+mediciones en [app/ml/README.md](../app/ml/README.md).
+
+- **El scaffold de la 4.0 vive en `app/ml/`** (movido con `git mv` desde `backend/models/`). Sus
+  sistemas usan el vocabulario canónico: `TAXONOMIES` sale de `app/db/models/enums.py`. La tabla
+  canónica no cambió. `python -m app.ml.pipeline` sigue corriendo sobre datos sintéticos.
+- **La costura** es `app/ml/classification.py`: entran las respuestas con su grupo resuelto en el
+  servidor, salen los cuatro sistemas (grupo y distribución), el eneatipo, el margen y la versión de
+  modelo. `CLASSIFIER_BACKEND` elige la implementación al arrancar (`app/ml/registry.py`); la ruta
+  de cierre recibe la que esté, sin saber cuál es. Un test registra una implementación falsa y entra
+  por configuración sin tocar rutas ni servicios.
+- **`stub`** (`stub-tally-1`): conteo por `group_label`. No es ML. Escenario suma 1; Likert suma
+  `(posición − 1) / 4` a su grupo objetivo (opción 1 suma 0, opción 5 suma 1). Fracciones exactas.
+  Empates: dentro de un sistema, el primer grupo del vocabulario; entre eneatipos, el número más bajo.
+- **`legacy_tree`** (`legacy-tree-1`): el árbol de 2024, **sin reentrenar**: el `.pkl` original se
+  guardó con scikit-learn 1.5.2, la versión fijada, y carga sin advertencias. Copia byte a byte en
+  `app/ml/legacy/`, con el dataset y un script de entrenamiento con rutas relativas que reproduce
+  0,94 / 0,94 y un árbol idéntico. El eneatipo lo decide el árbol; las filas de
+  `classifier_predictions` son las del conteo.
+- **`trained`** no arranca: sin los cuatro artefactos lo dice y se detiene; con artefactos también,
+  hasta que esté definida la codificación respuestas → features. Nunca cae al stub.
+- **En `production`, `CLASSIFIER_BACKEND` es obligatoria**, sin valor por defecto.
+- **Lo interno no sale.** El guardián de la Feature 3 ahora también rechaza `probabilities`,
+  `predicted_group`, `confidence_margin` y `model_version` en cualquier forma, toda clave que
+  contenga `confidence`, `margin` o `probabilit`, y todo texto que nombre una versión de modelo.
+- **`description_text`** es provisorio: el resumen de una frase de cada eneatipo, copiado tal cual
+  del frontend a `app/services/result_descriptions.py`. La redacción final es otra tarea.
+- **Cerrar dos veces** no reclasifica ni pisa. **Si la clasificación falla**, el intento sigue
+  `in_progress` sin filas, y responde `500 RESULT_NOT_GENERATED`.
+
+### Mediciones
+
+- `legacy_tree` contra la tabla canónica, en las 81 combinaciones de un grupo por sistema:
+  **coinciden en 77** (y en las 9 que son filas exactas de la tabla). El dataset de 2024 coincide con
+  la tabla en sus 891 filas: las 4 diferencias son errores del árbol sobre sus propios datos.
+- 1000 intentos al azar sobre el relleno (subset de 20, opción uniforme): `stub` reparte entre 100 y
+  123 por eneatipo; `legacy_tree`, entre 53 (tipo 4) y 158 (tipo 1). En el 58,5% de esos intentos
+  algún sistema queda empatado; para `legacy_tree` eso decide la entrada del árbol, para `stub` no.
+
+### Limitaciones declaradas
+
+- **El stub no es un modelo** y no se presenta como uno. Todo resultado suyo queda identificado por
+  `stub-tally-1` en `classifier_predictions.model_version`.
+- **El peso del Likert** (`(posición − 1) / 4`) es una regla del stub, no una calibración.
+- **`legacy_tree` recibe un solo grupo por sistema**; con empates, el primero del vocabulario. Con
+  respuestas al azar ese desempate sesga su entrada.
+
 ## Feature 3: cuestionario e intentos
 
 Hecho: crear un intento (el anterior en curso pasa a `abandoned`), servir el subset entero en una

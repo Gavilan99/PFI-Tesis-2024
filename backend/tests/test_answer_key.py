@@ -20,6 +20,7 @@ from flask import Flask, jsonify
 from sqlalchemy import select
 
 from app.blueprints.attempts.schemas import AnswerOptionOut, QuestionOut
+from app.blueprints.results.schemas import ResultOut
 from app.db.models import AnswerOption, Question, Response
 from app.db.models.enums import GROUP_LABELS, GROUPS_BY_SYSTEM, AttemptTier, GroupingSystem, QuestionType
 from app.services import attempts as attempts_service
@@ -31,6 +32,11 @@ from tests.auth_helpers import registered
 
 SYSTEM_NAMES = {system.value for system in GroupingSystem}
 FORBIDDEN_KEY_SPELLINGS = ("group_label", "groupLabel", "grouping_system", "groupingSystem")
+# Stored with every result and never exposed (PDR). Both forms, as the guard sees them.
+CLASSIFIER_OUTPUT_SPELLINGS = (
+    "probabilities", "predicted_group", "predictedGroup", "confidence_margin", "confidenceMargin",
+    "model_version", "modelVersion",
+)
 
 
 @pytest.fixture()
@@ -56,6 +62,7 @@ def _every_attempt_response(api, headers) -> list:
     collected += [
         api.get(f"/api/attempts/{attempt_id}/responses", headers=headers),
         api.post(f"/api/attempts/{attempt_id}/complete", headers=headers),
+        api.get(f"/api/attempts/{attempt_id}/result", headers=headers),
         api.get(f"/api/attempts/{attempt_id}", headers=headers),
         api.get("/api/attempts/latest", headers=headers),
         api.get("/api/attempts", headers=headers),
@@ -125,7 +132,7 @@ def test_a_no_response_carries_the_answer_key_fields(api, person):
     _, headers = person
     for response in _every_attempt_response(api, headers):
         body = response.get_data(as_text=True)
-        for spelling in FORBIDDEN_KEY_SPELLINGS:
+        for spelling in FORBIDDEN_KEY_SPELLINGS + CLASSIFIER_OUTPUT_SPELLINGS:
             assert spelling not in body
         assert leak_guard.find_leaks(response.get_json()) == []
 
@@ -308,6 +315,29 @@ def test_the_guard_catches_a_group_smuggled_as_a_value(served_option):
         client.get("/leak")
 
 
+class LeakyResultOut(ResultOut):
+    """The real result plus what is stored and never exposed."""
+
+    model_config = {**ResultOut.model_config, "protected_namespaces": ()}
+
+    confidence_margin: float
+    model_version: str
+
+
+@pytest.mark.parametrize("by_alias", [True, False], ids=["camelCase", "snake_case"])
+def test_the_guard_catches_a_result_that_leaks_the_classifier_output(api, person, by_alias):
+    _, headers = person
+    attempt = start(api, headers)
+    answer_all(api, headers, attempt["id"], questions(api, headers, attempt["id"]))
+    api.post(f"/api/attempts/{attempt['id']}/complete", headers=headers)
+    result = api.get(f"/api/attempts/{attempt['id']}/result", headers=headers).get_json()
+    leaky = LeakyResultOut(**result, confidenceMargin=0.42, modelVersion="otro-1")
+    client = _leaky_app(lambda: leaky.model_dump(mode="json", by_alias=by_alias)).test_client()
+    with pytest.raises(leak_guard.AnswerKeyLeak, match="confidence") as caught:
+        client.get("/leak")
+    assert "odel" in str(caught.value)  # modelVersion / model_version, flagged too
+
+
 def test_the_guard_counts_what_it_checks(api, person):
     before = leak_guard.stats.json_responses
     _, headers = person
@@ -322,9 +352,18 @@ def test_the_guard_counts_what_it_checks(api, person):
         {"GroupLabel": "x"},
         {"a": [{"b": {"groupingSystem": "x"}}]},
         {"predicted_group": "x"},
+        {"predictedGroup": "x"},
+        {"confidence_margin": 0.3},
         {"confidenceMargin": 0.3},
+        {"model_version": "x"},
         {"modelVersion": "stub"},
         {"probabilities": {}},
+        {"Probabilities": {}},
+        {"confidence": "alta"},
+        {"marginPct": 12},
+        {"result": {"probability": 0.8}},
+        {"note": "stub-tally-1"},
+        {"note": "Calculado con legacy-tree-1"},
         {"text": "heart"},
         {"text": "Tu centro es HEAD."},
         {"text": "intelligence_centers"},

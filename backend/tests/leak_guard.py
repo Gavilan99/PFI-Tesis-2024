@@ -6,10 +6,14 @@ having to remember it. A leak raises `AnswerKeyLeak` inside the test that made t
 
 Two layers are checked here:
 
-- Keys. No object anywhere in the payload has a key naming internal classification data
-  (`group_label`, `grouping_system`, the classifier outputs), in any casing.
+- Keys. No object anywhere in the payload has a key naming internal classification data, in any
+  casing: the answer key (`group_label`, `grouping_system`) and the raw classifier output, which is
+  stored and never exposed (`probabilities`, `predicted_group`, `confidence_margin`,
+  `model_version`). A key that merely contains "confidence", "margin" or "probabilit" is refused
+  too: the margin must not leave renamed or derived.
 - Values. No string value is, or contains as a word, a grouping system or group label of the
   canonical vocabulary. No key is one either (`{"gut": 3}` leaks as much as `{"group": "gut"}`).
+  No string names a classifier's model version.
 
 The third layer, order, cannot be seen in a single payload; it has its own tests.
 """
@@ -21,6 +25,8 @@ from typing import Any
 from flask.testing import FlaskClient
 
 from app.db.models.enums import GROUP_LABELS, GroupingSystem
+from app.ml.legacy.tree import LEGACY_MODEL_VERSION
+from app.ml.stub import STUB_MODEL_VERSION
 
 # Normalized: lowercase, no underscores, so group_label, groupLabel and GroupLabel are one entry.
 FORBIDDEN_KEYS = frozenset(
@@ -33,7 +39,10 @@ FORBIDDEN_KEYS = frozenset(
         "probabilities",
     }
 )
+# Normalized like the above, matched anywhere inside a key: `confidenceLevel`, `margin_pct`.
+FORBIDDEN_KEY_PARTS = ("confidence", "margin", "probabilit")
 CANONICAL_VALUES = frozenset(GROUP_LABELS) | frozenset(system.value for system in GroupingSystem)
+MODEL_VERSIONS = (STUB_MODEL_VERSION, LEGACY_MODEL_VERSION)
 
 # A canonical value as a whole word: "gut" leaks, "gutural" does not. Underscores and hyphens belong to
 # the word, so "positive_outlook" matches as one, and a base64url token (access tokens are) does not
@@ -66,7 +75,8 @@ def find_leaks(payload: Any, path: str = "$") -> list[str]:
     if isinstance(payload, dict):
         for key, value in payload.items():
             where = f"{path}.{key}"
-            if _normalize_key(str(key)) in FORBIDDEN_KEYS:
+            normalized = _normalize_key(str(key))
+            if normalized in FORBIDDEN_KEYS or any(part in normalized for part in FORBIDDEN_KEY_PARTS):
                 leaks.append(f"{where}: forbidden key")
             if _VALUE_PATTERN.search(str(key).lower()):
                 leaks.append(f"{where}: key is a canonical label")
@@ -78,6 +88,9 @@ def find_leaks(payload: Any, path: str = "$") -> list[str]:
         match = _VALUE_PATTERN.search(payload.lower())
         if match:
             leaks.append(f"{path}: value contains canonical label '{match.group(0)}'")
+        for version in MODEL_VERSIONS:
+            if version in payload.lower():
+                leaks.append(f"{path}: value contains model version '{version}'")
     return leaks
 
 

@@ -1,7 +1,7 @@
 """End-to-end sanity check: synthetic data -> train 4 classifiers -> intersect
 -> report accuracy against known synthetic labels.
 
-Run as a module from `backend/`: `python -m models.pipeline`
+Run as a module from `backend/`: `python -m app.ml.pipeline`
 
 This proves the architecture wires together correctly. It does NOT validate
 real-world accuracy -- that only means something once
@@ -12,10 +12,10 @@ from __future__ import annotations
 
 from sklearn.model_selection import train_test_split
 
-from models.classifiers import train_all_classifiers
-from models.config import TAXONOMIES, validate_type_table
-from models.intersection import predict_eneatypes_batch
-from models.tests.synthetic_data import generate_synthetic_dataset
+from app.ml.classifiers import train_all_classifiers
+from app.ml.config import TAXONOMIES, validate_type_table
+from app.ml.intersection import predict_eneatypes_batch
+from app.ml.tests.synthetic_data import generate_synthetic_dataset
 
 
 def main():

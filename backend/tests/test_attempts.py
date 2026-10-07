@@ -384,7 +384,7 @@ def test_completing_twice_returns_the_same_and_duplicates_nothing(api, person, d
 def test_the_completion_hook_runs_once(api, person, monkeypatch):
     calls = []
     monkeypatch.setattr(
-        attempts_service, "_after_completion", lambda session, attempt: calls.append(attempt.id)
+        attempts_service, "_after_completion", lambda session, attempt, classifier: calls.append(attempt.id)
     )
     _, headers = person
     attempt = start(api, headers)

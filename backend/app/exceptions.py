@@ -88,6 +88,22 @@ class AttemptIncomplete(AppError):
     message = "Quedan preguntas sin responder: el test no se puede cerrar todavía."
 
 
+class ResultNotFound(AppError):
+    """No result to show: the attempt does not exist, is someone else's, or is not closed yet."""
+
+    status_code = 404
+    code = "RESULT_NOT_FOUND"
+    message = "El resultado no existe."
+
+
+class ResultNotGenerated(AppError):
+    """The classification failed while closing: the attempt stays in progress and can be closed again."""
+
+    status_code = 500
+    code = "RESULT_NOT_GENERATED"
+    message = "No pudimos calcular tu resultado. El test sigue abierto: probá cerrarlo de nuevo."
+
+
 class QuestionNotInAttempt(AppError):
     status_code = 400
     code = "QUESTION_NOT_IN_ATTEMPT"

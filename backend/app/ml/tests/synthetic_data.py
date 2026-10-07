@@ -6,9 +6,9 @@ with each taxonomy's true group label, so the pipeline can be trained and
 sanity-checked end-to-end before real data is available.
 
 This module must never be imported by application/production code (only by
-`models.pipeline` for the wiring sanity check, or by tests). Replace it with
-a real loader once the dataset lands. Nothing in `models/classifiers.py`,
-`models/intersection.py`, or `models/pipeline.py` should need to change --
+`app.ml.pipeline` for the wiring sanity check, or by tests). Replace it with
+a real loader once the dataset lands. Nothing in `app/ml/classifiers.py`,
+`app/ml/intersection.py`, or `app/ml/pipeline.py` should need to change --
 they only expect X (n_samples, n_features) and y (n_samples,) per taxonomy.
 """
 
@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from models.config import TAXONOMIES, TYPE_TABLE
+from app.ml.config import TAXONOMIES, TYPE_TABLE
 
 
 def generate_synthetic_dataset(n_samples: int = 300, n_features_per_taxonomy: int = 10, noise: float = 0.35, random_state: int = 42):

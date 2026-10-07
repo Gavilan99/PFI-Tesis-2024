@@ -74,4 +74,6 @@ def get_responses(attempt_id):
 
 @bp.post("/<uuid:attempt_id>/complete")
 def complete_attempt(attempt_id):
-    return jsonify(_attempt(attempts.complete_attempt(current_user(), attempt_id)))
+    # Whichever backend CLASSIFIER_BACKEND built at startup; this route never knows which.
+    classifier = current_app.extensions["classifier"]
+    return jsonify(_attempt(attempts.complete_attempt(current_user(), attempt_id, classifier)))
