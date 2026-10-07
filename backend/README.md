@@ -61,3 +61,17 @@ pytest
 Ver [.env.example](./.env.example). En `production`, `SECRET_KEY`, `DATABASE_URL` y
 `CORS_ALLOWED_ORIGINS` son obligatorias: si falta alguna, la app no arranca y lo dice por nombre.
 En `development` y `test` tienen valores por defecto de uso local, no aptos para producción.
+
+## Cuentas e identidad
+
+Registro, ingreso y perfil pasan por el backend; el navegador nunca habla con Cognito. El proveedor
+de identidad se elige con `IDENTITY_PROVIDER`:
+
+- `local` (por defecto en `development` y `test`): un doble en memoria. Las cuentas se pierden al
+  reiniciar el proceso; las filas de `users` quedan. No es un modo de producción: con
+  `APP_ENV=production` la app se niega a arrancar.
+- `cognito`: el user pool real, con `COGNITO_USER_POOL_ID` y `COGNITO_APP_CLIENT_ID`. Por defecto en
+  `production`.
+
+Toda ruta exige `Authorization: Bearer <accessToken>` salvo las marcadas `@public` (health,
+registro e ingreso). Contrato de los endpoints en [docs/api-contract.md](./docs/api-contract.md).
