@@ -3,6 +3,9 @@ import os
 os.environ.setdefault("APP_ENV", "test")
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 os.environ.setdefault("CORS_ALLOWED_ORIGINS", "http://localhost:4200")
+# Not setdefault: a developer's shell or .env choosing legacy_tree must not change what the suite
+# runs. Tests that need another backend build their own app (tests/classifier_helpers.py).
+os.environ["CLASSIFIER_BACKEND"] = "stub"
 
 import pytest
 

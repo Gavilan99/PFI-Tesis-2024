@@ -79,6 +79,11 @@ class BaseConfig:
         self.SUBSET_SIZE_FREE_REDUCED = _subset_size("SUBSET_SIZE_FREE_REDUCED", 20)
         self.SUBSET_SIZE_PAID_FULL = _subset_size("SUBSET_SIZE_PAID_FULL", 60)
 
+        # Which classifier closes an attempt: stub | legacy_tree | trained. Validated when the app is
+        # created (app.ml.registry), where the backends are known.
+        self.CLASSIFIER_BACKEND = os.environ.get("CLASSIFIER_BACKEND", "stub").strip().lower()
+        self.CLASSIFIER_ARTIFACTS_DIR = os.environ.get("CLASSIFIER_ARTIFACTS_DIR") or None
+
     def _set_identity_provider(self, default: str, *, profile_required: bool) -> None:
         self.IDENTITY_PROVIDER = _identity_provider(default)
         if self.IDENTITY_PROVIDER != "cognito":
@@ -134,6 +139,9 @@ class ProductionConfig(BaseConfig):
             raise ConfigError(
                 "Falta la variable de entorno obligatoria: CORS_ALLOWED_ORIGINS"
             )
+        # Deployed, the classifier is chosen on purpose: a default would put the stub in front of
+        # users without anyone deciding it.
+        self.CLASSIFIER_BACKEND = _require("CLASSIFIER_BACKEND").strip().lower()
         if _identity_provider(default="cognito") == "local":
             raise ConfigError(
                 "IDENTITY_PROVIDER=local es un doble para tests y desarrollo: "
