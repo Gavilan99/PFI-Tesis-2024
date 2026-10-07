@@ -47,11 +47,26 @@ def _unavailable(operation: str, exc: Exception) -> IdentityUnavailable:
 
 
 class CognitoIdentityProvider(IdentityProvider):
-    def __init__(self, region: str, user_pool_id: str, client_id: str, client=None, jwks_client=None):
+    def __init__(
+        self,
+        region: str,
+        user_pool_id: str,
+        client_id: str,
+        *,
+        profile: str | None,
+        client=None,
+        jwks_client=None,
+    ):
         self.user_pool_id = user_pool_id
         self.client_id = client_id
         self.issuer = f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}"
-        self._client = client or boto3.client("cognito-idp", region_name=region)
+        if client is None:
+            # Explicit profile from config, never boto3's implicit choice. `None` only where config
+            # allows it (deployed, with role credentials and no profile file).
+            if profile == "default":
+                raise ValueError("The 'default' AWS profile is never used by this backend.")
+            client = boto3.Session(profile_name=profile, region_name=region).client("cognito-idp")
+        self._client = client
         jwks = jwks_client or jwt.PyJWKClient(f"{self.issuer}/.well-known/jwks.json", cache_keys=True)
         self._verifier = AccessTokenVerifier(
             self.issuer, client_id, lambda token: jwks.get_signing_key_from_jwt(token).key

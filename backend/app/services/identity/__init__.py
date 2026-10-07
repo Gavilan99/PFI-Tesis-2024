@@ -18,5 +18,6 @@ def build_identity_provider(config) -> IdentityProvider:
             region=config.COGNITO_REGION,
             user_pool_id=config.COGNITO_USER_POOL_ID,
             client_id=config.COGNITO_APP_CLIENT_ID,
+            profile=config.AWS_PROFILE,
         )
     return LocalIdentityProvider()

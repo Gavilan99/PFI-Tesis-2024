@@ -41,7 +41,9 @@ def cognito():
         "cognito-idp", region_name="sa-east-1", aws_access_key_id="x", aws_secret_access_key="x"
     )
     stubber = Stubber(client)
-    provider = CognitoIdentityProvider("sa-east-1", POOL, CLIENT, client=client, jwks_client=_FakeJwks(KEY.public_key()))
+    provider = CognitoIdentityProvider(
+        "sa-east-1", POOL, CLIENT, profile="nureon", client=client, jwks_client=_FakeJwks(KEY.public_key())
+    )
     with stubber:
         yield provider, stubber
         stubber.assert_no_pending_responses()
