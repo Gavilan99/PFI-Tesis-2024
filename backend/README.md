@@ -25,6 +25,34 @@ python wsgi.py
 `GET http://localhost:5000/api/health` responde sin tocar la base. `GET /api/health/ready` sí la
 toca y devuelve 503 si no responde.
 
+## Probar el backend en local (después de la primera vez)
+
+Docker levanta sólo la base: el `docker-compose.yml` tiene un único servicio, `db` (Postgres). El
+backend (Flask) corre fuera de Docker, con el entorno virtual. Desde `backend/`, en PowerShell:
+
+```powershell
+# 1. Abrí Docker Desktop y esperá a que diga "running"
+docker compose up -d                  # levanta Postgres en :5433
+
+# 2. Activá el entorno virtual
+.venv\Scripts\Activate.ps1
+
+# 3. Sólo si hubo migraciones nuevas desde la última vez (no hace daño correrlo siempre)
+alembic upgrade head
+
+# 4. El servidor
+flask --app wsgi run --port 5000
+```
+
+Queda en http://127.0.0.1:5000. Para comprobar que anda, abrí `/api/health`. Se corta con Ctrl+C.
+
+- **El banco de relleno ya queda cargado** en `nureon_dev` después de la primera vez, así que no
+  hace falta volver a correr `seed_filler_bank.py`. Sólo si recreás la base desde cero:
+  `python scripts/seed_filler_bank.py`.
+- **Las cuentas viven en memoria** con el proveedor local. Cada vez que reiniciás `flask` tenés que
+  registrarte de nuevo, con otro email.
+- **Para los tests no hace falta el servidor**, sólo el paso 1 y `pytest`.
+
 ## Banco de preguntas
 
 El relleno se carga como **versión 0** del cuestionario. Dice en su propio texto que es relleno y
