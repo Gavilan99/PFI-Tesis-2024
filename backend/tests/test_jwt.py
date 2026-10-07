@@ -100,7 +100,9 @@ def test_public_routes_need_no_token(api):
 
 
 def test_every_route_except_the_public_ones_requires_a_token(app):
-    public = {"core.health", "core.health_ready", "auth.register", "auth.login"}
+    public = {
+        "core.health", "core.health_ready", "auth.register", "auth.login", "feedback.submit_contact_message",
+    }
     for rule in app.url_map.iter_rules():
         view = app.view_functions[rule.endpoint]
         is_public = getattr(view, "_public_endpoint", False)

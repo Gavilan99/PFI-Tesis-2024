@@ -11,6 +11,8 @@ import pytest
 
 from app import create_app
 from app.services.identity import LocalIdentityProvider
+from app.services.mail import LocalMailSender
+from app.services.rate_limit import SlidingWindowLimiter
 from tests import leak_guard
 from tests.db_helpers import bound_session
 from tests.migration_helpers import rebuild_schema
@@ -63,8 +65,29 @@ def identity(app):
 
 
 @pytest.fixture()
-def api(client, db_session, identity):
-    """A test client whose requests hit the rolled-back test transaction and the local identity."""
+def mailbox(app):
+    """A fresh local mail sender per test: what the contact form would have sent, nothing sent."""
+    original = app.extensions["mail_sender"]
+    sender = LocalMailSender()
+    app.extensions["mail_sender"] = sender
+    yield sender
+    app.extensions["mail_sender"] = original
+
+
+@pytest.fixture()
+def contact_limiter(app):
+    """A fresh contact rate limiter per test, with the configured limit, so counts never carry over."""
+    original = app.extensions["contact_rate_limiter"]
+    limiter = SlidingWindowLimiter(app.config["CONTACT_RATE_LIMIT"], app.config["CONTACT_RATE_WINDOW_SECONDS"])
+    app.extensions["contact_rate_limiter"] = limiter
+    yield limiter
+    app.extensions["contact_rate_limiter"] = original
+
+
+@pytest.fixture()
+def api(client, db_session, identity, mailbox, contact_limiter):
+    """A test client whose requests hit the rolled-back test transaction, the local identity and the
+    local mail sender."""
     return client
 
 
