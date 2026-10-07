@@ -20,9 +20,9 @@ from app.exceptions import (
 )
 from app.services.identity import CognitoIdentityProvider
 
-POOL = "sa-east-1_TestPool"
+POOL = "us-east-2_TestPool"
 CLIENT = "testclientid"
-ISSUER = f"https://cognito-idp.sa-east-1.amazonaws.com/{POOL}"
+ISSUER = f"https://cognito-idp.us-east-2.amazonaws.com/{POOL}"
 SUB = "11111111-2222-3333-4444-555555555555"
 KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
@@ -38,11 +38,11 @@ class _FakeJwks:
 @pytest.fixture()
 def cognito():
     client = boto3.client(
-        "cognito-idp", region_name="sa-east-1", aws_access_key_id="x", aws_secret_access_key="x"
+        "cognito-idp", region_name="us-east-2", aws_access_key_id="x", aws_secret_access_key="x"
     )
     stubber = Stubber(client)
     provider = CognitoIdentityProvider(
-        "sa-east-1", POOL, CLIENT, profile="nureon", client=client, jwks_client=_FakeJwks(KEY.public_key())
+        "us-east-2", POOL, CLIENT, profile="nureon", client=client, jwks_client=_FakeJwks(KEY.public_key())
     )
     with stubber:
         yield provider, stubber
@@ -178,7 +178,7 @@ def test_verifies_a_cognito_shaped_access_token(cognito):
 @pytest.mark.parametrize(
     "overrides",
     [
-        {"iss": "https://cognito-idp.sa-east-1.amazonaws.com/sa-east-1_OtherPool"},
+        {"iss": "https://cognito-idp.us-east-2.amazonaws.com/us-east-2_OtherPool"},
         {"client_id": "other"},
         {"token_use": "id"},
         {"exp": int(time.time()) - 10},

@@ -12,7 +12,7 @@ def production_env(monkeypatch):
     monkeypatch.setenv("SECRET_KEY", "x")
     monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://u:p@host/db")
     monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "https://nureon.example")
-    monkeypatch.setenv("COGNITO_USER_POOL_ID", "sa-east-1_example")
+    monkeypatch.setenv("COGNITO_USER_POOL_ID", "us-east-2_example")
     monkeypatch.setenv("COGNITO_APP_CLIENT_ID", "exampleclientid")
     monkeypatch.delenv("IDENTITY_PROVIDER", raising=False)
     monkeypatch.delenv("AWS_PROFILE", raising=False)
@@ -21,7 +21,7 @@ def production_env(monkeypatch):
 @pytest.fixture()
 def development_cognito_env(monkeypatch):
     monkeypatch.setenv("IDENTITY_PROVIDER", "cognito")
-    monkeypatch.setenv("COGNITO_USER_POOL_ID", "sa-east-1_example")
+    monkeypatch.setenv("COGNITO_USER_POOL_ID", "us-east-2_example")
     monkeypatch.setenv("COGNITO_APP_CLIENT_ID", "exampleclientid")
     monkeypatch.setenv("AWS_PROFILE", "nureon")
 
@@ -91,7 +91,7 @@ def test_boto3_gets_the_configured_profile_explicitly(development_cognito_env, r
     provider = build_identity_provider(get_config("development"))
 
     assert isinstance(provider, CognitoIdentityProvider)
-    assert recorded_sessions == [{"profile_name": "nureon", "region_name": "sa-east-1"}]
+    assert recorded_sessions == [{"profile_name": "nureon", "region_name": "us-east-2"}]
 
 
 def test_cognito_outside_production_requires_aws_profile(development_cognito_env, monkeypatch):
@@ -110,10 +110,10 @@ def test_the_default_profile_is_refused(development_cognito_env, production_env,
 
 def test_provider_refuses_the_default_profile_even_if_config_is_bypassed(recorded_sessions):
     with pytest.raises(ValueError):
-        CognitoIdentityProvider("sa-east-1", "sa-east-1_x", "client", profile="default")
+        CognitoIdentityProvider("us-east-2", "us-east-2_x", "client", profile="default")
     assert recorded_sessions == []
 
 
 def test_production_without_a_profile_uses_the_platform_role(production_env, recorded_sessions):
     build_identity_provider(get_config("production"))
-    assert recorded_sessions == [{"profile_name": None, "region_name": "sa-east-1"}]
+    assert recorded_sessions == [{"profile_name": None, "region_name": "us-east-2"}]

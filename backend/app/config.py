@@ -52,7 +52,7 @@ class BaseConfig:
         self.CORS_ALLOWED_ORIGINS = _split_origins(
             os.environ.get("CORS_ALLOWED_ORIGINS", "")
         )
-        self.COGNITO_REGION = os.environ.get("COGNITO_REGION", "sa-east-1")
+        self.COGNITO_REGION = os.environ.get("COGNITO_REGION", "us-east-2")
         self.COGNITO_USER_POOL_ID = os.environ.get("COGNITO_USER_POOL_ID", "")
         self.COGNITO_APP_CLIENT_ID = os.environ.get("COGNITO_APP_CLIENT_ID", "")
 
