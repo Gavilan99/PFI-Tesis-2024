@@ -1,18 +1,26 @@
-# Qué está vivo (actualizado en Etapa 10)
+# Qué está vivo (actualizado en la Feature 7 del backend)
 
-Estado real de cada pantalla al cierre del rediseño visual: qué pega contra `MockApiService`
-(datos en memoria + `localStorage` del navegador, nada persiste en un servidor) y qué contra un
-backend real. Ver `HttpApiService` (`core/services/http-api.service.ts`): **los quince métodos
-de `ApiService` están 100% sin implementar** — cada uno tira
-`Error: <método>() is not implemented yet — backend integration is a later stage` a propósito.
-`environment.ts` (producción) tiene `useMockApi: false` apuntando a `https://api.nureon.ai`
-(no existe), así que **el build de producción de hoy no puede completar ningún flujo
-interactivo** — solo sirve para validar SSR/prerender de las rutas públicas estáticas
-(ver `browser-check.md`).
+Estado real de cada pantalla: qué pega contra el backend real (Flask + PostgreSQL + Cognito) y qué
+sigue siendo provisorio. Desde la Feature 7 del backend, `HttpApiService`
+(`core/services/http-api.service.ts`) implementa **los catorce métodos de `ApiService`** contra
+`environment.apiBaseUrl`, y CU001 a CU004 se recorrieron de punta a punta en el navegador contra el
+backend local, con Postgres y Cognito reales. Ningún componente cambió para eso: el cambio fue el
+provider de `API_SERVICE`, más el manejo del token (`core/auth/`). Detalle del lado del servidor en
+`backend/docs/backend-status.md`; contrato en `backend/docs/api-contract.md`.
 
-**Etapa 10 agrega `environment.demo.ts` (`npm run build:demo`)**: mismo build optimizado, pero
-`useMockApi: true`, así que sí completa el recorrido entero — es lo que se sube a S3 para mostrar
-el producto sin depender de un backend real ni de `ng serve`.
+Qué build usa qué:
+
+| Build | `ApiService` | Para qué |
+|---|---|---|
+| `ng serve` (development) | `HttpApiService` → `http://localhost:5000` | Desarrollo contra el backend local |
+| `npm run build` (production) | `HttpApiService` → `https://api.nureon.ai` | **No completa ningún flujo:** ese dominio no existe hasta la Feature 8 (despliegue). Sirve para validar SSR/prerender |
+| `npm run build:demo` | `MockApiService` | El respaldo de la defensa: completa el recorrido entero sin backend. Sin cambios desde la Etapa 10 |
+
+**Sesión.** El backend devuelve un access token al registrarse o ingresar. `HttpApiService` lo guarda
+en `localStorage` (`nureon_access_token`), al lado del usuario que guarda `AuthService`, y un
+interceptor lo manda sólo a los pedidos al backend. Se borra al cerrar sesión, y ante un 401, que
+además cierra la sesión. Dura una hora y no hay refresh: al vencer, se vuelve a ingresar. Nada de
+esto corre en SSR/prerender.
 
 ## Pantalla por pantalla
 
@@ -20,121 +28,118 @@ el producto sin depender de un backend real ni de `ng serve`.
 100% estático, sin llamadas a API. Listo para producción tal cual.
 
 ### Registro (`/registro`) — CU001, RF01
-`AuthService.register()` → `MockApiService.register()`. Guarda el usuario en el estado mock y
-en `localStorage` (`nureon_mock_auth_user`) para sobrevivir un reload. La confirmación manda
-directo a `/test` (Etapa 10 — antes mandaba a `/inicio`, lo que rompía el presupuesto de
-`docs/click-budget.md`; ver ese doc). **Real backend: 0%** — sin Cognito, sin validación de
-servidor, sin persistencia en RDS.
+`AuthService.register()` → `POST /api/auth/register`. Crea la cuenta en Cognito y la fila en
+`users`. Los errores del backend ("Ese email ya está registrado.", contraseña rechazada) se muestran
+en el formulario tal cual llegan. La confirmación manda directo a `/test`. **Real backend: 100%.**
+**El email no se verifica**: la cuenta se auto-confirma (decisión del plan del backend).
 
 ### Ingresar (`/ingresar`) — CU002, RF02, RNF09
-`AuthService.login()` → `MockApiService.login()`, misma persistencia que registro. Los botones
-"Continuar con Google/Facebook" son una ranura visual inerte — sin `(click)`, comentados en el
-propio HTML como `Ranura RNF09: dibujados pero inertes hasta que Cognito exista`. **Real backend:
-0%.**
+`AuthService.login()` → `POST /api/auth/login`. "Email o contraseña incorrectos." llega del backend y
+se muestra en el formulario. Los botones "Continuar con Google/Facebook" siguen siendo una ranura
+visual inerte. **Real backend: 100% para email y contraseña; 0% para Google/Facebook.**
 
-### `/inicio` — Etapa 10, RF03
-Ya no es el placeholder de la Etapa 2 — es el punto de partida real de la sesión. Lee
-`getLatestAttempt(userId)` y decide la acción primaria según el estado:
+### `/inicio` — RF03
+Lee `getLatestAttempt` y decide la acción primaria según el estado:
 
 - Sin intentos → "Iniciar test".
-- Intento en curso → "Retomar test" + progreso (`getQuestions`/`getResponses` para el conteo
-  respondidas/total) + "Empezar de nuevo" (crea un intento nuevo, que pasa a ser el "latest").
+- Intento en curso → "Retomar test" + progreso (respondidas/total) + "Empezar de nuevo" (el backend
+  pasa el intento anterior a `abandoned`).
 - Con resultado → "Ver mi resultado" + "Hacer el test de nuevo".
 
-Todo contra `MockApiService`. **Real backend: 0%.**
+**Real backend: 100%.**
 
 ### El test (`/test`) — CU003, RF03
-`createTestAttempt` / `getQuestions` / `submitResponse` / `completeTestAttempt` → todo
-`MockApiService`. Auto-advance, progreso, teclado y ARIA (`radiogroup`/`radio`) funcionan sobre
-datos mock. Desde Etapa 10 el footer no se muestra en esta ruta (`AppComponent.showFooter$`) y la
-pregunta se centra verticalmente en vez de quedar pegada arriba con un hueco muerto abajo.
+`createTestAttempt` / `getQuestions` / `submitResponse` / `getResponses` / `completeTestAttempt` →
+backend. El subset entero (20 ítems en el tier gratuito) llega en un solo pedido; cada respuesta se
+guarda al elegirla. Recargar a mitad del test retoma en el mismo ítem, leyendo la base. El cliente
+manda sólo el id de la opción: la clave de corrección (`group_label`, `grouping_system`) no llega al
+navegador, y las opciones de escenario vienen mezcladas por intento. **Real backend: 100%.**
 
-**Contenido de los ítems: placeholder explícito.** `assets/mock/questions.sample.json` trae su
-propio warning: *"CONTENIDO DE RELLENO. No son ítems del banco v1 ni de ningún instrumento real
-(...) Regenerar con --csv apenas esté disponible el CSV del banco v1."* El banco real de 200
-ítems (`NureonAI Question Bank v1`) todavía no está cargado en el frontend. **Real backend: 0%,
-y además contenido real pendiente.**
+**Contenido de los ítems: relleno explícito.** El backend sirve la **versión 0** del cuestionario,
+que dice en cada ítem "[RELLENO · versión 0] ... no es un ítem del banco v1 ni de ningún instrumento
+real". El banco real (`NureonAI Question Bank v1`) entra por el script de import del backend cuando
+esté su CSV. `assets/mock/questions.sample.json` sólo lo usa el build demo.
 
 ### Resultados (`/resultados`, `/resultados/:attemptId`) — CU004, RF04, RF05, RF08
-`getResult` / `getAttempt` / `getAttemptHistory` → `MockApiService`. Desde Etapa 10, el diagrama
-y el título/resumen/motivación comparten fila en desktop (antes el diagrama dejaba una columna
-vacía mientras el resto del contenido seguía abajo en una sola columna — ver
-`docs/screenshots/06-resultados-desktop.jpg` de Etapa 9 contra la versión actual).
+`getLatestAttempt` / `getAttempt` / `getResult` → backend. El resultado se calcula y guarda al cerrar
+el test. **Real backend: 100% en el circuito; el eneatipo no sale de un modelo entrenado.** Con
+`CLASSIFIER_BACKEND=stub` (el de desarrollo) sale de un conteo de respuestas por grupo más la tabla
+canónica: no es ML. La alternativa disponible, `legacy_tree`, es el árbol de 2024, entrenado sobre un
+dataset armado por el equipo (no respuestas reales); coincide con la tabla canónica en 77 de 81
+combinaciones. Los cuatro Random Forest nuevos todavía no existen. Ninguna probabilidad, grupo ni
+margen llega al navegador.
 
 El contenido de motivación/fortalezas/tensiones/alas es real **pero provisorio**:
-`eneatype-content.ts` está marcado `isPlaceholder: true` en los 9 eneatipos, con este comentario
-en el propio archivo: *"PROVISIONAL — adaptado y traducido de `type_*.txt` (...) No es la
-redacción final del contenido de resultados."* Es decir, no es texto de relleno tipo lorem ipsum
-— es una traducción real de las fuentes de la tesis, pendiente de una redacción final en español.
-La UI lo marca explícitamente en pantalla con "Contenido de ejemplo — texto final pendiente de
-redacción."
+`eneatype-content.ts` está marcado `isPlaceholder: true` en los 9 eneatipos (traducción de las
+fuentes de la tesis, pendiente de redacción final), y la UI lo dice en pantalla.
 
-**Freemium (RF09/RF10):** el gate visual (blur + botón "Desbloquear mi perfil completo") es puro
-CSS condicionado por `tier` del intento — en el mock, todo intento nace con
-`tier: 'free_reduced'` hardcodeado, no hay forma de pasar a `paid_full` desde la UI. Desde
-Etapa 10, el botón abre `FreemiumInfoDialogComponent`: un panel honesto con los dos niveles
-(gratis/pago) y una nota explícita de que el flujo de pago está en desarrollo — no desbloquea
-nada ni simula un pago. **Mercado Pago: 0% conectado**, ni SDK ni flujo de checkout.
+**Freemium (RF09/RF10):** el `tier` del intento lo decide el servidor (hoy siempre `free_reduced`; la
+Feature 6 lo resuelve por suscripción). Pero **el texto premium viaja en el bundle**: "En crecimiento
+y bajo estrés" está en `eneatype-content.ts` y se difumina con CSS, así que quien abra devtools lo
+lee. El botón "Desbloquear mi perfil completo" abre `FreemiumInfoDialogComponent`, que dice que el
+pago está en desarrollo. **Mercado Pago: 0% conectado.**
 
 ### Perfil (`/perfil`) — RF06, RF07, RF08
-`updateProfile` / `getAttemptHistory` / `submitFeedback` → `MockApiService`. Edición de datos,
-historial de intentos y el formulario de feedback (RF06) funcionan de punta a punta contra el
-mock, con estados de carga/error conectados (Etapa 8). **Real backend: 0%.**
+`updateProfile` / `getAttemptHistory` / `getResult` / `submitFeedback` → backend. Edición de datos,
+historial de intentos con su eneatipo y el formulario de comentarios funcionan contra la base.
+**Real backend: 100%.** El borrado de cuenta existe en el backend (`DELETE /api/users/me`) pero no
+tiene pantalla.
 
 ### Sobre el eneagrama (`/eneagrama`) — Etapa 10
-Contenido educativo estático: qué es el eneagrama, los 9 tipos (solo nombres — la copy
-descriptiva completa vive en `resultados/eneatype-content.ts` y es provisoria, así que esta
-página no depende de ella), y qué distingue a NureonAI. Nombra las cuatro familias de triadas
-(Centros de Inteligencia, Horneviano, Armónico, Relaciones Objetales) sin publicar qué ítem u
-opción corresponde a cada una — es la clave de corrección del instrumento. Sin llamadas a API.
+Contenido educativo estático. Nombra las cuatro familias de triadas sin publicar qué ítem u opción
+corresponde a cada una. Sin llamadas a API.
 
 ### Nosotros (`/nosotros`) — Etapa 10
-Borrador. El párrafo sobre el proyecto está escrito; la sección "Autores" es un placeholder
-explícito en pantalla (`[Nombre del autor/a — confirmar]`) — no se inventaron datos biográficos.
-**Pendiente: que confirmes nombres, roles y una bio breve antes de sacar el aviso de borrador.**
+Borrador. La sección "Autores" es un placeholder explícito en pantalla
+(`[Nombre del autor/a — confirmar]`). **Pendiente: que confirmes nombres, roles y una bio breve.**
 
 ### Contacto (`/contacto`) — Etapa 10
-Formulario simple (nombre, email, mensaje) → `MockApiService.submitContactMessage()`, agregado en
-esta etapa junto con el resto de `ApiService` (no existía antes; no hay tabla `contact_messages`
-en el PDR — es una conveniencia del mock, igual que `submitFeedback`). Mismos estados de
-carga/error que el resto de los formularios. **Real backend: 0%** — nadie recibe estos mensajes
-todavía.
+`submitContactMessage` → `POST /api/contact-messages`, sin sesión. El backend no lo guarda: lo manda
+por mail con Amazon SES. **Real backend: 100%, con SES provisorio**: en modo sandbox, a una casilla
+provisoria de Gmail, y sólo llega a direcciones verificadas. En desarrollo el backend corre con
+`MAIL_SENDER=local`, que no manda nada.
 
 ### Styleguide (`/styleguide`)
-Ruta dev-only (`!environment.production`), no existe en el build de producción ni en el build
-demo ni en las rutas prerenderizadas — confirmado en `app-routing.module.ts`. Es la lámina de
-sistema de diseño usada para el material visual, no una pantalla de producto.
+Ruta dev-only (`!environment.production`): no está en las rutas del build de producción ni del demo,
+ni en las prerenderizadas.
+
+## Errores y límites que el frontend no conoce
+
+El backend rechaza nombre de contacto de más de 100 caracteres, email de más de 254, mensaje de más
+de 5.000 y comentario de más de 2.000. Los formularios no tienen esos máximos: pasarse muestra el
+error genérico del formulario ("No pudimos enviar tu mensaje/comentario. Probá de nuevo."), legible,
+y el formulario sigue usable (verificado en la Feature 7). Agregar los máximos en pantalla es una
+tarea aparte.
+
+Al cerrar sesión, la pantalla actual no se va: en `/perfil`, los datos de la cuenta siguen visibles
+hasta navegar (el token y el usuario ya no están). Es un cambio de componente, fuera de la Feature 7.
 
 ## Presupuesto de clicks (`docs/click-budget.md`)
 
-Cerrado en esta etapa:
+Recontado en la Feature 7, contra el backend real (no empeoró ninguno):
 
-- **Landing → primera pregunta (usuario nuevo), ≤ 3 clicks**: "Empezar gratis" (1) → "Crear
-  cuenta" (2) → "Empezar el test" en la confirmación (3, manda directo a `/test`, ya no a
-  `/inicio`). **Cumple, justo en el límite.**
-- **Login → primera pregunta, ≤ 2 clicks post-ingreso**: login manda a `/inicio` (0 extra) →
-  "Iniciar test"/"Retomar test" (1). **Cumple.**
-- **Responder el test completo, 1 click por ítem**: sin cambios, ya cumplía.
-- **Fin del test → resultado, 1 click**: sin cambios, ya cumplía.
-- **Entrar a la app → ver resultado anterior, 1 click**: `/inicio` con estado "completado" →
-  "Ver mi resultado" (1). **Cumple** — antes no había forma de auditar esto porque `/inicio` no
-  existía.
+| Recorrido | Objetivo | Contado |
+|---|---|---|
+| Landing → primera pregunta (usuario nuevo) | ≤ 3 | **3**: "Empezar gratis", "Crear cuenta", "Empezar el test" |
+| Login → primera pregunta | ≤ 2 post-ingreso | **1**: login → `/inicio` (0) → "Iniciar test" |
+| Responder el test completo | 1 por ítem | **20 clicks para 20 ítems**, sin "Siguiente" |
+| Fin del test → resultado | 1 | **1**: "Ver mi resultado" |
+| Entrar a la app → resultado anterior | 1 | **1**: login → `/inicio` → "Ver mi resultado" |
 
 ## Resumen para la defensa
 
 | Área | Estado |
 |---|---|
 | UI / diseño / accesibilidad / responsive | Completo (Etapas 1-8) |
-| Recorrido de punta a punta sin placeholders | Completo (Etapa 10) |
-| Lógica de negocio de cada pantalla | Completa, corriendo contra `MockApiService` |
-| Build desplegable sin backend (`build:demo`) | Completo (Etapa 10) |
-| Backend real (Flask/RDS) | 0% — `HttpApiService` es un scaffold vacío que tira error a propósito |
-| Auth real (Cognito, incl. Google/Facebook) | 0% — ranura visual únicamente |
-| Pagos reales (Mercado Pago, RF09/10) | 0% — el panel freemium es honesto sobre esto |
-| Banco de preguntas real (200 ítems) | 0% — el test usa `questions.sample.json`, contenido de relleno declarado |
-| Contenido descriptivo de eneatipos | Traducido de las fuentes de la tesis, pendiente de redacción final (no relleno) |
+| Recorrido de punta a punta sin placeholders de UI | Completo (Etapa 10) |
+| Backend real (Flask/PostgreSQL), las catorce operaciones | Completo y verificado en local (Feature 7) |
+| Auth real con email y contraseña (Cognito) | Completo. Sin verificación de email ni recuperación de contraseña |
+| Auth con Google/Facebook (RNF09) | 0% — ranura visual únicamente |
+| Clasificación | `stub` (conteo, no ML) o `legacy_tree` (árbol de 2024 sobre dataset armado). Modelo entrenado: 0% |
+| Banco de preguntas real | 0% — se sirve el relleno, versión 0 |
+| Contenido descriptivo de eneatipos | Traducido de las fuentes de la tesis, pendiente de redacción final |
+| Freemium | Tier del lado del servidor; el texto premium igual viaja en el bundle |
+| Pagos reales (Mercado Pago, RF09/10) | 0% — Feature 6 postergada |
+| Despliegue (S3/CloudFront, ECS, RDS) | 0% — Feature 8 postergada; todo corre local |
+| Build desplegable sin backend (`build:demo`) | Completo, sin cambios: el respaldo de la defensa |
 | Bios de autores en `/nosotros` | Pendiente de que las confirmes — marcado en pantalla |
-
-`redesign/frontend` queda listo para mergear a `master` en lo visual/UX. Lo que sigue después del
-merge es reemplazar `HttpApiService` por una implementación real contra el backend que responda
-los contratos de la Etapa 2, más Cognito y Mercado Pago — y cargar el banco de preguntas real.

@@ -1,5 +1,93 @@
 # Estado del backend
 
+## Qué está vivo (al cierre de la Feature 7, 2026-10-07)
+
+El frontend real habla con este backend: `HttpApiService` implementa los catorce métodos de
+`ApiService` y CU001 a CU004 se recorrieron de punta a punta en el navegador contra el backend local,
+con Postgres y Cognito reales. Lo que sigue es qué de eso es real y qué no, sin suavizar.
+
+| Área | Estado real |
+|---|---|
+| Cuentas (registro, ingreso, perfil, borrado) | **Real.** Cognito en `us-east-2`, verificado de punta a punta desde el navegador |
+| Verificación de email | **No existe.** Las cuentas se auto-confirman: cualquiera registra un email ajeno |
+| Recuperación de contraseña | **No existe.** Ni pantalla ni método en el contrato |
+| Login con Google / Facebook (RNF09) | **No existe.** Los botones del frontend son una ranura inerte |
+| Sesión | Access token de 1 hora, sin refresh: al vencer se vuelve a ingresar |
+| Banco de preguntas | **Relleno, versión 0.** Lo dice en el texto de cada ítem. El banco v1 no está cargado |
+| Clasificación | **`stub` activo por defecto** en desarrollo. **No es ML** (ver abajo) |
+| Resultado | Real en el sentido de guardado y servido; el eneatipo sale del `stub` y la descripción es provisoria |
+| Comentarios (RF06) | **Real.** Se guardan en la base; no hay pantalla para leerlos |
+| Contacto | **Real pero provisorio:** SES en sandbox, casilla de Gmail, sólo a direcciones verificadas |
+| Freemium (RF09/RF10) | El tier lo decide el servidor (hoy siempre `free_reduced`), pero **el texto premium viaja en el bundle** |
+| Pagos (Mercado Pago, Feature 6) | **0%.** Postergada: no hay endpoint, ni SDK, ni flujo |
+| Despliegue (Feature 8) | **0%.** Postergada: no hay dominio, ni ECS, ni RDS, ni S3/CloudFront. Todo corre local |
+
+### Clasificación: qué es cada implementación
+
+`CLASSIFIER_BACKEND` elige una al arrancar; los recorridos de la Feature 7 corrieron con `stub`.
+
+- **`stub`** — conteo de respuestas por grupo, más la tabla canónica (intersección de los cuatro
+  sistemas → eneatipo). Determinístico. **No es ML** y no se presenta como tal: cada resultado suyo
+  queda marcado `stub-tally-1` en la base. Es el valor por defecto en desarrollo y tests.
+- **`legacy_tree`** — el árbol de decisión de 2024, el del documento original, sin reentrenar. **Se
+  entrenó sobre un dataset armado por el equipo, no sobre respuestas reales:** son las 81
+  combinaciones de un grupo por sistema, 11 copias de cada una, etiquetadas con la tabla canónica.
+  **Coincide con la tabla canónica en 77 de 81 combinaciones**; las 4 diferencias son errores del
+  árbol sobre sus propios datos. Recibe un solo grupo por sistema, así que hereda los desempates del
+  conteo. Es el candidato para la demo, pero no aprende nada que la tabla no diga.
+- **`trained`** — los cuatro Random Forest del diseño nuevo. **No existe todavía:** sin artefactos,
+  la app no arranca con este valor, y nunca cae al stub.
+
+En `production` la variable es obligatoria, sin valor por defecto: elegir qué se muestra en la defensa
+es una decisión explícita.
+
+### Lo que sabe el navegador
+
+- **La clave de corrección no sale.** Ni `group_label`, ni `grouping_system`, ni probabilidades,
+  margen o versión de modelo: lo vigila `tests/leak_guard.py` sobre toda respuesta de la suite, y
+  `tests/test_contract.py` exige que las claves de cada respuesta sean exactamente las de su interfaz
+  TypeScript. Verificado también a mano en las respuestas reales de preguntas y resultado.
+- **El texto premium sí está en el navegador.** El contenido "En crecimiento y bajo estrés" de los
+  nueve eneatipos viaja en el bundle del frontend (`eneatype-content.ts`), y en `/resultados` además
+  se renderiza en el DOM y se difumina con CSS cuando el intento es `free_reduced`. El tier lo decide
+  el servidor, pero quien abra devtools lee el texto.
+  Mover ese contenido al backend y servirlo según el tier es trabajo de la Feature 6.
+
+### Contacto
+
+Sale por SES en **modo sandbox**, desde y hacia una **casilla provisoria de Gmail** (va sólo en el
+`.env`): en el sandbox SES sólo entrega a direcciones verificadas, que hoy es esa casilla y nada más.
+Los mails probablemente caigan en spam hasta tener dominio propio con DKIM (PA-21). El **límite de
+envíos cuenta por proceso**, en memoria: con varios workers cada uno permite el límite, y reiniciar lo
+pone en cero. En la Feature 7 los recorridos usaron `MAIL_SENDER=local`, que no manda nada; SES real
+se probó en la Feature 5.
+
+### Integración (Feature 7)
+
+- **`HttpApiService`** implementa los catorce métodos contra `environment.apiBaseUrl`. El formato de
+  error del backend llega a los formularios como un `Error` con el `message` en español; donde el
+  contrato admite `null` (`getLatestAttempt` sin intentos, `getAttempt` con 404) se devuelve `null`.
+- **Token** en `localStorage`, enviado por un interceptor sólo al backend. Se borra al cerrar sesión
+  y ante un 401 (que además cierra la sesión). Probado: después de cerrar sesión `localStorage` queda
+  vacío; con una cuenta borrada, el primer pedido devuelve 401 y la app vuelve a `/ingresar`.
+- **Recargar a mitad del test** retoma en el mismo ítem leyendo la base (`latest`, `questions`,
+  `responses`); en `localStorage` no queda estado del mock.
+- **Otra cuenta no ve nada de la anterior:** historial vacío, y el intento ajeno responde 404 en
+  intento, respuestas y resultado.
+- **El build `demo` sigue usando el mock**, sin interceptor: es el respaldo de la defensa.
+- **El build de producción apunta a `https://api.nureon.ai`, que no existe** hasta la Feature 8.
+
+### Limitaciones declaradas
+
+- **Al cerrar sesión, la pantalla actual no se va.** `AppComponent.onLogoutRequested` sólo vacía el
+  usuario: si se cierra sesión en `/perfil`, los datos de esa cuenta siguen en pantalla hasta navegar.
+  No hay pedidos ni token detrás. Es un cambio de componente, fuera del alcance de esta feature.
+- **Los formularios no conocen los máximos del backend** (100 / 254 / 5000 en contacto, 2000 en el
+  comentario). Pasarse muestra el error genérico del formulario, legible, y el formulario sigue
+  usable. Agregar los máximos en pantalla es una tarea aparte.
+- **Un token vencido con el test abierto** hace fallar el próximo pedido con el error del test; la
+  sesión se cierra y hay que volver a ingresar. Sin refresh token no hay renovación silenciosa.
+
 ## Feature 5: comentarios y contacto
 
 Hecho: `POST /api/feedback` guarda el comentario (RF06) y `POST /api/contact-messages` manda el
@@ -42,8 +130,8 @@ contra SES real: `204`, sin errores en el log.
   aceptar sólo lo que puede ir a una cabecera sin codificar.
 - **Remitente de Gmail:** los mensajes probablemente caigan en spam hasta tener dominio propio (PA-21).
 - **El frontend no conoce los máximos** (100 / 254 / 5000 en contacto, 2000 en el comentario): un
-  texto más largo recibe el error genérico de envío. Agregar `maxlength` a los formularios es de la
-  Feature 7.
+  texto más largo recibe el error genérico de envío. Agregar `maxlength` a los formularios es una
+  tarea aparte del frontend (decidido en la Feature 7, que no toca componentes).
 
 ## Feature 4.1: resultado y ranura de inferencia
 

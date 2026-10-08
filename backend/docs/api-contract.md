@@ -1,11 +1,50 @@
 # Contrato de la API
 
-Las formas de datos salen de `frontend/nureon/src/app/core/models/` (rama `redesign/frontend`). El JSON
-va en camelCase. Todo error tiene la misma forma:
+Las formas de datos salen de `frontend/nureon/src/app/core/models/`. El JSON va en camelCase. Todo
+error tiene la misma forma:
 
 ```json
 {"error": {"code": "SNAKE_CASE_IN_ENGLISH", "message": "Texto en español."}}
 ```
+
+`message` se muestra tal cual: `HttpApiService` lo convierte en el `Error` con el que rechaza cada
+método. Si no llega ese cuerpo (el servidor no responde, o responde otra cosa), el `Error` lleva un
+mensaje genérico en español.
+
+**Verificado automáticamente** (`tests/test_contract.py`): para cada una de las catorce rutas de la
+tabla de abajo, el conjunto de claves de la respuesta es *igual* al de la interfaz TypeScript con la
+que el frontend la lee. Las claves esperadas no están copiadas en el test: se leen de los `.ts` del
+frontend, así que un campo agregado o sacado de cualquiera de los dos lados lo rompe.
+
+## Las catorce rutas y `HttpApiService`
+
+| Método de `ApiService` | Ruta | Respuesta | Qué hace `HttpApiService` además de la llamada |
+|---|---|---|---|
+| `register` | `POST /api/auth/register` | `201` `{user, accessToken, expiresIn}` | Guarda el token; devuelve `user` |
+| `login` | `POST /api/auth/login` | `200` `{user, accessToken, expiresIn}` | Guarda el token; devuelve `user` |
+| `updateProfile` | `PATCH /api/users/me` | `200` `User` | No manda el `userId` |
+| `createTestAttempt` | `POST /api/attempts` | `201` `TestAttempt` | Sin cuerpo; no manda el `userId` |
+| `getQuestions` | `GET /api/attempts/{id}/questions` | `200` `Question[]` | — |
+| `submitResponse` | `POST /api/attempts/{id}/responses` | `200` `TestResponse` | Manda exactamente los cuatro campos |
+| `getResponses` | `GET /api/attempts/{id}/responses` | `200` `TestResponse[]` | — |
+| `completeTestAttempt` | `POST /api/attempts/{id}/complete` | `200` `TestAttempt` | Sin cuerpo |
+| `getLatestAttempt` | `GET /api/attempts/latest` | `200` `TestAttempt` o `null` | No manda el `userId` |
+| `getAttempt` | `GET /api/attempts/{id}` | `200` `TestAttempt` | Un `404` se devuelve como `null` |
+| `getAttemptHistory` | `GET /api/attempts` | `200` `TestAttempt[]` | No manda el `userId` |
+| `getResult` | `GET /api/attempts/{id}/result` | `200` `Result` | — |
+| `submitFeedback` | `POST /api/feedback` | `204` sin cuerpo | Devuelve `void` |
+| `submitContactMessage` | `POST /api/contact-messages` | `204` sin cuerpo | Devuelve `void`; va sin token |
+
+El `userId` que el contrato pide en algunos métodos se sigue recibiendo y no se manda: la identidad
+sale del token.
+
+El token se guarda en `localStorage` (`nureon_access_token`, con su vencimiento), al lado del usuario
+que ya guarda `AuthService`, y lo agrega un interceptor (`core/auth/`) sólo a los pedidos a
+`environment.apiBaseUrl`. Se borra cuando `AuthService` se queda sin usuario (cerrar sesión) y cuando el
+backend responde `401` a una ruta que no es de `/api/auth/`; en ese caso además se cierra la sesión,
+para que la app no quede "logueada" con un token que ya no sirve. Si al arrancar hay usuario guardado
+pero ningún token vigente, también se cierra la sesión. Nada de esto corre en el render del servidor
+(SSR/prerender).
 
 ## Autenticación
 
@@ -15,6 +54,26 @@ Toda ruta exige `Authorization: Bearer <accessToken>`, salvo `GET /api/health`,
 token del user pool configurado: se verifican la firma, el emisor, el `client_id`, el vencimiento y
 `token_use = access`. Un token ausente, vencido, mal firmado o de otro pool responde
 `401 UNAUTHORIZED`. La identidad sale del token y de ningún otro lado.
+
+Toda ruta autenticada puede responder, además de lo que diga su tabla:
+
+| Status | `code` | `message` |
+|---|---|---|
+| 401 | `UNAUTHORIZED` | No se pudo autenticar la solicitud. |
+| 503 | `IDENTITY_UNAVAILABLE` | El servicio de cuentas no está disponible. Probá de nuevo en unos minutos. |
+
+El 503 es no poder bajar las claves públicas del user pool para verificar la firma.
+
+Y cualquier ruta, pública o no:
+
+| Status | `code` | `message` |
+|---|---|---|
+| 404 | `NOT_FOUND` | El recurso solicitado no existe. (Ruta inexistente, o un `{id}` que no es un UUID.) |
+| 405 | `METHOD_NOT_ALLOWED` | El método no está permitido para este recurso. |
+| 500 | `INTERNAL_SERVER_ERROR` | Ocurrió un error interno. |
+
+Un cuerpo que no es JSON válido, o no es un objeto, responde `400 VALIDATION_ERROR`, como cualquier otro
+cuerpo inválido.
 
 `User` (igual a `user.model.ts`):
 
@@ -48,9 +107,13 @@ crearse: no hay verificación de email.
 | Status | `code` | `message` |
 |---|---|---|
 | 409 | `EMAIL_ALREADY_REGISTERED` | Ese email ya está registrado. |
+| 409 | `ACCOUNT_CONFLICT` | La cuenta no se pudo asociar: ya existe otra con ese email. |
 | 400 | `PASSWORD_REJECTED` | La contraseña no cumple los requisitos de seguridad. |
 | 400 | `VALIDATION_ERROR` | Los datos enviados no son válidos. |
 | 503 | `IDENTITY_UNAVAILABLE` | El servicio de cuentas no está disponible. Probá de nuevo en unos minutos. |
+
+`ACCOUNT_CONFLICT` es la carrera de dos registros simultáneos con el mismo email: la cuenta recién
+creada en el proveedor se borra y no queda nada a medias.
 
 ### `POST /api/auth/login` — `login(input)`
 
@@ -61,12 +124,16 @@ Cuerpo: exactamente `LoginInput`, `{"email", "password"}`. El email no distingue
 |---|---|---|
 | 401 | `INVALID_CREDENTIALS` | Email o contraseña incorrectos. |
 | 400 | `VALIDATION_ERROR` | Los datos enviados no son válidos. |
+| 409 | `ACCOUNT_CONFLICT` | La cuenta no se pudo asociar: ya existe otra con ese email. |
+| 503 | `IDENTITY_UNAVAILABLE` | El servicio de cuentas no está disponible. Probá de nuevo en unos minutos. |
 
-Email inexistente y contraseña incorrecta responden igual, a propósito.
+Email inexistente y contraseña incorrecta responden igual, a propósito. El login crea la fila de
+`users` si falta; `ACCOUNT_CONFLICT` es el caso en que esa fila choca con el email de otra cuenta viva.
 
 ### `GET /api/users/me`
 
-`200` con el `User` del token.
+Sin método en `ApiService`: el frontend recibe el usuario en la respuesta del login. `200` con el
+`User` del token.
 
 ### `PATCH /api/users/me` — `updateProfile(userId, input)`
 
@@ -293,3 +360,36 @@ Límite: `CONTACT_RATE_LIMIT` mensajes (5) por dirección de origen cada
 
 El 503 es una falla de SES: queda en el log con el código de error y nada del mensaje. No se encola
 ni se reintenta: la persona lo vuelve a mandar.
+
+## Qué queda fuera de las respuestas, a propósito
+
+Toda respuesta sale de un esquema con lista explícita de campos; ningún modelo se serializa entero. Lo
+que existe en la base y no sale:
+
+| Dato | Por qué no sale |
+|---|---|
+| `grouping_system` y `group_label` de preguntas y opciones | Son la clave de corrección del instrumento: con ellas, cualquiera falsea su resultado desde devtools |
+| El orden de las opciones en el banco | Las de escenario salen mezcladas por intento: el orden fijo también podría delatar el grupo |
+| Las predicciones de los clasificadores: grupo, probabilidades, `model_version` | Internas (PDR): no se muestran ni como número ni en palabras |
+| `results.confidence_margin` | Ídem. Mostrar la confianza es un punto abierto del plan, no una decisión del backend |
+| `questions.version`, `is_active`, `created_at` | Metadatos del banco: el servidor ya resuelve la versión activa |
+| `users.cognito_sub`, `deleted_at`, `created_at` | Internos de la cuenta |
+| Los comentarios (`feedback`) | No hay endpoint de lectura: se leen de la base, para el piloto |
+| Los mensajes de contacto | No se guardan en ningún lado |
+
+`tests/leak_guard.py` revisa toda respuesta JSON de la suite y falla si aparece una clave o un valor de
+la clave de corrección o de la salida interna de los clasificadores. `tests/test_contract.py` exige
+igualdad exacta de claves: tampoco puede aparecer un campo nuevo sin que se agregue a la interfaz del
+frontend.
+
+## Endpoints sin pantalla en el frontend
+
+| Endpoint | Para qué existe |
+|---|---|
+| `GET /api/health` | Liveness, para el balanceador (Feature 8). No toca la base |
+| `GET /api/health/ready` | Readiness: `503 SERVICE_UNAVAILABLE` si no hay base |
+| `GET /api/users/me` | El `User` del token. El frontend no lo usa |
+| `DELETE /api/users/me` | Borrado con anonimización (Ley 25.326). Sin pantalla todavía (PA-7) |
+
+Al revés no hay huecos: todo método de `ApiService` tiene su ruta. Pagos (Feature 6) no existe todavía,
+ni en el contrato ni en el backend.
