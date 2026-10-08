@@ -1,0 +1,67 @@
+.ingresar-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--nureon-space-sm);
+  max-width: 420px;
+  margin: var(--nureon-space-lg) auto;
+  width: 100%;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-2xs);
+  width: 100%;
+}
+
+.ingresar-form__forgot {
+  font-size: var(--nureon-text-body-sm-size);
+  color: rgba(black, 0.6);
+}
+
+.ingresar-form__error {
+  color: var(--nureon-color-danger);
+  font-size: var(--nureon-text-body-sm-size);
+}
+
+.ingresar-form__social {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-2xs);
+  width: 100%;
+}
+
+// Plain buttons, not Material directives: these follow each provider's own
+// brand convention, not ours, so fighting Material's button theming for a
+// one-off exception isn't worth it. Ranura RNF09 — inert until Cognito.
+.social-button {
+  display: block;
+  width: 100%;
+  padding: var(--nureon-space-xs) var(--nureon-space-sm);
+  border-radius: var(--nureon-radius-md);
+  font-size: var(--nureon-text-body-size);
+  // !important: overrides Material's global .mat-typography button reset
+  // (from body's class in index.html), which otherwise wins on specificity.
+  font-weight: var(--nureon-text-body-weight) !important;
+  font-family: var(--nureon-font-body);
+  cursor: pointer;
+}
+
+.social-button--google {
+  background: white;
+  color: rgba(black, 0.87);
+  border: 1px solid rgba(black, 0.24);
+}
+
+.social-button--facebook {
+  // Facebook's own brand blue — not one of ours, kept as the one deliberate
+  // exception to "no raw hex" since it identifies a third-party brand mark.
+  background: #1877f2;
+  color: white;
+  border: none;
+}
+
+.ingresar-form__signup {
+  font-size: var(--nureon-text-body-sm-size);
+}

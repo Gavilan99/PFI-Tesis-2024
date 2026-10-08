@@ -1,0 +1,59 @@
+.enneagram-diagram {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.enneagram-diagram__circle {
+  fill: none;
+  stroke: rgba(black, 0.16);
+  stroke-width: 1.5;
+}
+
+.enneagram-diagram__edge {
+  stroke: rgba(black, 0.12);
+  stroke-width: 1;
+
+  &--integration {
+    stroke: var(--nureon-orange);
+    stroke-width: 3;
+  }
+
+  &--disintegration {
+    stroke: var(--nureon-orange);
+    stroke-width: 3;
+    stroke-dasharray: 6 5;
+  }
+}
+
+.enneagram-diagram__point {
+  fill: white;
+  stroke: rgba(black, 0.3);
+  stroke-width: 1.5;
+
+  &--wing {
+    stroke: var(--nureon-green-dark);
+    stroke-width: 2.5;
+  }
+
+  &--result {
+    fill: var(--nureon-green-dark);
+    stroke: var(--nureon-green-dark);
+  }
+}
+
+.enneagram-diagram__label {
+  font-family: var(--nureon-font-body);
+  font-size: 14px;
+  text-anchor: middle;
+  dominant-baseline: central;
+  fill: rgba(black, 0.7);
+  pointer-events: none;
+
+  &--result {
+    fill: white;
+    font-weight: 700;
+  }
+}

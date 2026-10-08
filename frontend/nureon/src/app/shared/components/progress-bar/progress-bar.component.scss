@@ -1,0 +1,10 @@
+.progress-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-3xs);
+}
+
+.progress-bar__label {
+  font-size: var(--nureon-text-caption-size);
+  color: rgba(black, 0.6);
+}
