@@ -3,6 +3,11 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { API_SERVICE, ApiService } from '../../../core/services/api.service';
 import { BrandButtonComponent } from '../brand-button/brand-button.component';
 
+// Same limit the backend enforces (backend/app/blueprints/feedback/schemas.py,
+// COMMENT_MAX_LENGTH): a longer comment is rejected there and the user only
+// sees the generic error.
+const COMMENT_MAX_LENGTH = 2000;
+
 // RF06 — short on purpose: rating (1-5) + an optional comment. Used from
 // TestComponent's closing screen (tied to the attempt just finished) and
 // from ProfileComponent (general feedback, no attempt). Same component
@@ -21,7 +26,7 @@ export class FeedbackFormComponent {
   readonly ratings = [1, 2, 3, 4, 5];
   readonly form = this.fb.group({
     rating: this.fb.control<number | null>(null, Validators.required),
-    comment: [''],
+    comment: ['', Validators.maxLength(COMMENT_MAX_LENGTH)],
   });
 
   submitting = false;
@@ -32,6 +37,12 @@ export class FeedbackFormComponent {
     private readonly fb: NonNullableFormBuilder,
     @Inject(API_SERVICE) private readonly api: ApiService,
   ) {}
+
+  get commentError(): string | null {
+    const control = this.form.controls.comment;
+    if (!control.touched || !control.hasError('maxlength')) return null;
+    return `El comentario no puede superar los ${COMMENT_MAX_LENGTH.toLocaleString('es-AR')} caracteres.`;
+  }
 
   selectRating(value: number): void {
     this.form.controls.rating.setValue(value);

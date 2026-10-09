@@ -62,14 +62,23 @@
         </p>
       </section>
 
-      <!-- Capa 6: contenido premium, difuminado en su lugar -->
+      <!-- Capa 6: contenido premium. Sin el tier pago, el texto real no se
+           dibuja: lo difuminado es un relleno decorativo. -->
       <section class="resultados__section">
         <h2>En crecimiento y bajo estrés</h2>
         <div class="resultados__premium-body" [class.resultados__premium-body--locked]="!isPaid">
-          <div class="resultados__premium-content">
-            <p>{{ content.growth }}</p>
-            <p>{{ content.stress }}</p>
-          </div>
+          @if (isPaid) {
+            <div class="resultados__premium-content">
+              <p>{{ content.growth }}</p>
+              <p>{{ content.stress }}</p>
+            </div>
+          } @else {
+            <div class="resultados__premium-content" aria-hidden="true">
+              @for (paragraph of lockedPlaceholder; track $index) {
+                <p>{{ paragraph }}</p>
+              }
+            </div>
+          }
           @if (!isPaid) {
             <div class="resultados__premium-overlay">
               <app-brand-button variant="primary" (click)="openFreemiumInfo()">
