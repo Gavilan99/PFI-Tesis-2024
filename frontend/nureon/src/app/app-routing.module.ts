@@ -15,6 +15,8 @@ import { sessionGuard } from './core/guards/session.guard';
 import { resultAvailableGuard } from './core/guards/result-available.guard';
 import { environment } from '../environments/environment';
 
+// Guarded routes use runGuardsAndResolvers: 'always' so that AppComponent can
+// re-run their guards on logout by reloading the current URL.
 const routes: Routes = [
   { path: '', component: LandingComponent, data: { title: 'Descubrí tu eneatipo' } },
   { path: 'registro', component: RegistroComponent, data: { title: 'Registro' } },
@@ -24,30 +26,35 @@ const routes: Routes = [
     component: InicioComponent,
     data: { title: 'Inicio' },
     canActivate: [sessionGuard],
+    runGuardsAndResolvers: 'always',
   },
   {
     path: 'test',
     component: TestComponent,
     data: { title: 'Test' },
     canActivate: [sessionGuard],
+    runGuardsAndResolvers: 'always',
   },
   {
     path: 'resultados',
     component: ResultadosComponent,
     data: { title: 'Resultados' },
     canActivate: [resultAvailableGuard],
+    runGuardsAndResolvers: 'always',
   },
   {
     path: 'resultados/:attemptId',
     component: ResultadosComponent,
     data: { title: 'Resultado de intento' },
     canActivate: [resultAvailableGuard],
+    runGuardsAndResolvers: 'always',
   },
   {
     path: 'perfil',
     component: ProfileComponent,
     data: { title: 'Perfil' },
     canActivate: [sessionGuard],
+    runGuardsAndResolvers: 'always',
   },
   { path: 'eneagrama', component: EneagramaComponent, data: { title: 'Sobre el eneagrama' } },
   { path: 'nosotros', component: NosotrosComponent, data: { title: 'Nosotros' } },
