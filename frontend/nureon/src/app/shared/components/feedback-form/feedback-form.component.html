@@ -27,6 +27,9 @@
       rows="3"
       placeholder="Contanos qué mejorarías"
     ></textarea>
+    @if (commentError) {
+      <p class="feedback-form__error" role="alert">{{ commentError }}</p>
+    }
 
     @if (error) {
       <p class="feedback-form__error" role="alert">{{ error }}</p>
