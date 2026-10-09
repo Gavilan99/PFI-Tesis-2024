@@ -17,7 +17,7 @@ import { environment } from '../environments/environment';
 
 // Guarded routes use runGuardsAndResolvers: 'always' so that AppComponent can
 // re-run their guards on logout by reloading the current URL.
-const routes: Routes = [
+export const routes: Routes = [
   { path: '', component: LandingComponent, data: { title: 'Descubrí tu eneatipo' } },
   { path: 'registro', component: RegistroComponent, data: { title: 'Registro' } },
   { path: 'ingresar', component: IngresarComponent, data: { title: 'Ingresar' } },
