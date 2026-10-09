@@ -36,6 +36,15 @@ import { ENEATYPE_CONTENT, EneatypeContent, FRAMING_TEXT } from './eneatype-cont
   styleUrl: './resultados.component.scss',
 })
 export class ResultadosComponent implements OnInit {
+  // Drawn under the blur instead of content.growth/content.stress when the
+  // tier doesn't include them: blurred text only hides from the eye, and
+  // anyone can read it from devtools. Roughly the same length as the real
+  // paragraphs so the locked block keeps its shape.
+  readonly lockedPlaceholder = [
+    'Este párrafo es un relleno. En el perfil completo, acá aparece cómo se expresa tu eneatipo cuando estás en tu mejor momento.',
+    'Este párrafo también es un relleno. En el perfil completo, acá aparece cómo se expresa tu eneatipo en situaciones de presión.',
+  ];
+
   loading = true;
   error: string | null = null;
   eneatype: number | null = null;
