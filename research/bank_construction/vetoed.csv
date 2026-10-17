@@ -1,0 +1,110 @@
+rule,tier,scope,pattern,note
+REG-01,register,ALL,bronca,Vetada en la ronda v2 por informal/lunfardo
+REG-02,register,ALL,banc(ar|arte|ás|as|a)\b,Vetada en v2: baja la calidad percibida del producto
+REG-03,register,ALL,(empuj\w*\s+(mas|hasta|fuerte)|seguir empujando),"El calco de ""push"" (empujar hasta / empujar mas fuerte), NO la palabra: ""empujar"" es correcta en su uso literal"
+REG-04,register,ALL,sacar el cuerpo,Vetada en v1: se lee como esquivar responsabilidad
+REG-05,register,ALL,meter mano,Muy coloquial y ambiguo para un assessment pago (v4 Q3)
+OBS-01,construct,ALL,\bclaves\b,"Marcada en la adjudicación del lote de escenario (""suena raro"") y reincidente en el lote Likert. Palabra bajo vigilancia, no veto duro: avisa, no bloquea"
+OBS-02,construct,ALL,\bmella\b,"Modismo peninsular, no rioplatense. Marcada en el lote Likert: ""no sé ni qué significa"""
+CEN-1a,construct,Cuerpo,que otros decidan por vos,Cuerpo != autonomia; atractor 8
+CEN-1b,construct,Cuerpo,no poder intervenir,Cuerpo != accion inmediata; atractor 8
+CEN-1c,construct,Cuerpo,pedir permiso,Cuerpo != autonomia limitada; atractor 8
+CEN-1d,construct,Cuerpo,que te limiten,Cuerpo != control externo; atractor 8
+CEN-1e,construct,Cuerpo,tomar el control,Cuerpo != control; atractor 8
+CEN-1f,construct,Cuerpo,actuar r[aá]pido,Cuerpo != velocidad de accion
+CEN-2a,construct,Corazón,que te quieran,Corazon != aprobacion; atractor 2
+CEN-2b,construct,Corazón,te (tenga|tienen|tiene|tengan) en cuenta,Corazon != importancia para el otro; atractor 2
+CEN-2c,construct,Corazón,que nadie se enoje,Corazon != evitar conflicto; atractor 2
+CEN-2d,construct,Corazón,no defraudar,Corazon != no fallarle al otro; atractor 2
+CEN-2e,construct,Corazón,mantener el v[ií]nculo,Corazon != sostener la relacion; atractor 2
+CEN-3a,construct,Mente,no saber qu[eé] viene,Mente != anticipacion; atractor 6
+CEN-3b,construct,Mente,pod[eé]s anticipar,Mente != anticipacion; atractor 6
+CEN-3c,construct,Mente,no saber qu[eé] esperar,Mente != anticipacion; atractor 6
+CEN-3d,construct,Mente,que no ves venir,Mente != imprevisibilidad; atractor 6
+CEN-3e,construct,Mente,imprevisibilidad,Mente != imprevisibilidad; atractor 6
+CEN-3f,construct,Mente,miedo a lo desconocido,Mente != miedo; atractor 6
+HOR-2a,construct,Asertiva,plant(arte|arse|ás)\b,Asertiva != confrontacion; atractor 8
+HOR-2b,construct,Asertiva,marcar l[ií]mites,Asertiva != limites; atractor 8
+HOR-2c,construct,Asertiva,imponerte,Asertiva != imposicion; atractor 8
+HOR-2d,construct,Asertiva,ir de frente,Asertiva != confrontacion; atractor 8
+HOR-2e,construct,Asertiva,sac(arlo|ar) del medio,Asertiva != fuerza bruta; atractor 8
+HOR-2f,construct,Asertiva,forzar,Asertiva != forzar; atractor 8
+HOR-2g,construct,Asertiva,tomar el control,Asertiva != control; atractor 8
+HOR-2h,construct,Asertiva,hacerte respetar,Asertiva != dominancia; atractor 8
+HOR-3a,construct,Complaciente,(se espera|esperan) de vos,Complaciente != expectativa externa; deja afuera al 1
+HOR-3b,construct,Complaciente,(espera el grupo|adaptarte al grupo),Complaciente != adaptacion al grupo; deja afuera al 1
+HOR-3c,construct,Complaciente,no defraudar,Complaciente != no fallarle al otro; atractor 2
+HOR-3d,construct,Complaciente,lo que te piden,Complaciente != obediencia; atractor 2/6
+HOR-4a,construct,Complaciente,si hiciste algo mal,Complaciente != autoculpa (regla 4)
+HOR-4b,construct,Complaciente,la culpa (fue|sea) tuya,Complaciente != culpa
+HOR-4c,construct,Complaciente,aprobaci[oó]n,Complaciente != necesidad de validacion
+HOR-7a,construct,Complaciente,hacerl(a|o) bien,Ventaja moral: vuelve Complaciente la opcion virtuosa
+HOR-7b,construct,Complaciente,cumplirlo bien,Ventaja moral: vuelve Complaciente la opcion virtuosa
+HOR-7c,construct,Complaciente,cumplir perfectamente,Ventaja moral
+HOR-5a,construct,Retraída,arregl(arte|ártelas|artelas) ,Retraida != autosuficiencia; atractor 5 y solapa Rechazo
+HOR-5b,construct,Retraída,no pedir ayuda,Retraida != autosuficiencia; atractor 5
+HOR-5c,construct,Retraída,guardar (tu )?energ[ií]a,Retraida != conservar recursos; atractor 5
+HOR-5d,construct,Retraída,conservar recursos,Retraida != conservar recursos; atractor 5
+HOR-5e,construct,Retraída,querer estar solo,Retraida != aislamiento
+HOR-5f,construct,Retraída,evitar depender,Retraida != independencia; solapa Rechazo
+HOR-5g,construct,Retraída,seguir con lo tuyo,Retraida != desentenderse; atractor 5
+HOR-6a,construct,Retraída,hacer lo m[ií]nimo,Deseabilidad negativa: vuelve Retraida la opcion mediocre
+HOR-6b,construct,Retraída,desentenderte,Deseabilidad negativa
+HOR-6c,construct,Retraída,evitar hacerte cargo,Deseabilidad negativa
+ARM-2a,construct,Positiva,nuevo que te entusiasme,Positiva != novedad; atractor 7
+ARM-2b,construct,Positiva,otra posibilidad,Positiva != posibilidades; atractor 7
+ARM-2c,construct,Positiva,distraerte,Positiva != distraccion; caricatura de negacion
+ARM-2d,construct,Positiva,pasar a otra cosa,Positiva != evasion; atractor 7
+ARM-2e,construct,Positiva,en lo pr[oó]ximo,Positiva != futuro; atractor 7
+ARM-2f,construct,Positiva,oportunidades,Positiva != oportunidad; atractor 7
+ARM-3a,construct,Positiva,de cuenta que no pas,Positiva != negacion
+ARM-3b,construct,Positiva,pensar positivo,Positiva != optimismo
+ARM-3c,construct,Positiva,ignorar el problema,Positiva != negacion
+ARM-3d,construct,Positiva,minimizar todo,Positiva != negacion
+ARM-4a,construct,Competente,resolver r[aá]pido,Competente != velocidad; atractor 3
+ARM-4b,construct,Competente,r[aá]pido para que,Competente != velocidad; atractor 3
+ARM-4c,construct,Competente,que igual salga,Competente != producir cualquier resultado; atractor 3
+ARM-4d,construct,Competente,ser eficiente,Competente != eficiencia; atractor 3
+ARM-4e,construct,Competente,cerrar el tema,Competente != clausura; deja afuera al 5
+ARM-4f,construct,Competente,quede cerrado,Competente != clausura; deja afuera al 5
+ARM-5a,construct,Competente,(pongan|ponerse) emocional,Juzga la emotividad en vez de medir interferencia con la resolucion
+ARM-5b,construct,Competente,sentimientos de lado,Competente != desapego emocional
+ARM-5c,construct,Competente,no dejarse afectar,Competente != desapego emocional
+ARM-6a,construct,Reactiva,expresar lo que sent[ií]s,Reactiva != expresion emocional; atractor 4
+ARM-6b,construct,Reactiva,atravesar (todo lo que|tus),Reactiva != procesar emociones; atractor 4
+ARM-6c,construct,Reactiva,cu[aá]nto te afect[oó],Reactiva != impacto emocional propio; atractor 4
+ARM-6d,construct,Reactiva,hablar del dolor,Reactiva != dolor; atractor 4
+ARM-6e,construct,Reactiva,c[oó]mo te hizo sentir,Reactiva != expresion emocional; atractor 4
+ARM-7a,construct,Reactiva,de frente,Reactiva != confrontacion; atractor 8
+ARM-7b,construct,Reactiva,confrontar,Reactiva != confrontacion; atractor 8
+ARM-7c,construct,Reactiva,lo que hay que decir,Reactiva != decir verdades incomodas; atractor 8
+ARM-7d,construct,Reactiva,reclamar,Reactiva != reclamo; atractor 8
+REL-2a,construct,Apego,dejado solo,Apego != abandono; atractor 6
+REL-2b,construct,Apego,cuando m[aá]s lo necesitabas,Apego != necesidad de apoyo; atractor 6
+REL-2c,construct,Apego,confiar en nadie,Apego != confianza; atractor 6
+REL-2d,construct,Apego,necesitar apoyo,Apego != necesidad de apoyo; atractor 6
+REL-2e,construct,Apego,seguridad emocional,Apego != seguridad; atractor 6
+REL-4a,construct,Apego,que dure,Apego != permanencia; deja afuera al 3
+REL-4b,construct,Apego,(sea|algo) estable,Apego != estabilidad; deja afuera al 3
+REL-4c,construct,Apego,que no cambie,Apego != permanencia; deja afuera al 3
+REL-15a,construct,Apego,vuelvan a estar bien,Contaminacion con Armonica-Positiva
+REL-6a,construct,Frustración,que sea (diferente|distinto),Frustracion != novedad; atractores 4/7
+REL-6b,construct,Frustración,distinto a todo,Frustracion != novedad; atractores 4/7
+REL-6c,construct,Frustración,(sea|algo) [uú]nico,Frustracion != singularidad; atractor 4
+REL-6d,construct,Frustración,nunca hayas vivido,Frustracion != novedad; atractor 7
+REL-6e,construct,Frustración,fuera de lo com[uú]n,Frustracion != singularidad; atractor 4
+REL-7a,construct,Frustración,desperdiciaste,Frustracion != potencial personal; atractor 3
+REL-7b,construct,Frustración,mucho m[aá]s lejos,Frustracion != logro; atractor 3
+REL-7c,construct,Frustración,menos de lo que pod[ií]as,Frustracion != potencial personal; atractor 3
+REL-15b,construct,Frustración,se resuelva,Contaminacion con Armonica-Competente
+REL-15c,construct,Frustración,resolver bien,Contaminacion con Armonica-Competente
+REL-8a,construct,Rechazo,no depender,Rechazo != independencia; atractores 5/8
+REL-8b,construct,Rechazo,no necesitar ayuda,Rechazo != independencia; atractores 5/8
+REL-8c,construct,Rechazo,arregl(arte|artelas|ártelas) solo,Rechazo != autosuficiencia; atractores 5/8
+REL-8d,construct,Rechazo,poder sobre vos,Rechazo != poder; atractor 8
+REL-8e,construct,Rechazo,mantener (tu )?independencia,Rechazo != independencia; atractores 5/8
+REL-8f,construct,Rechazo,necesitando m[aá]s de lo que,Rechazo != asimetria de necesidad; atractores 5/8
+REL-8g,construct,Rechazo,necesitando demasiado,Rechazo != aversion a depender; atractores 5/8
+REL-8h,construct,Rechazo,no quedar vulnerable,Rechazo != vulnerabilidad; atractor 8
+REL-8i,construct,Rechazo,por tu cuenta,Rechazo != autosuficiencia; atractores 5/8
+REL-8j,construct,Rechazo,terminado dependiendo,Rechazo != dependencia; atractores 5/8

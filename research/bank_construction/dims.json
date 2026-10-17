@@ -1,0 +1,158 @@
+{
+ "alik 31": {
+  "Afordancia": "mixta",
+  "Estado": "recién pasó",
+  "Origen": "sin culpable",
+  "Posición": "protagonista"
+ },
+ "alik 32": {
+  "Afordancia": "mixta",
+  "Estado": "en curso",
+  "Origen": "propio",
+  "Posición": "corresponsable"
+ },
+ "alik 33": {
+  "Afordancia": "reencuadre",
+  "Estado": "viejo",
+  "Origen": "ajeno",
+  "Posición": "protagonista"
+ },
+ "alik 34": {
+  "Afordancia": "mixta",
+  "Estado": "en curso",
+  "Origen": "ajeno",
+  "Posición": "acompañante"
+ },
+ "alik 35": {
+  "Afordancia": "mixta",
+  "Estado": "en curso",
+  "Origen": "ajeno",
+  "Posición": "corresponsable"
+ },
+ "alik 36": {
+  "Afordancia": "acción",
+  "Estado": "recién pasó",
+  "Origen": "sin culpable",
+  "Posición": "protagonista"
+ },
+ "alik 37": {
+  "Afordancia": "diagnóstico",
+  "Estado": "en curso",
+  "Origen": "propio",
+  "Posición": "protagonista"
+ },
+ "alik 38": {
+  "Afordancia": "mixta",
+  "Estado": "recién pasó",
+  "Origen": "ajeno",
+  "Posición": "testigo"
+ },
+ "alik 39": {
+  "Afordancia": "mixta",
+  "Estado": "viejo",
+  "Origen": "ajeno",
+  "Posición": "corresponsable"
+ },
+ "alik 40": {
+  "Afordancia": "mixta",
+  "Estado": "recién pasó",
+  "Origen": "sin culpable",
+  "Posición": "protagonista"
+ },
+ "alik 41": {
+  "Afordancia": "mixta",
+  "Estado": "en curso",
+  "Origen": "sin culpable",
+  "Posición": "acompañante"
+ },
+ "alik 42": {
+  "Afordancia": "mixta",
+  "Estado": "viejo",
+  "Origen": "ajeno",
+  "Posición": "protagonista"
+ },
+ "rlik 43": {
+  "Afordancia": "mixta",
+  "Asimetría": "el equipo decide",
+  "Momento": "en curso",
+  "Tarea relacional": "coordinación / función",
+  "Vínculo": "trabajo"
+ },
+ "rlik 44": {
+  "Afordancia": "mixta",
+  "Asimetría": "el otro cambia",
+  "Momento": "en crisis",
+  "Tarea relacional": "distancia / continuidad",
+  "Vínculo": "amistad"
+ },
+ "rlik 45": {
+  "Afordancia": "mixta",
+  "Asimetría": "el otro propone",
+  "Momento": "en curso",
+  "Tarea relacional": "negociación de preferencias",
+  "Vínculo": "pareja"
+ },
+ "rlik 46": {
+  "Afordancia": "mixta",
+  "Asimetría": "el grupo tiene historia sin vos",
+  "Momento": "en curso",
+  "Tarea relacional": "pertenencia / historia compartida",
+  "Vínculo": "familia"
+ },
+ "rlik 47": {
+  "Afordancia": "mixta",
+  "Asimetría": "el otro se corrió",
+  "Momento": "en crisis",
+  "Tarea relacional": "continuidad / profundización",
+  "Vínculo": "amistad"
+ },
+ "rlik 48": {
+  "Afordancia": "mixta",
+  "Asimetría": "par",
+  "Momento": "en curso",
+  "Tarea relacional": "convivencia / ajuste",
+  "Vínculo": "pareja"
+ },
+ "rlik 49": {
+  "Afordancia": "mixta",
+  "Asimetría": "par",
+  "Momento": "en curso",
+  "Tarea relacional": "continuidad grupal",
+  "Vínculo": "grupo"
+ },
+ "rlik 50": {
+  "Afordancia": "mixta",
+  "Asimetría": "el otro se acerca",
+  "Momento": "se retoma",
+  "Tarea relacional": "reparación / reapertura",
+  "Vínculo": "familia"
+ },
+ "rlik 51": {
+  "Afordancia": "mixta",
+  "Asimetría": "par",
+  "Momento": "en curso",
+  "Tarea relacional": "integración / contribución",
+  "Vínculo": "vecinos"
+ },
+ "rlik 52": {
+  "Afordancia": "favorece Rechazo",
+  "Asimetría": "vos dependés",
+  "Momento": "recién pasó",
+  "Tarea relacional": "recepción de cuidado logístico",
+  "Vínculo": "familia"
+ },
+ "rlik 53": {
+  "Afordancia": "favorece Rechazo",
+  "Asimetría": "el otro ofrece",
+  "Momento": "recién pasó",
+  "Tarea relacional": "recepción de cuidado ofrecido",
+  "Vínculo": "amistad"
+ },
+ "rlik 54": {
+  "Afordancia": "mixta",
+  "Asimetría": "el otro atraviesa una necesidad sostenida",
+  "Momento": "en curso",
+  "Tarea relacional": "sostén / acompañamiento",
+  "Vínculo": "pareja"
+ }
+}

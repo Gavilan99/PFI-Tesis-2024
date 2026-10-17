@@ -1,0 +1,836 @@
+{
+ "facets": {
+  "alik 31": {
+   "_likert": "recordar recursos"
+  },
+  "alik 32": {
+   "_likert": "conservar vínculo o estabilidad"
+  },
+  "alik 33": {
+   "_likert": "recuperar perspectiva"
+  },
+  "alik 34": {
+   "_likert": "recuperar esperanza"
+  },
+  "alik 35": {
+   "_likert": "separar reacción de resolución"
+  },
+  "alik 36": {
+   "_likert": "ordenar"
+  },
+  "alik 37": {
+   "_likert": "definir el problema"
+  },
+  "alik 38": {
+   "_likert": "corregir"
+  },
+  "alik 39": {
+   "_likert": "no fingir que nada pasó"
+  },
+  "alik 40": {
+   "_likert": "no cerrar demasiado rápido"
+  },
+  "alik 41": {
+   "_likert": "dar espacio a lo difícil"
+  },
+  "alik 42": {
+   "_likert": "nombrar lo ocurrido"
+  },
+  "arm 01": {
+   "Competente": "corregir",
+   "Positiva": "conservar vínculo o estabilidad",
+   "Reactiva": "validar impacto"
+  },
+  "arm 02": {
+   "Competente": "entender",
+   "Positiva": "impedir que lo malo contamine todo",
+   "Reactiva": "no cerrar demasiado rápido"
+  },
+  "arm 03": {
+   "Competente": "próximo paso",
+   "Positiva": "preservar lo bueno",
+   "Reactiva": "no minimizar"
+  },
+  "arm 04": {
+   "Competente": "definir el problema",
+   "Positiva": "algo que siga teniendo valor",
+   "Reactiva": "reconocer gravedad"
+  },
+  "arm 05": {
+   "Competente": "estructurar",
+   "Positiva": "preservar lo bueno",
+   "Reactiva": "validar impacto"
+  },
+  "arm 06": {
+   "Competente": "encontrar solución",
+   "Positiva": "recuperar perspectiva",
+   "Reactiva": "reconocer gravedad"
+  },
+  "arm 07": {
+   "Competente": "ordenar",
+   "Positiva": "conservar vínculo o estabilidad",
+   "Reactiva": "no minimizar"
+  },
+  "arm 08": {
+   "Competente": "próximo paso",
+   "Positiva": "impedir que lo malo contamine todo",
+   "Reactiva": "dar espacio a lo difícil"
+  },
+  "arm 09": {
+   "Competente": "entender",
+   "Positiva": "preservar lo bueno",
+   "Reactiva": "dar espacio a lo difícil"
+  },
+  "arm 10": {
+   "Competente": "encontrar solución",
+   "Positiva": "recuperar perspectiva",
+   "Reactiva": "validar impacto"
+  },
+  "arm 11": {
+   "Competente": "próximo paso",
+   "Positiva": "recuperar esperanza",
+   "Reactiva": "no cerrar demasiado rápido"
+  },
+  "arm 12": {
+   "Competente": "separar reacción de resolución",
+   "Positiva": "conservar vínculo o estabilidad",
+   "Reactiva": "no fingir que nada pasó"
+  },
+  "arm 13": {
+   "Competente": "estructurar",
+   "Positiva": "recuperar perspectiva",
+   "Reactiva": "nombrar lo ocurrido"
+  },
+  "arm 14": {
+   "Competente": "corregir",
+   "Positiva": "algo que siga teniendo valor",
+   "Reactiva": "reconocer gravedad"
+  },
+  "arm 15": {
+   "Competente": "definir el problema",
+   "Positiva": "preservar lo bueno",
+   "Reactiva": "no minimizar"
+  },
+  "arm 16": {
+   "Competente": "estructurar",
+   "Positiva": "impedir que lo malo contamine todo",
+   "Reactiva": "nombrar lo ocurrido"
+  },
+  "arm 17": {
+   "Competente": "separar reacción de resolución",
+   "Positiva": "recuperar esperanza",
+   "Reactiva": "no cerrar demasiado rápido"
+  },
+  "arm 18": {
+   "Competente": "estructurar",
+   "Positiva": "recordar recursos",
+   "Reactiva": "no fingir que nada pasó"
+  },
+  "centros3 19": {
+   "Corazón": "identidad",
+   "Cuerpo": "criterio visceral",
+   "Mente": "escenarios"
+  },
+  "centros3 20": {
+   "Corazón": "imagen",
+   "Cuerpo": "posición",
+   "Mente": "preparación"
+  },
+  "centros3 21": {
+   "Corazón": "significado personal",
+   "Cuerpo": "tensión",
+   "Mente": "orientación"
+  },
+  "centros3 22": {
+   "Corazón": "valor",
+   "Cuerpo": "activación corporal",
+   "Mente": "posibilidades"
+  },
+  "centros3 23": {
+   "Corazón": "reconocimiento",
+   "Cuerpo": "ritmo",
+   "Mente": "comprensión"
+  },
+  "centros3 24": {
+   "Corazón": "significado personal",
+   "Cuerpo": "límites",
+   "Mente": "opciones"
+  },
+  "hlik 19": {
+   "_likert": "iniciativa"
+  },
+  "hlik 20": {
+   "_likert": "ganar margen"
+  },
+  "hlik 21": {
+   "_likert": "avance"
+  },
+  "hlik 22": {
+   "_likert": "tomar acción"
+  },
+  "hlik 23": {
+   "_likert": "deber"
+  },
+  "hlik 24": {
+   "_likert": "compromiso"
+  },
+  "hlik 25": {
+   "_likert": "responsabilidad"
+  },
+  "hlik 26": {
+   "_likert": "expectativas"
+  },
+  "hlik 27": {
+   "_likert": "preservar interioridad"
+  },
+  "hlik 28": {
+   "_likert": "menor involucramiento"
+  },
+  "hlik 29": {
+   "_likert": "bajar activación"
+  },
+  "hlik 30": {
+   "_likert": "volver después"
+  },
+  "hornev1 01": {
+   "Asertiva": "ir por lo deseado",
+   "Complaciente": "compromiso",
+   "Retraída": "procesar"
+  },
+  "hornev1 02": {
+   "Asertiva": "ganar margen",
+   "Complaciente": "lo que corresponde",
+   "Retraída": "ritmo propio"
+  },
+  "hornev1 03": {
+   "Asertiva": "iniciativa",
+   "Complaciente": "necesidades ajenas",
+   "Retraída": "volver después"
+  },
+  "hornev1 04": {
+   "Asertiva": "avance",
+   "Complaciente": "pauta o criterio externo",
+   "Retraída": "decantar"
+  },
+  "hornev1 05": {
+   "Asertiva": "ir por lo deseado",
+   "Complaciente": "responsabilidad",
+   "Retraída": "preservar interioridad"
+  },
+  "hornev1 06": {
+   "Asertiva": "tomar acción",
+   "Complaciente": "compromiso",
+   "Retraída": "distancia"
+  },
+  "hornev1 07": {
+   "Asertiva": "modificar la situación",
+   "Complaciente": "deber",
+   "Retraída": "bajar activación"
+  },
+  "hornev1 08": {
+   "Asertiva": "ir por lo deseado",
+   "Complaciente": "lo que corresponde",
+   "Retraída": "decantar"
+  },
+  "hornev1 09": {
+   "Asertiva": "ganar margen",
+   "Complaciente": "deber",
+   "Retraída": "menor involucramiento"
+  },
+  "hornev1 10": {
+   "Asertiva": "avance",
+   "Complaciente": "responsabilidad",
+   "Retraída": "volver después"
+  },
+  "hornev1 11": {
+   "Asertiva": "tomar acción",
+   "Complaciente": "lo que corresponde",
+   "Retraída": "preservar interioridad"
+  },
+  "hornev1 12": {
+   "Asertiva": "ganar margen",
+   "Complaciente": "necesidades ajenas",
+   "Retraída": "menor involucramiento"
+  },
+  "hornev1 13": {
+   "Asertiva": "iniciativa",
+   "Complaciente": "expectativas",
+   "Retraída": "espacio propio"
+  },
+  "hornev1 14": {
+   "Asertiva": "avance",
+   "Complaciente": "compromiso",
+   "Retraída": "preservar interioridad"
+  },
+  "hornev1 15": {
+   "Asertiva": "ganar margen",
+   "Complaciente": "compromiso",
+   "Retraída": "procesar"
+  },
+  "hornev1 16": {
+   "Asertiva": "buscar otra vía",
+   "Complaciente": "responsabilidad",
+   "Retraída": "bajar activación"
+  },
+  "hornev1 17": {
+   "Asertiva": "buscar otra vía",
+   "Complaciente": "compromiso",
+   "Retraída": "menor involucramiento"
+  },
+  "hornev1 18": {
+   "Asertiva": "modificar la situación",
+   "Complaciente": "deber",
+   "Retraída": "procesar"
+  },
+  "hornev2 13": {
+   "Asertiva": "tomar acción",
+   "Complaciente": "lo que corresponde",
+   "Retraída": "procesar"
+  },
+  "hornev2 14": {
+   "Asertiva": "ganar margen",
+   "Complaciente": "pauta o criterio externo",
+   "Retraída": "distancia"
+  },
+  "hornev2 15": {
+   "Asertiva": "iniciativa",
+   "Complaciente": "deber",
+   "Retraída": "preservar interioridad"
+  },
+  "hornev2 16": {
+   "Asertiva": "modificar la situación",
+   "Complaciente": "compromiso",
+   "Retraída": "volver después"
+  },
+  "hornev2 17": {
+   "Asertiva": "buscar otra vía",
+   "Complaciente": "necesidades ajenas",
+   "Retraída": "despejar para pensar"
+  },
+  "hornev2 18": {
+   "Asertiva": "avance",
+   "Complaciente": "compromiso",
+   "Retraída": "menor involucramiento"
+  },
+  "likert1 01": {
+   "_likert": "tensión / residuo corporal"
+  },
+  "likert1 02": {
+   "_likert": "límites sentidos"
+  },
+  "likert1 03": {
+   "_likert": "ritmo propio"
+  },
+  "likert1 04": {
+   "_likert": "resistencia interna"
+  },
+  "likert1 05": {
+   "_likert": "reconocimiento"
+  },
+  "likert1 06": {
+   "_likert": "valor personal"
+  },
+  "likert1 07": {
+   "_likert": "significado interpersonal"
+  },
+  "likert1 08": {
+   "_likert": "discrepancia entre quién sos y cómo quedás"
+  },
+  "likert1 09": {
+   "_likert": "referencias"
+  },
+  "likert1 10": {
+   "_likert": "escenarios"
+  },
+  "likert1 11": {
+   "_likert": "comprensión"
+  },
+  "likert1 12": {
+   "_likert": "posibilidades"
+  },
+  "lote1 01": {
+   "Corazón": "reconocimiento",
+   "Cuerpo": "activación corporal",
+   "Mente": "comprensión"
+  },
+  "lote1 02": {
+   "Corazón": "valor",
+   "Cuerpo": "ritmo",
+   "Mente": "preparación"
+  },
+  "lote1 03": {
+   "Corazón": "cómo te leen otros",
+   "Cuerpo": "criterio visceral",
+   "Mente": "referencias"
+  },
+  "lote1 04": {
+   "Corazón": "identidad",
+   "Cuerpo": "posición",
+   "Mente": "orientación"
+  },
+  "lote1 05": {
+   "Corazón": "significado personal",
+   "Cuerpo": "posición",
+   "Mente": "opciones"
+  },
+  "lote1 06": {
+   "Corazón": "imagen",
+   "Cuerpo": "tensión",
+   "Mente": "referencias"
+  },
+  "lote1 07": {
+   "Corazón": "identidad",
+   "Cuerpo": "límites",
+   "Mente": "opciones"
+  },
+  "lote1 08": {
+   "Corazón": "reconocimiento",
+   "Cuerpo": "activación corporal",
+   "Mente": "posibilidades"
+  },
+  "lote1 09": {
+   "Corazón": "significado personal",
+   "Cuerpo": "ritmo",
+   "Mente": "preparación"
+  },
+  "lote1 10": {
+   "Corazón": "valor",
+   "Cuerpo": "criterio visceral",
+   "Mente": "comprensión"
+  },
+  "lote1 11": {
+   "Corazón": "imagen",
+   "Cuerpo": "límites",
+   "Mente": "escenarios"
+  },
+  "lote1 12": {
+   "Corazón": "cómo te leen otros",
+   "Cuerpo": "tensión",
+   "Mente": "escenarios"
+  },
+  "rel 01": {
+   "Apego": "adaptarse a lo disponible",
+   "Frustración": "brecha entre expectativa y resultado",
+   "Rechazo": "ser valorado sólo por lo que proveés"
+  },
+  "rel 02": {
+   "Apego": "rol",
+   "Frustración": "podría ser mejor",
+   "Rechazo": "tener algo propio para ofrecer"
+  },
+  "rel 03": {
+   "Apego": "continuidad",
+   "Frustración": "ideal vs realidad",
+   "Rechazo": "propia necesidad relegada"
+  },
+  "rel 04": {
+   "Apego": "adaptarse a lo disponible",
+   "Frustración": "no conformarse",
+   "Rechazo": "propia necesidad relegada"
+  },
+  "rel 05": {
+   "Apego": "pertenencia",
+   "Frustración": "brecha entre expectativa y resultado",
+   "Rechazo": "ser quien sostiene"
+  },
+  "rel 06": {
+   "Apego": "rol",
+   "Frustración": "reparar hacia una forma más ideal",
+   "Rechazo": "tener algo propio para ofrecer"
+  },
+  "rel 07": {
+   "Apego": "continuidad",
+   "Frustración": "podría ser mejor",
+   "Rechazo": "ser valorado sólo por lo que proveés"
+  },
+  "rel 08": {
+   "Apego": "adaptarse a lo disponible",
+   "Frustración": "podría ser mejor",
+   "Rechazo": "ser quien sostiene"
+  },
+  "rel 09": {
+   "Apego": "referencia",
+   "Frustración": "ideal vs realidad",
+   "Rechazo": "propia necesidad relegada"
+  },
+  "rel 10": {
+   "Apego": "adaptarse a lo disponible",
+   "Frustración": "brecha entre expectativa y resultado",
+   "Rechazo": "incomodidad al quedar del lado de pedir"
+  },
+  "rel 11": {
+   "Apego": "pertenencia",
+   "Frustración": "reparar hacia una forma más ideal",
+   "Rechazo": "ser quien sostiene"
+  },
+  "rel 12": {
+   "Apego": "continuidad",
+   "Frustración": "potencial no realizado",
+   "Rechazo": "incomodidad al quedar del lado de pedir"
+  },
+  "rel 13": {
+   "Apego": "referencia",
+   "Frustración": "ideal vs realidad",
+   "Rechazo": "propia necesidad relegada"
+  },
+  "rel 14": {
+   "Apego": "perder el deseo propio por acomodación",
+   "Frustración": "no conformarse",
+   "Rechazo": "propia necesidad relegada"
+  },
+  "rel 15": {
+   "Apego": "adaptarse a lo disponible",
+   "Frustración": "reparar hacia una forma más ideal",
+   "Rechazo": "ser quien sostiene"
+  },
+  "rel 16": {
+   "Apego": "referencia",
+   "Frustración": "podría ser mejor",
+   "Rechazo": "tener algo propio para ofrecer"
+  },
+  "rel 17": {
+   "Apego": "saber dónde estás parado",
+   "Frustración": "brecha entre expectativa y resultado",
+   "Rechazo": "incomodidad al quedar del lado de pedir"
+  },
+  "rel 18": {
+   "Apego": "rol",
+   "Frustración": "no conformarse",
+   "Rechazo": "ser quien sostiene"
+  },
+  "rlik 43": {
+   "_likert": "conservar un lugar"
+  },
+  "rlik 44": {
+   "_likert": "saber dónde estás parado"
+  },
+  "rlik 45": {
+   "_likert": "perder el deseo propio por acomodación"
+  },
+  "rlik 46": {
+   "_likert": "pertenencia"
+  },
+  "rlik 47": {
+   "_likert": "potencial no realizado"
+  },
+  "rlik 48": {
+   "_likert": "no conformarse"
+  },
+  "rlik 49": {
+   "_likert": "ideal vs realidad"
+  },
+  "rlik 50": {
+   "_likert": "reparar hacia una forma más ideal"
+  },
+  "rlik 51": {
+   "_likert": "tener algo propio para ofrecer"
+  },
+  "rlik 52": {
+   "_likert": "invertir la posición de proveedor"
+  },
+  "rlik 53": {
+   "_likert": "incomodidad al quedar del lado de pedir"
+  },
+  "rlik 54": {
+   "_likert": "ser quien sostiene"
+  },
+  "v4.1 A1": {
+   "Competente": "ordenar",
+   "Positiva": "preservar lo bueno",
+   "Reactiva": "dar espacio a lo difícil"
+  },
+  "v4.1 A2": {
+   "Competente": "encontrar solución",
+   "Positiva": "algo que siga teniendo valor",
+   "Reactiva": "no cerrar demasiado rápido"
+  },
+  "v4.1 A3": {
+   "Competente": "definir el problema",
+   "Positiva": "impedir que lo malo contamine todo",
+   "Reactiva": "nombrar lo ocurrido"
+  },
+  "v4.1 A4": {
+   "Competente": "próximo paso",
+   "Positiva": "recuperar perspectiva",
+   "Reactiva": "validar impacto"
+  },
+  "v4.1 A5": {
+   "Competente": "separar reacción de resolución",
+   "Positiva": "impedir que lo malo contamine todo",
+   "Reactiva": "no fingir que nada pasó"
+  },
+  "v4.1 A6": {
+   "Competente": "encontrar solución",
+   "Positiva": "impedir que lo malo contamine todo",
+   "Reactiva": "no minimizar"
+  },
+  "v4.1 C1": {
+   "Corazón": "reconocimiento",
+   "Cuerpo": "tensión",
+   "Mente": "orientación"
+  },
+  "v4.1 C2": {
+   "Corazón": "imagen",
+   "Cuerpo": "posición",
+   "Mente": "comprensión"
+  },
+  "v4.1 C3": {
+   "Corazón": "cómo te leen otros",
+   "Cuerpo": "tensión",
+   "Mente": "incertidumbre"
+  },
+  "v4.1 C4": {
+   "Corazón": "identidad",
+   "Cuerpo": "posición",
+   "Mente": "orientación"
+  },
+  "v4.1 C5": {
+   "Corazón": "significado personal",
+   "Cuerpo": "tensión",
+   "Mente": "escenarios"
+  },
+  "v4.1 C6": {
+   "Corazón": "reconocimiento",
+   "Cuerpo": "esto no está bien",
+   "Mente": "referencias"
+  },
+  "v4.1 H1": {
+   "Asertiva": "ir por lo deseado",
+   "Complaciente": "lo que corresponde",
+   "Retraída": "distancia"
+  },
+  "v4.1 H2": {
+   "Asertiva": "modificar la situación",
+   "Complaciente": "norma o rol",
+   "Retraída": "decantar"
+  },
+  "v4.1 H3": {
+   "Asertiva": "iniciativa",
+   "Complaciente": "norma o rol",
+   "Retraída": "menor involucramiento"
+  },
+  "v4.1 H4": {
+   "Asertiva": "avance",
+   "Complaciente": "expectativas",
+   "Retraída": "espacio propio"
+  },
+  "v4.1 H5": {
+   "Asertiva": "ganar margen",
+   "Complaciente": "responsabilidad",
+   "Retraída": "procesar"
+  },
+  "v4.1 H6": {
+   "Asertiva": "buscar otra vía",
+   "Complaciente": "lo que corresponde",
+   "Retraída": "menor involucramiento"
+  },
+  "v4.1 R1": {
+   "Apego": "saber dónde estás parado",
+   "Frustración": "potencial no realizado",
+   "Rechazo": "ser valorado sólo por lo que proveés"
+  },
+  "v4.1 R2": {
+   "Apego": "perder el deseo propio por acomodación",
+   "Frustración": "no conformarse",
+   "Rechazo": "invertir la posición de proveedor"
+  },
+  "v4.1 R3": {
+   "Apego": "continuidad",
+   "Frustración": "ideal vs realidad",
+   "Rechazo": "tener algo para aportar"
+  },
+  "v4.1 R4": {
+   "Apego": "conservar un lugar",
+   "Frustración": "brecha entre expectativa y resultado",
+   "Rechazo": "ser visto como carga"
+  },
+  "v4.1 R5": {
+   "Apego": "pertenencia",
+   "Frustración": "ideal vs realidad",
+   "Rechazo": "incomodidad al quedar del lado de pedir"
+  },
+  "v4.1 R6": {
+   "Apego": "conservar un lugar",
+   "Frustración": "reparar hacia una forma más ideal",
+   "Rechazo": "tener algo para aportar"
+  }
+ },
+ "inferred": [
+  "v4.1 A1",
+  "v4.1 A2",
+  "v4.1 A3",
+  "v4.1 A4",
+  "v4.1 A5",
+  "v4.1 A6",
+  "v4.1 C1",
+  "v4.1 C2",
+  "v4.1 C3",
+  "v4.1 C4",
+  "v4.1 C5",
+  "v4.1 C6",
+  "v4.1 H1",
+  "v4.1 H2",
+  "v4.1 H3",
+  "v4.1 H4",
+  "v4.1 H5",
+  "v4.1 H6",
+  "v4.1 R1",
+  "v4.1 R2",
+  "v4.1 R3",
+  "v4.1 R4",
+  "v4.1 R5",
+  "v4.1 R6"
+ ],
+ "sources": {
+  "alik 31": "Spec de Ítems Likert — Armónico (v2, post-auditoría).md",
+  "alik 32": "Spec de Ítems Likert — Armónico (v2, post-auditoría).md",
+  "alik 33": "Spec de Ítems Likert — Armónico (v2, post-auditoría).md",
+  "alik 34": "Spec de Ítems Likert — Armónico (v2, post-auditoría).md",
+  "alik 35": "Spec de Ítems Likert — Armónico (v2, post-auditoría).md",
+  "alik 36": "Spec de Ítems Likert — Armónico (v2, post-auditoría).md",
+  "alik 37": "Spec de Ítems Likert — Armónico (v2, post-auditoría).md",
+  "alik 38": "Spec de Ítems Likert — Armónico (v2, post-auditoría).md",
+  "alik 39": "Spec de Ítems Likert — Armónico (v2, post-auditoría).md",
+  "alik 40": "Spec de Ítems Likert — Armónico (v2, post-auditoría).md",
+  "alik 41": "Spec de Ítems Likert — Armónico (v2, post-auditoría).md",
+  "alik 42": "Spec de Ítems Likert — Armónico (v2, post-auditoría).md",
+  "arm 01": "Spec de Conjunto — Armónico (v3, correcciones de lenguaje).md",
+  "arm 02": "Spec de Conjunto — Armónico (v3, correcciones de lenguaje).md",
+  "arm 03": "Spec de Conjunto — Armónico (v3, correcciones de lenguaje).md",
+  "arm 04": "Spec de Conjunto — Armónico (v3, correcciones de lenguaje).md",
+  "arm 05": "Spec de Conjunto — Armónico (v3, correcciones de lenguaje).md",
+  "arm 06": "Spec de Conjunto — Armónico (v3, correcciones de lenguaje).md",
+  "arm 07": "Spec de Conjunto — Armónico (v3, correcciones de lenguaje).md",
+  "arm 08": "Spec de Conjunto — Armónico (v3, correcciones de lenguaje).md",
+  "arm 09": "Spec de Conjunto — Armónico (v3, correcciones de lenguaje).md",
+  "arm 10": "Spec de Conjunto — Armónico (v3, correcciones de lenguaje).md",
+  "arm 11": "Spec de Conjunto — Armónico (v3, correcciones de lenguaje).md",
+  "arm 12": "Spec de Conjunto — Armónico (v3, correcciones de lenguaje).md",
+  "arm 13": "Spec de Conjunto — Armónico (v3, correcciones de lenguaje).md",
+  "arm 14": "Spec de Conjunto — Armónico (v3, correcciones de lenguaje).md",
+  "arm 15": "Spec de Conjunto — Armónico (v3, correcciones de lenguaje).md",
+  "arm 16": "Spec de Conjunto — Armónico (v3, correcciones de lenguaje).md",
+  "arm 17": "Spec de Conjunto — Armónico (v3, correcciones de lenguaje).md",
+  "arm 18": "Spec de Conjunto — Armónico (v3, correcciones de lenguaje).md",
+  "centros3 19": "Spec de Lote Mixto — v4, post-auditoría del rediseño.md",
+  "centros3 20": "Spec de Lote Mixto — v4, post-auditoría del rediseño.md",
+  "centros3 21": "Spec de Lote Mixto — v4, post-auditoría del rediseño.md",
+  "centros3 22": "Spec de Lote Mixto — v4, post-auditoría del rediseño.md",
+  "centros3 23": "Spec de Lote Mixto — v4, post-auditoría del rediseño.md",
+  "centros3 24": "Spec de Lote Mixto — v4, post-auditoría del rediseño.md",
+  "hlik 19": "Spec de Ítems Likert — Horneviano (v1, reescrito).md",
+  "hlik 20": "Spec de Ítems Likert — Horneviano (v1, reescrito).md",
+  "hlik 21": "Spec de Ítems Likert — Horneviano (v1, reescrito).md",
+  "hlik 22": "Spec de Ítems Likert — Horneviano (v1, reescrito).md",
+  "hlik 23": "Spec de Ítems Likert — Horneviano (v1, reescrito).md",
+  "hlik 24": "Spec de Ítems Likert — Horneviano (v1, reescrito).md",
+  "hlik 25": "Spec de Ítems Likert — Horneviano (v1, reescrito).md",
+  "hlik 26": "Spec de Ítems Likert — Horneviano (v1, reescrito).md",
+  "hlik 27": "Spec de Ítems Likert — Horneviano (v1, reescrito).md",
+  "hlik 28": "Spec de Ítems Likert — Horneviano (v1, reescrito).md",
+  "hlik 29": "Spec de Ítems Likert — Horneviano (v1, reescrito).md",
+  "hlik 30": "Spec de Ítems Likert — Horneviano (v1, reescrito).md",
+  "hornev1 01": "Spec de Conjunto — Horneviano (v3, final).md",
+  "hornev1 02": "Spec de Conjunto — Horneviano (v3, final).md",
+  "hornev1 03": "Spec de Conjunto — Horneviano (v3, final).md",
+  "hornev1 04": "Spec de Conjunto — Horneviano (v3, final).md",
+  "hornev1 05": "Spec de Conjunto — Horneviano (v3, final).md",
+  "hornev1 06": "Spec de Conjunto — Horneviano (v3, final).md",
+  "hornev1 07": "Spec de Conjunto — Horneviano (v3, final).md",
+  "hornev1 08": "Spec de Conjunto — Horneviano (v3, final).md",
+  "hornev1 09": "Spec de Conjunto — Horneviano (v3, final).md",
+  "hornev1 10": "Spec de Conjunto — Horneviano (v3, final).md",
+  "hornev1 11": "Spec de Conjunto — Horneviano (v3, final).md",
+  "hornev1 12": "Spec de Conjunto — Horneviano (v3, final).md",
+  "hornev1 13": "Spec de Conjunto — Horneviano (v3, final).md",
+  "hornev1 14": "Spec de Conjunto — Horneviano (v3, final).md",
+  "hornev1 15": "Spec de Conjunto — Horneviano (v3, final).md",
+  "hornev1 16": "Spec de Conjunto — Horneviano (v3, final).md",
+  "hornev1 17": "Spec de Conjunto — Horneviano (v3, final).md",
+  "hornev1 18": "Spec de Conjunto — Horneviano (v3, final).md",
+  "hornev2 13": "Spec de Lote Mixto — v4, post-auditoría del rediseño.md",
+  "hornev2 14": "Spec de Lote Mixto — v4, post-auditoría del rediseño.md",
+  "hornev2 15": "Spec de Lote Mixto — v4, post-auditoría del rediseño.md",
+  "hornev2 16": "Spec de Lote Mixto — v4, post-auditoría del rediseño.md",
+  "hornev2 17": "Spec de Lote Mixto — v4, post-auditoría del rediseño.md",
+  "hornev2 18": "Spec de Lote Mixto — v4, post-auditoría del rediseño.md",
+  "likert1 01": "Spec de Ítems Likert — Centros lote 1 (v2, post-revisión).md",
+  "likert1 02": "Spec de Ítems Likert — Centros lote 1 (v2, post-revisión).md",
+  "likert1 03": "Spec de Ítems Likert — Centros lote 1 (v2, post-revisión).md",
+  "likert1 04": "Spec de Ítems Likert — Centros lote 1 (v2, post-revisión).md",
+  "likert1 05": "Spec de Ítems Likert — Centros lote 1 (v2, post-revisión).md",
+  "likert1 06": "Spec de Ítems Likert — Centros lote 1 (v2, post-revisión).md",
+  "likert1 07": "Spec de Ítems Likert — Centros lote 1 (v2, post-revisión).md",
+  "likert1 08": "Spec de Ítems Likert — Centros lote 1 (v2, post-revisión).md",
+  "likert1 09": "Spec de Ítems Likert — Centros lote 1 (v2, post-revisión).md",
+  "likert1 10": "Spec de Ítems Likert — Centros lote 1 (v2, post-revisión).md",
+  "likert1 11": "Spec de Ítems Likert — Centros lote 1 (v2, post-revisión).md",
+  "likert1 12": "Spec de Ítems Likert — Centros lote 1 (v2, post-revisión).md",
+  "lote1 01": "Spec de Facetas — Centros lote 2 (v2, post-revisión).md",
+  "lote1 02": "Spec de Facetas — Centros lote 2 (v2, post-revisión).md",
+  "lote1 03": "Spec de Facetas — Centros lote 2 (v2, post-revisión).md",
+  "lote1 04": "Spec de Facetas — Centros lote 2 (v2, post-revisión).md",
+  "lote1 05": "Spec de Facetas — Centros lote 2 (v2, post-revisión).md",
+  "lote1 06": "Spec de Facetas — Centros lote 2 (v2, post-revisión).md",
+  "lote1 07": "Spec de Facetas — Centros lote 2 (v2, post-revisión).md",
+  "lote1 08": "Spec de Facetas — Centros lote 2 (v2, post-revisión).md",
+  "lote1 09": "Spec de Facetas — Centros lote 2 (v2, post-revisión).md",
+  "lote1 10": "Spec de Facetas — Centros lote 2 (v2, post-revisión).md",
+  "lote1 11": "Spec de Facetas — Centros lote 2 (v2, post-revisión).md",
+  "lote1 12": "Spec de Facetas — Centros lote 2 (v2, post-revisión).md",
+  "rel 01": "Spec de Conjunto — Relaciones Objetales (v2, post-auditoría).md",
+  "rel 02": "Spec de Conjunto — Relaciones Objetales (v2, post-auditoría).md",
+  "rel 03": "Spec de Conjunto — Relaciones Objetales (v2, post-auditoría).md",
+  "rel 04": "Spec de Conjunto — Relaciones Objetales (v2, post-auditoría).md",
+  "rel 05": "Spec de Conjunto — Relaciones Objetales (v2, post-auditoría).md",
+  "rel 06": "Spec de Conjunto — Relaciones Objetales (v2, post-auditoría).md",
+  "rel 07": "Spec de Conjunto — Relaciones Objetales (v2, post-auditoría).md",
+  "rel 08": "Spec de Conjunto — Relaciones Objetales (v2, post-auditoría).md",
+  "rel 09": "Spec de Conjunto — Relaciones Objetales (v2, post-auditoría).md",
+  "rel 10": "Spec de Conjunto — Relaciones Objetales (v2, post-auditoría).md",
+  "rel 11": "Spec de Conjunto — Relaciones Objetales (v2, post-auditoría).md",
+  "rel 12": "Spec de Conjunto — Relaciones Objetales (v2, post-auditoría).md",
+  "rel 13": "Spec de Conjunto — Relaciones Objetales (v2, post-auditoría).md",
+  "rel 14": "Spec de Conjunto — Relaciones Objetales (v2, post-auditoría).md",
+  "rel 15": "Spec de Conjunto — Relaciones Objetales (v2, post-auditoría).md",
+  "rel 16": "Spec de Conjunto — Relaciones Objetales (v2, post-auditoría).md",
+  "rel 17": "Spec de Conjunto — Relaciones Objetales (v2, post-auditoría).md",
+  "rel 18": "Spec de Conjunto — Relaciones Objetales (v2, post-auditoría).md",
+  "rlik 43": "Spec de Ítems Likert — Relaciones Objetales (v2, post-auditoría).md",
+  "rlik 44": "Spec de Ítems Likert — Relaciones Objetales (v2, post-auditoría).md",
+  "rlik 45": "Spec de Ítems Likert — Relaciones Objetales (v2, post-auditoría).md",
+  "rlik 46": "Spec de Ítems Likert — Relaciones Objetales (v2, post-auditoría).md",
+  "rlik 47": "Spec de Ítems Likert — Relaciones Objetales (v2, post-auditoría).md",
+  "rlik 48": "Spec de Ítems Likert — Relaciones Objetales (v2, post-auditoría).md",
+  "rlik 49": "Spec de Ítems Likert — Relaciones Objetales (v2, post-auditoría).md",
+  "rlik 50": "Spec de Ítems Likert — Relaciones Objetales (v2, post-auditoría).md",
+  "rlik 51": "Spec de Ítems Likert — Relaciones Objetales (v2, post-auditoría).md",
+  "rlik 52": "Spec de Ítems Likert — Relaciones Objetales (v2, post-auditoría).md",
+  "rlik 53": "Spec de Ítems Likert — Relaciones Objetales (v2, post-auditoría).md",
+  "rlik 54": "Spec de Ítems Likert — Relaciones Objetales (v2, post-auditoría).md",
+  "v4.1 A1": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 A2": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 A3": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 A4": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 A5": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 A6": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 C1": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 C2": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 C3": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 C4": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 C5": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 C6": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 H1": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 H2": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 H3": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 H4": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 H5": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 H6": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 R1": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 R2": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 R3": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 R4": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 R5": "inferida del memo — aprobada 2026-09-17",
+  "v4.1 R6": "inferida del memo — aprobada 2026-09-17"
+ }
+}

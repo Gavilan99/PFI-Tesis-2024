@@ -1,0 +1,17 @@
+# Datos privados del piloto: NUNCA al repositorio.
+# Respuestas, tipificaciones, listas de códigos y salidas por persona viven en la carpeta de
+# datos (NUREON_DATA, por defecto research/pilot/data/), fuera del control de versiones.
+data/
+*.xlsx
+responses*.csv
+respuestas*.csv
+tipificaciones*.csv
+version_por_respondente.csv
+code_fixes.json
+excluidos.txt
+*_vistos.txt
+e3_entrenamiento.txt
+NureonAI — Cuestionario de personalidad*.csv
+*_log*.txt
+*_out*/
+__pycache__/

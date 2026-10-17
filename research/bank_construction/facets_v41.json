@@ -1,0 +1,125 @@
+{
+ "_nota": "Facetas INFERIDAS para la cohorte v4.1, que no tiene spec. Propuestas el 2026-09-20 desde los inventarios declarados en los cuatro memos de conjunto. NO son facetas declaradas: cuentan como inferidas en cualquier distribución. C2-Mente pasó de `orientación` a `comprensión` el 2026-09-18 al reescribirse la opción (paso 6a, aprobado).",
+ "facets": {
+  "v4.1 C1": {
+   "Cuerpo": "tensión",
+   "Corazón": "reconocimiento",
+   "Mente": "orientación"
+  },
+  "v4.1 C2": {
+   "Cuerpo": "posición",
+   "Corazón": "imagen",
+   "Mente": "comprensión"
+  },
+  "v4.1 C3": {
+   "Cuerpo": "tensión",
+   "Corazón": "cómo te leen otros",
+   "Mente": "incertidumbre"
+  },
+  "v4.1 C4": {
+   "Cuerpo": "posición",
+   "Corazón": "identidad",
+   "Mente": "orientación"
+  },
+  "v4.1 C5": {
+   "Cuerpo": "tensión",
+   "Corazón": "significado personal",
+   "Mente": "escenarios"
+  },
+  "v4.1 C6": {
+   "Cuerpo": "esto no está bien",
+   "Corazón": "reconocimiento",
+   "Mente": "referencias"
+  },
+  "v4.1 H1": {
+   "Asertiva": "ir por lo deseado",
+   "Complaciente": "lo que corresponde",
+   "Retraída": "distancia"
+  },
+  "v4.1 H2": {
+   "Asertiva": "modificar la situación",
+   "Complaciente": "norma o rol",
+   "Retraída": "decantar"
+  },
+  "v4.1 H3": {
+   "Asertiva": "iniciativa",
+   "Complaciente": "norma o rol",
+   "Retraída": "menor involucramiento"
+  },
+  "v4.1 H4": {
+   "Asertiva": "avance",
+   "Complaciente": "expectativas",
+   "Retraída": "espacio propio"
+  },
+  "v4.1 H5": {
+   "Asertiva": "ganar margen",
+   "Complaciente": "responsabilidad",
+   "Retraída": "procesar"
+  },
+  "v4.1 H6": {
+   "Asertiva": "buscar otra vía",
+   "Complaciente": "lo que corresponde",
+   "Retraída": "menor involucramiento"
+  },
+  "v4.1 A1": {
+   "Positiva": "preservar lo bueno",
+   "Competente": "ordenar",
+   "Reactiva": "dar espacio a lo difícil"
+  },
+  "v4.1 A2": {
+   "Positiva": "algo que siga teniendo valor",
+   "Competente": "encontrar solución",
+   "Reactiva": "no cerrar demasiado rápido"
+  },
+  "v4.1 A3": {
+   "Positiva": "impedir que lo malo contamine todo",
+   "Competente": "definir el problema",
+   "Reactiva": "nombrar lo ocurrido"
+  },
+  "v4.1 A4": {
+   "Positiva": "recuperar perspectiva",
+   "Competente": "próximo paso",
+   "Reactiva": "validar impacto"
+  },
+  "v4.1 A5": {
+   "Positiva": "impedir que lo malo contamine todo",
+   "Competente": "separar reacción de resolución",
+   "Reactiva": "no fingir que nada pasó"
+  },
+  "v4.1 A6": {
+   "Positiva": "impedir que lo malo contamine todo",
+   "Competente": "encontrar solución",
+   "Reactiva": "no minimizar"
+  },
+  "v4.1 R1": {
+   "Apego": "saber dónde estás parado",
+   "Frustración": "potencial no realizado",
+   "Rechazo": "ser valorado sólo por lo que proveés"
+  },
+  "v4.1 R2": {
+   "Apego": "perder el deseo propio por acomodación",
+   "Frustración": "no conformarse",
+   "Rechazo": "invertir la posición de proveedor"
+  },
+  "v4.1 R3": {
+   "Apego": "continuidad",
+   "Frustración": "ideal vs realidad",
+   "Rechazo": "tener algo para aportar"
+  },
+  "v4.1 R4": {
+   "Apego": "conservar un lugar",
+   "Frustración": "brecha entre expectativa y resultado",
+   "Rechazo": "ser visto como carga"
+  },
+  "v4.1 R5": {
+   "Apego": "pertenencia",
+   "Frustración": "ideal vs realidad",
+   "Rechazo": "incomodidad al quedar del lado de pedir"
+  },
+  "v4.1 R6": {
+   "Apego": "conservar un lugar",
+   "Frustración": "reparar hacia una forma más ideal",
+   "Rechazo": "tener algo para aportar"
+  }
+ }
+}

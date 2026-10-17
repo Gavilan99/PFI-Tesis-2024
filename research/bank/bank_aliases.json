@@ -1,0 +1,499 @@
+{
+  "version": "v4.1.2",
+  "base": "NureonAI Prototype v4.1.csv",
+  "fecha": "2026-10-07",
+  "pdr": "PDR — NureonAI Mid-Collection Rewording of Observed Items",
+  "nota": "Cambios tipo A/B: mismo ítem, mismo id. El parser acepta el texto viejo y el nuevo de cada opción como la misma posición. Los enunciados no intervienen en el mapeo (la columna se identifica por el id), se registran por trazabilidad. Cada cambio indica en qué versión entró: el parser registra la versión respondida por separado para cada una, porque las versiones se cargan en fechas distintas.",
+  "cambios": [
+    {
+      "question_id": "Q001",
+      "campo": "opcion_2",
+      "display_order": 2,
+      "tipo": "B",
+      "viejo": "Haber pasado tanto tiempo sin encontrar con qué orientarte ni saber cómo moverte frente a lo que iba apareciendo",
+      "nuevo": "Haber pasado tanto tiempo sin saber con qué orientarte ni cómo moverte frente a lo que iba apareciendo",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q004",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "B",
+      "viejo": "Lo que más te costaría de un trabajo que tomaste sin poder elegirlo sería:",
+      "nuevo": "Si tuvieras que tomar un trabajo sin poder elegirlo, lo que más te costaría sería:",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q017",
+      "campo": "opcion_1",
+      "display_order": 1,
+      "tipo": "B",
+      "viejo": "No exigirte más de lo que sabés que podés sostener sin pasarte",
+      "nuevo": "No exigirte más de lo que sabés que podés sostener",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q027",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "A",
+      "viejo": "Cuando alguien con quien trabajo hace meses reacciona de una manera inesperada, me quedó sin saber cómo leerlo",
+      "nuevo": "Cuando alguien con quien trabajo hace meses reacciona de una manera inesperada, me quedo sin saber cómo leerlo",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q029",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "B",
+      "viejo": "Escuchando a un familiar relatar un problema con varios nombres y detalles de gente que no ubico, me inquieta no poder armar una versión coherente de lo ocurrido",
+      "nuevo": "Cuando un familiar me cuenta un problema con varios nombres y detalles de gente que no ubico, me inquieta no poder armarme una idea clara de lo que pasó",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q030",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "A",
+      "viejo": "Después de reservar un alojamiento para un viaje largo y enterarme de que había otras zonas posibles que me interesan, puedo seguir conforme con lo elegido sin volver a comparar",
+      "nuevo": "Después de reservar un alojamiento para un viaje largo y enterarme de que hay otras zonas posibles que me interesan, puedo seguir conforme con lo elegido sin volver a comparar",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q031",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "B",
+      "viejo": "Cuando te mudás a una casa que elegiste vos, lo primero que notás es:",
+      "nuevo": "Cuando te mudás a una casa que elegiste vos, lo primero que te llama la atención de esa nueva etapa es:",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q033",
+      "campo": "opcion_3",
+      "display_order": 3,
+      "tipo": "A",
+      "viejo": "Lo que antes te importaba ya no pesa lo mismo",
+      "nuevo": "Que lo que antes te importaba ya no pese lo mismo",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q034",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "B",
+      "viejo": "Cuando estrenás una bicicleta que elegiste durante meses, lo primero que notás es:",
+      "nuevo": "Cuando estrenás una bicicleta que elegiste durante meses, lo primero que te pasa es:",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q034",
+      "campo": "opcion_2",
+      "display_order": 2,
+      "tipo": "B",
+      "viejo": "La energía que sentís apenas empezás a pedalear con la bicicleta que elegiste",
+      "nuevo": "La energía que sentís apenas empezás a pedalear",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q036",
+      "campo": "opcion_2",
+      "display_order": 2,
+      "tipo": "B",
+      "viejo": "Hasta dónde te sale buscar sin empezar a sentir que la elección te exige demasiado",
+      "nuevo": "Hasta dónde podés buscar sin que la elección te exija demasiado",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q040",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "A",
+      "viejo": "De una etapa con mucha exigencia encima, lo que menos tolerarías es:",
+      "nuevo": "En una etapa con mucha exigencia encima, lo que menos tolerarías es:",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q043",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "A",
+      "viejo": "Cuando algo que querías hace tiempo se vuelve posible, lo primero que se te viene es:",
+      "nuevo": "Cuando algo que querías hace tiempo se vuelve posible, lo primero que se te viene a la cabeza es:",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q044",
+      "campo": "opcion_2",
+      "display_order": 2,
+      "tipo": "B",
+      "viejo": "Cuánto vas a poder llevarlo hacia donde vos querés",
+      "nuevo": "Cuánto vas a poder darle el rumbo que vos querés",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q044",
+      "campo": "opcion_3",
+      "display_order": 3,
+      "tipo": "B",
+      "viejo": "Con qué te habías comprometido antes de que apareciera esto",
+      "nuevo": "Qué compromisos tenías antes de que apareciera esta propuesta",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q050",
+      "campo": "opcion_2",
+      "display_order": 2,
+      "tipo": "B",
+      "viejo": "Qué compromisos que ya asumiste quedarían tironeados si la aceptás",
+      "nuevo": "Qué compromisos que ya asumiste se complicarían si la aceptás",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q050",
+      "campo": "opcion_3",
+      "display_order": 3,
+      "tipo": "B",
+      "viejo": "Cuánto te tira aprovecharla porque te dan ganas de ir por eso",
+      "nuevo": "Las ganas de aprovecharla e ir por eso",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q055",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "B",
+      "viejo": "Cuando un plan con un amigo se cancela por tercera vez seguida, lo primero que te aparece es:",
+      "nuevo": "Cuando un plan con un amigo se cancela por tercera vez seguida, lo primero que te pasa por la cabeza es:",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q055",
+      "campo": "opcion_1",
+      "display_order": 1,
+      "tipo": "B",
+      "viejo": "Que el próximo plan vuelva a quedar en el aire sin que puedas mover algo para evitarlo",
+      "nuevo": "Que el próximo plan también quede en el aire sin que puedas hacer nada para evitarlo",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q055",
+      "campo": "opcion_2",
+      "display_order": 2,
+      "tipo": "B",
+      "viejo": "Un poco de distancia de esa persona para registrar qué te dejó la tercera cancelación",
+      "nuevo": "Ganas de tomar un poco de distancia de esa persona para registrar cómo te cayó la tercera cancelación",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q055",
+      "campo": "opcion_3",
+      "display_order": 3,
+      "tipo": "B",
+      "viejo": "La manera de responder que te parece más acorde a esa amistad antes de decidir si insistís",
+      "nuevo": "Cómo responder de la manera más acorde a esa amistad antes de decidir si insistís",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q059",
+      "campo": "opcion_3",
+      "display_order": 3,
+      "tipo": "B/C",
+      "viejo": "Que otra persona no pueda afrontar la misma parte y eso pese en tu decisión",
+      "nuevo": "Si a alguien del grupo le va a costar pagar su parte",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q060",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "B",
+      "viejo": "Cuando en el trabajo te suman a un chat de grupo que no para de sonar, lo primero que te aparece es:",
+      "nuevo": "Cuando en el trabajo te suman a un chat de grupo que no para de sonar, lo primero que te pasa por la cabeza es:",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q060",
+      "campo": "opcion_2",
+      "display_order": 2,
+      "tipo": "B",
+      "viejo": "Reducir cuánto participás para no quedar absorbido por el ritmo de conversación del grupo",
+      "nuevo": "Reducir cuánto participás para no quedar absorbido por el ritmo del grupo",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q076",
+      "campo": "opcion_1",
+      "display_order": 1,
+      "tipo": "B",
+      "viejo": "Volver a encontrarle valor a algo que ya tenías y se había tapado",
+      "nuevo": "Volver a encontrarle valor a algo que ya tenías y había quedado tapado por lo malo",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q076",
+      "campo": "opcion_3",
+      "display_order": 3,
+      "tipo": "B",
+      "viejo": "Haber podido registrar lo mal que fue esa etapa, sin que nadie te apurara a dar vuelta la página",
+      "nuevo": "Haber podido reconocer lo mal que la pasaste, sin que nadie te apurara a dar vuelta la página",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q079",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "A",
+      "viejo": "Cuando te olvidás de sacar las entradas que habías dicho que comprabas y la otra persona se entera, lo primero que se te viene es:",
+      "nuevo": "Cuando te olvidás de sacar las entradas que habías dicho que comprabas y la otra persona se entera, lo primero que se te viene a la cabeza es:",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q080",
+      "campo": "opcion_1",
+      "display_order": 1,
+      "tipo": "B",
+      "viejo": "Ver en qué parte se malentendió lo que querías decir",
+      "nuevo": "Entender en qué parte se malentendió lo que querías decir",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q080",
+      "campo": "opcion_2",
+      "display_order": 2,
+      "tipo": "B",
+      "viejo": "No dejar que un malentendido te cambie el clima del día",
+      "nuevo": "No dejar que un malentendido te cambie el humor del día",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q080",
+      "campo": "opcion_3",
+      "display_order": 3,
+      "tipo": "B",
+      "viejo": "Que no se cierre con un «ya está» antes de aclararlo de verdad",
+      "nuevo": "Que la discusión no se cierre con un «ya está» antes de aclararlo de verdad",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q081",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "B",
+      "viejo": "Cuando un compañero falta varios días por un problema personal y te queda la parte de la entrega que compartían, lo que menos tolerarías es:",
+      "nuevo": "Cuando un compañero falta varios días por un problema personal y te toca cubrir su parte de una entrega que hacían juntos, lo que menos tolerarías es:",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q081",
+      "campo": "opcion_1",
+      "display_order": 1,
+      "tipo": "B",
+      "viejo": "Que nadie registre cuánto más te tocó hacer esos días",
+      "nuevo": "Que nadie se dé cuenta de cuánto más te tocó hacer esos días",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q081",
+      "campo": "opcion_2",
+      "display_order": 2,
+      "tipo": "B",
+      "viejo": "No tener cómo repartir lo que quedó para que entre en la semana",
+      "nuevo": "No encontrar la manera de repartir lo que quedó para llegar a tiempo con la entrega",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q084",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "A",
+      "viejo": "Cuando tu hermana te cuenta que una tormenta le arruinó parte del departamento, lo primero que se te viene es:",
+      "nuevo": "Cuando tu hermana te cuenta que una tormenta le arruinó parte del departamento, lo primero que se te viene a la cabeza es:",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q088",
+      "campo": "opcion_1",
+      "display_order": 1,
+      "tipo": "B",
+      "viejo": "Ver que el atraso ya no le llama la atención a nadie",
+      "nuevo": "Que el atraso ya no le llame la atención a nadie",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q093",
+      "campo": "opcion_1",
+      "display_order": 1,
+      "tipo": "B",
+      "viejo": "Que pueda decir lo insoportable que es sin que le bajen el tono",
+      "nuevo": "Dejar que diga lo insoportable que es sin bajarle el tono",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q102",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "A",
+      "viejo": "Si en una semana se me junta una entrega, una canilla rota y una visita familiar para reorganizar, me siento trabado hasta ponerles un orden",
+      "nuevo": "Si en una semana se me juntan una entrega, una canilla rota y una visita familiar para reorganizar, me siento trabado hasta ponerles un orden",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q107",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "A",
+      "viejo": "Cuando alguien de mi familia está pasando una separación difícil y el tema vuelve en cada encuentro, me quedó conversándolo todo lo que haga falta antes de llevar la charla a otro lado, aunque se ponga pesado",
+      "nuevo": "Cuando alguien de mi familia está pasando una separación difícil y el tema vuelve en cada encuentro, me quedo conversándolo todo lo que haga falta antes de llevar la charla a otro lado, aunque se ponga pesado",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q114",
+      "campo": "opcion_1",
+      "display_order": 1,
+      "tipo": "B",
+      "viejo": "No quedar como una persona que sólo pide y dejar en claro que también podés aportar algo a la relación",
+      "nuevo": "No quedar como alguien que sólo pide, y mostrar que también aportás a la relación",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q117",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "A",
+      "viejo": "Cuando en tu pareja tienen que decidir dónde pasar las fiestas y las dos familias esperan, lo que más te cuesta de eso es:",
+      "nuevo": "Cuando en tu pareja tienen que decidir dónde pasar las fiestas y las dos familias esperan, lo que más te cuesta es:",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q118",
+      "campo": "opcion_2",
+      "display_order": 2,
+      "tipo": "B",
+      "viejo": "Tomar la posición de quien resuelve y que no pueda cambiarse",
+      "nuevo": "Ser siempre el que resuelve y no poder cambiarlo",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q119",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "A",
+      "viejo": "Cuando tenés un compañero de trabajo con el que te entendés muy bien, lo que más te importa de eso es:",
+      "nuevo": "Cuando tenés un compañero de trabajo con el que te entendés muy bien, lo que más te importa es:",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q120",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "A",
+      "viejo": "Cuando tu pareja te dice que necesita más tiempo para sus cosas, lo primero que se te viene es:",
+      "nuevo": "Cuando tu pareja te dice que necesita más tiempo para sus cosas, lo primero que se te viene a la cabeza es:",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q121",
+      "campo": "opcion_1",
+      "display_order": 1,
+      "tipo": "B",
+      "viejo": "Que la relación entre ellos siga alrededor del conflicto, cuando podría existir una forma menos quebrada de vincularse",
+      "nuevo": "Que la relación entre ellos siga alrededor del conflicto, cuando podrían vincularse de una forma mejor",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q121",
+      "campo": "opcion_2",
+      "display_order": 2,
+      "tipo": "B",
+      "viejo": "Quedar metido entre dos personas sin encontrar cómo relacionarte con cada una sin seguir en el medio",
+      "nuevo": "No encontrar cómo relacionarte con cada una sin quedar siempre en el medio",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q123",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "A",
+      "viejo": "Cuando alguien de tu familia con quien te habías peleado te escribe después de meses, lo primero que se te viene es:",
+      "nuevo": "Cuando alguien de tu familia con quien te habías peleado te escribe después de meses, lo primero que se te viene a la cabeza es:",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q123",
+      "campo": "opcion_3",
+      "display_order": 3,
+      "tipo": "B",
+      "viejo": "Cómo volver a relacionarte con esa persona a partir de lo que efectivamente te escribió, no de cómo era antes",
+      "nuevo": "Cómo volver a relacionarte con esa persona a partir de lo que realmente te escribió, no de cómo era antes",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q126",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "A",
+      "viejo": "Cuando en tu grupo empiezan a rotar quién coordina cada encuentro, lo que más te importa de eso es:",
+      "nuevo": "Cuando en tu grupo empiezan a rotar quién coordina cada encuentro, lo que más te importa es:",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q132",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "A",
+      "viejo": "Cuando termina una relación y hay que repartir lo que era de los dos, lo que más te cuesta de eso es:",
+      "nuevo": "Cuando termina una relación y hay que repartir lo que era de los dos, lo que más te cuesta es:",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q132",
+      "campo": "opcion_1",
+      "display_order": 1,
+      "tipo": "B",
+      "viejo": "Darte cuenta de cuánto de lo que armaron era lo que quería el otro",
+      "nuevo": "Darte cuenta de que mucho de lo que armaron juntos era lo que quería el otro",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q132",
+      "campo": "opcion_2",
+      "display_order": 2,
+      "tipo": "B",
+      "viejo": "Ceder las cosas que te importaban para que el otro salga entero",
+      "nuevo": "Ceder cosas que te importaban para que el otro quede bien",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q132",
+      "campo": "opcion_3",
+      "display_order": 3,
+      "tipo": "B",
+      "viejo": "Repartir rápido para terminar con el trámite, cuando la relación merecía un cierre mejor",
+      "nuevo": "Tener que repartir rápido, como un trámite, cuando la relación merecía un cierre mejor",
+      "version": "v4.1.1"
+    },
+    {
+      "question_id": "Q137",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "A",
+      "viejo": "En una comida familiar proponen repetir una tradición que empezó antes de que yo fuera, y prefiero sumarme igual antes que quedar mirando desde afuera",
+      "nuevo": "En una comida familiar proponen repetir una tradición que empezó antes de que yo formara parte, y prefiero sumarme igual antes que quedar mirando desde afuera",
+      "version": "v4.1.2"
+    },
+    {
+      "question_id": "Q143",
+      "campo": "enunciado",
+      "display_order": null,
+      "tipo": "B",
+      "viejo": "Una operación menor me deja unas semanas necesitando que me lleven y me traigan, y me cuesta más pedirlo que atravesar la operación, porque siempre fui yo el que llevaba y ahora quedó del lado de necesitar",
+      "nuevo": "Una operación menor me deja unas semanas necesitando que me lleven y me traigan, y me cuesta más pedirlo que atravesar la operación, porque siempre fui yo el que llevaba y ahora soy quien necesita",
+      "version": "v4.1.2"
+    }
+  ],
+  "versiones": {
+    "v4.1.1": "8 ítems en observación — cargada en el formulario el 2026-10-07",
+    "v4.1.2": "revisión general del banco — aprobada y cargada en el formulario el 2026-10-08 (Q143 con la redacción de Tobías)"
+  }
+}
