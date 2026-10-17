@@ -1,0 +1,66 @@
+expect,group,text
+REG-01,Cuerpo,Toda la bronca que te fuiste guardando sin poder soltarla
+CEN-1a,Cuerpo,Que otros decidan por vos hasta que te acomodes
+CEN-1c,Cuerpo,Tener que pedir permiso para casi todo lo que hacés
+REG-05,Cuerpo,No poder meter mano y tener que esperar
+CEN-2b,Corazón,No saber si esa persona te tiene en cuenta de verdad
+CEN-3d,Mente,Estar a merced de decisiones que no ves venir
+CEN-3b,Mente,Quedar expuesto a algo que no podés anticipar
+ANY,Mente,Vivir sin saber nunca con qué te vas a encontrar
+ANY,Mente,Haber vivido todo el año sin saber qué se venía
+HOR-2d,Asertiva,Ir de frente y sacarlo del medio
+HOR-2a,Asertiva,Plantarte y marcarle que así no
+HOR-3a,Complaciente,Ver qué se espera de vos y cumplirlo bien
+HOR-3b,Complaciente,Ver qué espera el grupo y adaptarte a eso
+HOR-4a,Complaciente,Revisar si hiciste algo mal antes de reclamar
+HOR-7a,Complaciente,Hacerla igual y hacerla bien
+HOR-5a,Retraída,Arreglártelas por otro lado antes que tener que pedirlo
+HOR-6a,Retraída,Hacer lo mínimo y guardar tu energía para lo tuyo
+HOR-5g,Retraída,Tomar distancia de esa persona y seguir con lo tuyo
+ARM-2a,Positiva,Que se te abra algo nuevo que te entusiasme
+ARM-4b,Competente,Rearmar rápido para que igual salga algo
+ARM-5a,Competente,Que se pongan emocionales en lugar de resolver
+ANY,Reactiva,Parar y decir lo que realmente te generó
+ARM-6b,Reactiva,Haber podido atravesar todo lo que sentiste
+ARM-7c,Reactiva,"Que se diga lo que hay que decir, aunque duela"
+ARM-6c,Reactiva,Tener que disimular cuánto te afectó
+REL-2a,Apego,Que te haya dejado solo justo cuando más lo necesitabas
+REL-4a,Apego,Que se arme algo estable y que dure
+REL-15a,Apego,Que las cosas vuelvan a estar bien entre ustedes
+REL-6b,Frustración,Que sea distinto a todo lo que tuviste antes
+REL-7c,Frustración,Que te quedaste con mucho menos de lo que podías
+REL-15b,Frustración,Que se resuelva de verdad y no a medias
+REL-8j,Rechazo,"Haber terminado dependiendo de alguien, después de ser vos quien resolvía"
+REL-8f,Rechazo,No terminar necesitando más de lo que el otro te da
+REL-8g,Rechazo,Poder aportar lo tuyo sin quedar necesitando demasiado del otro
+ANY,Rechazo,No quedar vos en el lugar del que necesita más
+NONE,Corazón,Haber quedado ante ellos como alguien que no sos
+NONE,Mente,No saber en qué quedó todo ni qué esperar ahora
+NONE,Asertiva,Ir directo a pedir lo que querés
+NONE,Asertiva,Sentir que algo te frena de ir por lo que querés
+NONE,Retraída,Quedarte en la tuya hasta sentirte más ubicado
+NONE,Retraída,Sentir que no tenés un espacio propio para procesar las cosas
+NONE,Retraída,"Hacerte a un lado, dejar que decante y volver después"
+NONE,Complaciente,"Hacerla porque entendés que te toca, aunque no te interese"
+NONE,Competente,Ayudarlo a ordenar el problema y ver qué hacer
+NONE,Competente,Tener claro cuál es el próximo paso concreto
+NONE,Competente,No encontrar una forma concreta de arreglarlo
+NONE,Competente,Que la reacción emocional del momento les impida ocuparse del problema
+NONE,Reactiva,Que actúen como si no hubiera pasado nada
+NONE,Reactiva,Tener que hacer como si no hubiera sido para tanto
+NONE,Positiva,Que eso te arruine el resto de las cosas que van bien
+NONE,Positiva,Volver a ver algo bueno por delante que te dé ganas de seguir
+NONE,Frustración,Que haya arruinado algo que podía haber sido muy bueno
+NONE,Frustración,Que llegue a ser el vínculo que sentís que podría ser
+NONE,Apego,Haberte amoldado tanto que perdiste de vista lo que querías
+NONE,Apego,Que ya no hay lugar para vos en su vida
+NONE,Rechazo,Que fuiste una carga
+NONE,Rechazo,Que dé por hecho lo que aportás y sólo cuente con vos por eso
+NONE,Cuerpo,La tensión que se te queda acumulada en el cuerpo
+NONE,Cuerpo,Convivir todos los días con algo que por dentro sentís que no está bien
+NONE,Mente,No tener con qué orientarte cuando cambian las cosas o toman decisiones nuevas
+NONE,Corazón,Que a los que tenés cerca les dé igual quién sos
+REG-03,Asertiva,Empujar más fuerte y salir hacia adelante
+REG-03,Asertiva,Empujar hasta que la situación se destrabe
+NONE,Cuerpo,Sentir que algo te empuja a decidir sin estar listo
+NONE,Asertiva,Empujar la puerta y entrar igual
