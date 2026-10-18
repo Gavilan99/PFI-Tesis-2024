@@ -6,6 +6,8 @@
 #     curl http://127.0.0.1:8000/api/health/ready
 #     docker compose -f backend/docker-compose.prod.yml down -v
 #
+# The image needs the REAL artifacts in backend/app/ml/artifacts/ (the cut plan; also for the stub):
+# without them the app does not start, and with synthetic ones it refuses to start in production.
 # APP_ENV=production, so the app reads only what is set here, never backend/.env. There are no AWS
 # credentials in the container: health and the database work; anything that calls Cognito or SES
 # fails, as it should. The passwords are for this throwaway local database only.

@@ -3,8 +3,10 @@
 #     docker build -f backend/Dockerfile --build-arg GIT_REF=$(git describe --tags --always --dirty) -t nureon-api .
 #
 # What goes in is an allowlist (Dockerfile.dockerignore): the app, migrations, scripts and the bank.
-# Never .env, tests, .venv or credentials. app/ml/artifacts/ (the trained models, not versioned) goes
-# in with app/ when it exists on the build machine, and is simply absent when it does not.
+# Never .env, tests, .venv or credentials. app/ml/artifacts/ (the trained models and the cut plan, not
+# versioned) goes in with app/: 08-image.ps1 -Models copies the real ones into the build context. Without
+# them the app does not start, whatever CLASSIFIER_BACKEND says (the stub serves by the cut plan too),
+# and with synthetic ones (scripts/make_dev_artifacts.py) it refuses to start in production.
 
 FROM python:3.11-slim
 
