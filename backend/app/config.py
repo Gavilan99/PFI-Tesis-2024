@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+from sqlalchemy.engine import URL
 
 ENV_FILE = Path(__file__).resolve().parents[1] / ".env"
 
@@ -64,6 +65,52 @@ def _positive_int(name: str, default: int) -> int:
     return value
 
 
+def _non_negative_int(name: str, default: int) -> int:
+    raw = os.environ.get(name, str(default)).strip()
+    try:
+        value = int(raw)
+    except ValueError:
+        raise ConfigError(f"{name} tiene que ser un número entero; vale '{raw}'.") from None
+    if value < 0:
+        raise ConfigError(f"{name} no puede ser negativo; vale {value}.")
+    return value
+
+
+DATABASE_PARTS = ("DB_HOST", "DB_NAME", "DB_USER", "DB_PASSWORD")
+
+
+def _production_database_url() -> str:
+    """DATABASE_URL if given; otherwise built from its parts.
+
+    In AWS the password is the RDS-managed master secret, injected by ECS key by key (DB_USER,
+    DB_PASSWORD), so there is no single URL to inject. URL.create escapes whatever the password holds.
+    """
+    url = os.environ.get("DATABASE_URL")
+    if url:
+        return url
+    present = [name for name in DATABASE_PARTS if os.environ.get(name)]
+    if not present:
+        raise ConfigError(
+            "Falta la variable de entorno obligatoria: DATABASE_URL "
+            f"(o sus partes: {', '.join(DATABASE_PARTS)})."
+        )
+    missing = [name for name in DATABASE_PARTS if name not in present]
+    if missing:
+        raise ConfigError(
+            "Sin DATABASE_URL, la conexión se arma por partes y faltan: " + ", ".join(missing) + "."
+        )
+    return URL.create(
+        "postgresql+psycopg",
+        username=os.environ["DB_USER"],
+        password=os.environ["DB_PASSWORD"],
+        host=os.environ["DB_HOST"],
+        port=_positive_int("DB_PORT", 5432),
+        database=os.environ["DB_NAME"],
+        # RDS accepts TLS; a local Postgres for the production compose sets DB_SSLMODE=disable.
+        query={"sslmode": os.environ.get("DB_SSLMODE", "require").strip()},
+    ).render_as_string(hide_password=False)
+
+
 def _mail_sender(default: str) -> str:
     name = os.environ.get("MAIL_SENDER", default).strip().lower()
     if name not in MAIL_SENDERS:
@@ -115,6 +162,9 @@ class BaseConfig:
         # The contact route is public: at most this many messages per origin per window.
         self.CONTACT_RATE_LIMIT = _positive_int("CONTACT_RATE_LIMIT", 5)
         self.CONTACT_RATE_WINDOW_SECONDS = _positive_int("CONTACT_RATE_WINDOW_SECONDS", 3600)
+        # Proxies in front of the app whose X-Forwarded-For entry is trusted. 0 locally: no proxy,
+        # and the header is whatever the client wrote. Production sets its own default.
+        self.TRUSTED_PROXY_HOPS = _non_negative_int("TRUSTED_PROXY_HOPS", 0)
 
     def _check_aws_profile(self, *, profile_required: bool) -> None:
         # The `default` profile of a developer machine can hold full access to the account: boto3
@@ -182,7 +232,10 @@ class ProductionConfig(BaseConfig):
     def __init__(self) -> None:
         super().__init__()
         self.SECRET_KEY = _require("SECRET_KEY")
-        self.SQLALCHEMY_DATABASE_URI = _require("DATABASE_URL")
+        self.SQLALCHEMY_DATABASE_URI = _production_database_url()
+        # Exactly one hop: the ALB that Express Mode puts in front of the service, which appends the
+        # visitor's address. Anything before it in the header was written by the client.
+        self.TRUSTED_PROXY_HOPS = _non_negative_int("TRUSTED_PROXY_HOPS", 1)
         if not self.CORS_ALLOWED_ORIGINS:
             raise ConfigError(
                 "Falta la variable de entorno obligatoria: CORS_ALLOWED_ORIGINS"

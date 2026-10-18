@@ -1,6 +1,7 @@
 import os
 
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.blueprints.attempts import attempts_bp
 from app.blueprints.auth import auth_bp
@@ -37,6 +38,12 @@ def create_app(config_name: str | None = None) -> Flask:
     # A JSON API: no static files, so no `/static` route either.
     app = Flask(__name__, static_folder=None)
     app.config.from_object(config)
+    if config.TRUSTED_PROXY_HOPS:
+        # Only X-Forwarded-For, and only the last N entries: the ones our proxies appended. Host,
+        # scheme, port and prefix headers are left alone; nothing here reads them.
+        app.wsgi_app = ProxyFix(
+            app.wsgi_app, x_for=config.TRUSTED_PROXY_HOPS, x_proto=0, x_host=0, x_port=0, x_prefix=0
+        )
     app.extensions["identity_provider"] = identity
     app.extensions["classifier"] = classifier
     app.extensions["mail_sender"] = mail_sender

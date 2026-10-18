@@ -1,4 +1,5 @@
 import pytest
+from sqlalchemy.engine import make_url
 
 from app import create_app
 from app.config import ConfigError, get_config
@@ -70,4 +71,74 @@ def test_subset_sizes_come_from_the_environment(monkeypatch):
 def test_a_subset_size_that_does_not_split_across_the_four_systems_fails(monkeypatch, value):
     monkeypatch.setenv("SUBSET_SIZE_FREE_REDUCED", value)
     with pytest.raises(ConfigError, match="SUBSET_SIZE_FREE_REDUCED"):
+        get_config("test")
+
+
+# --- production database URL and proxy hops (Feature 8) ----------------------------------------
+
+DB_PARTS = {"DB_HOST": "nureon.abc.us-east-2.rds.amazonaws.com", "DB_NAME": "nureon",
+            "DB_USER": "nureon_admin", "DB_PASSWORD": "p@ss:w/rd%?#"}
+
+
+def _production_env(monkeypatch, **database):
+    for name, value in {
+        "SECRET_KEY": "x",
+        "CORS_ALLOWED_ORIGINS": "https://d111111abcdef8.cloudfront.net",
+        "CLASSIFIER_BACKEND": "stub",
+        "IDENTITY_PROVIDER": "cognito",
+        "COGNITO_USER_POOL_ID": "us-east-2_example",
+        "COGNITO_APP_CLIENT_ID": "example",
+        "MAIL_SENDER": "ses",
+        "CONTACT_MAIL_TO": "contacto@example.test",
+    }.items():
+        monkeypatch.setenv(name, value)
+    for name in ("DATABASE_URL", "DB_PORT", "DB_SSLMODE", "TRUSTED_PROXY_HOPS", *DB_PARTS):
+        monkeypatch.delenv(name, raising=False)
+    for name, value in database.items():
+        monkeypatch.setenv(name, value)
+
+
+def test_production_builds_the_database_url_from_its_parts_escaping_the_password(monkeypatch):
+    _production_env(monkeypatch, **DB_PARTS)
+
+    url = make_url(get_config("production").SQLALCHEMY_DATABASE_URI)
+
+    assert url.drivername == "postgresql+psycopg"
+    assert (url.host, url.port, url.database) == (DB_PARTS["DB_HOST"], 5432, "nureon")
+    assert (url.username, url.password) == ("nureon_admin", "p@ss:w/rd%?#")
+    assert url.query == {"sslmode": "require"}
+
+
+def test_production_prefers_a_whole_database_url(monkeypatch):
+    _production_env(monkeypatch, DATABASE_URL="postgresql+psycopg://u:p@host/db", **DB_PARTS)
+
+    assert get_config("production").SQLALCHEMY_DATABASE_URI == "postgresql+psycopg://u:p@host/db"
+
+
+def test_production_names_the_missing_database_parts(monkeypatch):
+    _production_env(monkeypatch, DB_HOST="host", DB_NAME="nureon")
+
+    with pytest.raises(ConfigError, match="faltan: DB_USER, DB_PASSWORD"):
+        get_config("production")
+
+
+def test_production_port_and_sslmode_come_from_the_environment(monkeypatch):
+    _production_env(monkeypatch, DB_PORT="5433", DB_SSLMODE="disable", **DB_PARTS)
+
+    url = make_url(get_config("production").SQLALCHEMY_DATABASE_URI)
+
+    assert (url.port, url.query) == (5433, {"sslmode": "disable"})
+
+
+def test_production_trusts_exactly_one_proxy_hop_and_local_runs_none(monkeypatch):
+    _production_env(monkeypatch, **DB_PARTS)
+    assert get_config("production").TRUSTED_PROXY_HOPS == 1
+    monkeypatch.delenv("TRUSTED_PROXY_HOPS", raising=False)
+    assert get_config("test").TRUSTED_PROXY_HOPS == 0
+
+
+@pytest.mark.parametrize("value", ["-1", "uno"])
+def test_a_bad_proxy_hop_count_fails(monkeypatch, value):
+    monkeypatch.setenv("TRUSTED_PROXY_HOPS", value)
+    with pytest.raises(ConfigError, match="TRUSTED_PROXY_HOPS"):
         get_config("test")
