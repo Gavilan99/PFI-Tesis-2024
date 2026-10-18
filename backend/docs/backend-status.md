@@ -14,11 +14,12 @@ con Postgres y Cognito reales. Lo que sigue es qué de eso es real y qué no, si
 | Login con Google / Facebook (RNF09) | **No existe.** Los botones del frontend son una ranura inerte |
 | Sesión | Access token de 1 hora, sin refresh: al vencer se vuelve a ingresar |
 | Banco de preguntas | **Banco real v4.1.2 como versión 1** (145 ítems), cargado en la base local con `scripts/import_question_bank.py`. El relleno sigue siendo la versión 0 (ver abajo, "Banco real") |
-| Clasificación | **`stub` activo por defecto** en desarrollo. **No es ML** (ver abajo) |
-| Resultado | Real en el sentido de guardado y servido; el eneatipo sale del `stub` y la descripción es provisoria |
+| Cortes fijos (Feature 9) | **Real.** 40 / 90 / 145 ítems, los mismos para todos, desde el manifest de los modelos. Seguir después de un corte, también después de ver el resultado. **Sin frontend todavía** (Feature 10) |
+| Clasificación | **`stub` activo por defecto** en desarrollo. **No es ML** (ver abajo). `trained` existe y funciona, pero **sólo con artefactos sintéticos**: los reales llegan después del corte del piloto (18/10) |
+| Resultado | Real en el sentido de guardado y servido; el eneatipo sale del `stub` (o de los modelos sintéticos) y la descripción es provisoria |
 | Comentarios (RF06) | **Real.** Se guardan en la base; no hay pantalla para leerlos |
 | Contacto | **Real pero provisorio:** SES en sandbox, casilla de Gmail, sólo a direcciones verificadas |
-| Freemium (RF09/RF10) | El tier lo decide el servidor (hoy siempre `free_reduced`), pero **el texto premium viaja en el bundle** |
+| Freemium (RF09/RF10) | El corte 1 es gratis; el 2 y el 3 piden una suscripción activa. Sin Mercado Pago: **las suscripciones se dan de alta a mano** (`scripts/grant_subscription.py`). **El texto premium sigue viajando en el bundle** |
 | Pagos (Mercado Pago, Feature 6) | **0%.** Postergada: no hay endpoint, ni SDK, ni flujo |
 | Despliegue (Feature 8) | **Preparado, sin ejecutar.** Imagen, compose de producción y scripts de AWS CLI en `backend/infra/` ([runbook](./deploy-runbook.md)). En AWS no hay nada creado: se despliega en diciembre, para no gastar los créditos del plan gratuito antes de la demo. Todo corre local |
 
@@ -35,8 +36,10 @@ con Postgres y Cognito reales. Lo que sigue es qué de eso es real y qué no, si
   **Coincide con la tabla canónica en 77 de 81 combinaciones**; las 4 diferencias son errores del
   árbol sobre sus propios datos. Recibe un solo grupo por sistema, así que hereda los desempates del
   conteo. Es el candidato para la demo, pero no aprende nada que la tabla no diga.
-- **`trained`** — los cuatro Random Forest del diseño nuevo. **No existe todavía:** sin artefactos,
-  la app no arranca con este valor, y nunca cae al stub.
+- **`trained`** — los doce Random Forest de los cortes, cuatro por corte (Feature 9). El resultado
+  sale de los modelos del último corte completo. Si falta un modelo, o no coincide con el manifest, la
+  app no arranca; nunca cae al stub. **Hoy sólo hay artefactos sintéticos**, y en producción la app no
+  arranca con ellos.
 
 En `production` la variable es obligatoria, sin valor por defecto: elegir qué se muestra en la defensa
 es una decisión explícita.
@@ -110,6 +113,87 @@ se probó en la Feature 5.
 - **Un token vencido con el test abierto** hace fallar el próximo pedido con el error del test; la
   sesión se cierra y hay que volver a ingresar. Sin refresh token no hay renovación silenciosa.
 
+## Feature 9: cortes fijos y modelos entrenados
+
+Hecho: el test se sirve en tres cortes fijos y anidados de 40, 90 y 145 ítems (decisión del 17/10,
+PDR de Tobi «Product Classifier and Fixed Item Cuts», que reemplaza el sorteo de 20/60), cada corte
+con sus cuatro Random Forest, y se puede seguir de un corte al siguiente. Contrato en
+[api-contract.md](./api-contract.md#feature-9-cortes-fijos).
+
+- **El plan de cortes** (`app/ml/cut_plan.py`) sale del `manifest.json` y del
+  `precision_by_items.json` de los artefactos, en `CLASSIFIER_ARTIFACTS_DIR` (por defecto
+  `app/ml/artifacts/`). Lo usan todos los clasificadores, también el stub. Al arrancar se valida que
+  los cortes estén anidados, que sean 40 / 90 / 145, que cada `serve_new_items` cubra exactamente lo
+  que agrega su corte y que haya una precisión por corte; si algo falla, la app no arranca.
+- **Servir.** Crear un intento precrea las 40 filas del corte 1 en el orden del manifest. Cada código
+  (`Q007`) se resuelve contra la versión activa por `questions.display_order`; si falta alguno, 503
+  y el detalle en el log. `POST /api/attempts/{id}/continue` agrega el corte siguiente;
+  `GET /api/attempts/{id}/cut` da el estado. **Las opciones salen en el orden del banco**, también las
+  de escenario; `responses.option_order` se sigue guardando. `SUBSET_SIZE_FREE_REDUCED` y
+  `SUBSET_SIZE_PAID_FULL` ya no existen.
+- **Tier por suscripción** (`app/services/tiers.py`): pago = una fila de `subscriptions` en `active`
+  con `current_period_end` vacío o futuro. El corte 1 es gratis; el 2 y el 3 son pagos (402
+  `PAID_TIER_REQUIRED`). Un intento nuevo es siempre `free_reduced`, también para quien paga.
+- **Alta manual de suscripciones:** `scripts/grant_subscription.py --email … --days N` (y el job
+  `grant-subscription` de `infra/10-task.ps1`). Fila con `mercadopago_subscription_id` en NULL y sin
+  `payments`: así se distingue para siempre de una paga. El checkout y el webhook siguen siendo la
+  Feature 6.
+- **`trained`** (`app/ml/trained.py`) sigue el README de `app/ml/training/`: arma
+  `{código: option_position}`, elige el corte cuyo `model_items` coincide exactamente con lo
+  respondido (si no coincide ninguno es un error), codifica con `encoding.encode_one` de Tobi,
+  comprueba las columnas contra el manifest y pasa la fila por los cuatro `Pipeline` del corte.
+  `model_version` = el del manifest + el corte (`…/cut_040`). Al arrancar carga los doce modelos y no
+  arranca si scikit-learn o numpy no son las versiones del manifest, si falta un archivo o no es un
+  `Pipeline` con un solo paso `rf`, si las `classes_` no son los tres grupos de su sistema o si
+  `n_features_in_` no coincide con las columnas del corte. `Answer` ahora lleva `question_order`.
+- **Artefactos sintéticos** para desarrollo y tests: `scripts/make_dev_artifacts.py --out <carpeta>`
+  corre el entrenamiento de Tobi sobre el banco real con respondentes sintéticos (los generadores de
+  `tests/test_ml_training.py`, movidos sin cambios a `scripts/synthetic_pilot.py`), 25 árboles y una
+  repetición; tarda ~8 s. Su `model_version` empieza con `synthetic-`, y en producción la app no
+  arranca con él. La suite genera los suyos una vez por sesión en una carpeta temporal. Ninguno de los
+  dos scripts entra a la imagen.
+- **El guardián de filtraciones** pierde la capa de orden: el banco con sus grupos ya es público en el
+  repo (`research/bank/`) y el orden de servicio es fijo. Las capas de claves y de valores siguen
+  igual, y la de valores ahora reconoce también las versiones de los modelos entrenados (`rf-cuts-`,
+  `synthetic-`, `/cut_0…`). Los tests de la mezcla se reemplazaron por tests del orden fijo.
+
+### Decisiones del 17/10 que esta feature implementa
+
+- **Quien paga después del corte 1 sigue con el mismo intento.** Reemplaza la decisión 2 del 05-10
+  («el tier se fija al crear el intento y no cambia»): un intento `free_reduced` pasa a `paid_full`
+  cuando sigue al corte 2 con una suscripción activa.
+- **Se puede seguir después de ver el resultado** (pedido de Tobi). Un intento cerrado no se reabre y
+  su resultado no se pisa: se sigue con un intento nuevo enlazado al anterior, que arranca con sus
+  respuestas copiadas. Sólo desde el último intento cerrado de la persona, una vez, y mientras su
+  versión del cuestionario siga activa.
+- **Las opciones se sirven en el orden del banco**, como las vio el piloto.
+- **Se retira la capa de orden del guardián de filtraciones.**
+
+### Cuarta diferencia con el PDR: `test_attempts.continued_from_attempt_id`
+
+Migración 0004. Nullable, con FK al intento anterior (RESTRICT, como todas), única (un intento se
+sigue una sola vez) y con un CHECK que impide que un intento se continúe a sí mismo.
+
+**Nota para el análisis de datos:** las respuestas copiadas aparecen **en los dos intentos
+enlazados**, con el mismo `answered_at`. Para no contarlas dos veces hay que seguir el enlace: de una
+cadena de intentos enlazados, quedarse con el último (el que no tiene a nadie con
+`continued_from_attempt_id` apuntándole) o, si interesa cada resultado, saber que el intento nuevo
+contiene las respuestas del anterior. Las filas copiadas se reconocen porque su `display_order` es
+menor o igual que el tamaño del corte del intento anterior.
+
+### Limitaciones declaradas
+
+- **Los artefactos reales todavía no existen.** Todo lo verificado de `trained` corrió con modelos
+  sintéticos: prueba el cableado, no la precisión. Las precisiones sintéticas (~1,0) no significan
+  nada.
+- **Sin plan de cortes la app no arranca, ni siquiera con el stub.** La imagen de producción tiene que
+  construirse con los artefactos reales (`08-image.ps1 -Models`), y el compose de producción local
+  también los necesita en `app/ml/artifacts/`.
+- **Los intentos servidos antes de los cortes** (subsets de 20 o 60 en bases de desarrollo) no
+  tienen corte: el estado y el seguir responden 409 `ATTEMPT_NOT_CONTINUABLE`, y se loguea.
+- **El enlace no sale en `TestAttempt`.** El frontend lo ve sólo desde el intento viejo
+  (`continuedByAttemptId`).
+
 ## Feature 5: comentarios y contacto
 
 Hecho: `POST /api/feedback` guarda el comentario (RF06) y `POST /api/contact-messages` manda el
@@ -181,7 +265,8 @@ mediciones en [app/ml/README.md](../app/ml/README.md).
   0,94 / 0,94 y un árbol idéntico. El eneatipo lo decide el árbol; las filas de
   `classifier_predictions` son las del conteo.
 - **`trained`** no arranca: sin los cuatro artefactos lo dice y se detiene; con artefactos también,
-  hasta que esté definida la codificación respuestas → features. Nunca cae al stub.
+  hasta que esté definida la codificación respuestas → features. Nunca cae al stub. (Implementado en
+  la Feature 9.)
 - **En `production`, `CLASSIFIER_BACKEND` es obligatoria**, sin valor por defecto.
 - **Lo interno no sale.** El guardián de la Feature 3 ahora también rechaza `probabilities`,
   `predicted_group`, `confidence_margin` y `model_version` en cualquier forma, toda clave que
@@ -214,11 +299,14 @@ Hecho: crear un intento (el anterior en curso pasa a `abandoned`), servir el sub
 request, guardar cada respuesta al elegirla (upsert), reanudar, cerrar (409 si falta alguna) y leer
 intentos (`latest`, por id, historial). Contrato en [api-contract.md](./api-contract.md).
 
+> **Reemplazado en la Feature 9:** el subset sorteado (20/60, `SUBSET_SIZE_*`), la mezcla de opciones
+> y de preguntas y la capa de orden del guardián ya no existen; el tier ya no es fijo. Lo que sigue
+> queda como registro de la Feature 3.
+
 - **El subset.** Al crear el intento se eligen, de la versión activa más alta, N preguntas activas, la
-  misma cantidad por sistema (`SUBSET_SIZE_FREE_REDUCED`, `SUBSET_SIZE_PAID_FULL`: 20 y 60 por
-  defecto, múltiplos de 4). Dentro de cada sistema, al azar, sin controlar la proporción escenario /
-  Likert (decidido el 07-10). Queda guardado como filas de `responses` sin opción elegida, con su
-  `display_order` y su `option_order`, y no vuelve a sortearse.
+  misma cantidad por sistema (20 y 60 por defecto, múltiplos de 4). Dentro de cada sistema, al azar,
+  sin controlar la proporción escenario / Likert (decidido el 07-10). Queda guardado como filas de
+  `responses` sin opción elegida, con su `display_order` y su `option_order`, y no vuelve a sortearse.
 - **El tier** sale de `app/services/tiers.py`, que hoy devuelve siempre `free_reduced`. La Feature 6
   cambia esa función y nada más. El cliente no puede mandarlo.
 - **La clave de corrección no sale.** Tres capas, con test cada una: las claves (`group_label`,
