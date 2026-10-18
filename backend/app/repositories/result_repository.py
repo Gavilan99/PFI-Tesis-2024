@@ -19,6 +19,7 @@ def classification_inputs(session: Session, attempt_id: uuid.UUID) -> list[Answe
             Response.selected_option_id,
             Question.grouping_system,
             Question.question_type,
+            Question.display_order,
             AnswerOption.group_label,
         )
         .join(Question, Question.id == Response.question_id)
@@ -36,6 +37,7 @@ def classification_inputs(session: Session, attempt_id: uuid.UUID) -> list[Answe
             group_label=row.group_label,
             option_position=bank_order[row.question_id].index(row.selected_option_id) + 1,
             option_count=len(bank_order[row.question_id]),
+            question_order=row.display_order,
         )
         for row in rows
     ]

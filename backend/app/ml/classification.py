@@ -35,6 +35,9 @@ class Answer:
     # For a Likert item the bank's order is the scale: the last option is maximum agreement.
     option_position: int
     option_count: int
+    # The item's number in the bank: `questions.display_order`, `Q007` -> 7. What the trained models'
+    # columns are named after (app/ml/training/README.md).
+    question_order: int
 
 
 @dataclass(frozen=True)

@@ -18,9 +18,14 @@ turns a closed attempt into a result.
 - `registry.py` — `CLASSIFIER_BACKEND` → backend. Built-ins are imported lazily; `register` adds one.
 - `tally.py`, `stub.py` — `stub`. Not ML.
 - `legacy/` — `legacy_tree`: the 2024 tree, its dataset and its training script.
-- `trained.py` — `trained`: refuses to start (see below).
+- `cut_plan.py` — the fixed item cuts (40 / 90 / 145): items, serving order and estimated accuracy
+  of each, read from the artifacts' `manifest.json` and `precision_by_items.json` and validated at
+  startup. Every backend serves by it, the stub too.
+- `trained.py` — `trained`: the twelve Random Forests of the cuts (see below).
+- `training/` — Tobi's training of the cuts; its `README.md` is the contract with `trained.py`.
 - `classifiers.py`, `pipeline.py`, `tests/synthetic_data.py` — the Random Forest scaffold and its
-  synthetic sanity check. scikit-learn is imported only here and in `legacy/`.
+  synthetic sanity check. scikit-learn is imported only here, in `training/`, in `trained.py` (lazily)
+  and in `legacy/`.
 
 ## Backends (`CLASSIFIER_BACKEND`)
 
@@ -31,7 +36,7 @@ Every prediction stores its `model_version`, so a result can always be traced to
 |---|---|---|
 | `stub` (default in development and test) | `stub-tally-1` | count by group → shared intersection |
 | `legacy_tree` | `legacy-tree-1` | the 2024 tree, fed the count's winning group per system |
-| `trained` | — | does not start: no artifacts, and the answer → feature encoding is undecided |
+| `trained` | the manifest's, plus the cut: `<model_version>/cut_040` | the four models of the last complete cut → shared intersection |
 
 In production the variable has no default: the app does not start until someone chooses.
 
@@ -84,13 +89,31 @@ Over the 81 possible combinations of one group per system:
 
 Not corrected here, on purpose.
 
+### The artifacts and the cut plan
+
+`CLASSIFIER_ARTIFACTS_DIR` (default `app/ml/artifacts/`, not versioned) holds what
+`app/ml/training/train.py` writes: `manifest.json`, `precision_by_items.json` and `cut_040/`,
+`cut_090/`, `cut_145/` with one `<system>.joblib` each. The cut plan is read from the two JSON files
+for every backend: the app does not start without them, or if the cuts are not nested, are not
+40 / 90 / 145, a `serve_new_items` does not cover exactly what its cut adds, or a cut has no
+estimated accuracy.
+
+For development and tests, `python scripts/make_dev_artifacts.py --out <folder>` runs the same
+training over the real bank with synthetic respondents. Its `model_version` starts with `synthetic-`,
+and in production the app refuses to start with it. The test suite generates its own once per
+session, in a temporary folder.
+
 ### `trained`
 
-Needs `intelligence_centers.joblib`, `hornevian.joblib`, `harmonic.joblib` and
-`object_relations.joblib` in `CLASSIFIER_ARTIFACTS_DIR` (default `app/ml/artifacts/`). Without them
-the app does not start and says so; it never falls back to the stub. With them it still refuses,
-until the answer → feature encoding is defined (real bank, `NO_PREGUNTADO` proposal). When it lands
-it hands four distributions to `classification.from_distributions`, the same intersection as the stub.
+At startup it loads the twelve models and refuses to start, naming the problem, if the installed
+scikit-learn or numpy is not the manifest's, a file is missing or is not a `Pipeline` with the single
+step `rf`, a model's `classes_` are not its system's three groups, or `n_features_in_` is not its
+cut's column count. It never falls back to the stub.
+
+To classify: `{code: option_position}` from the answers (the code is `Q` + `questions.display_order`);
+the cut whose `model_items` are exactly the answered codes (no match is an error); the training's own
+`encoding.encode_one`, with the columns checked against the manifest's; `predict_proba` of the cut's
+four pipelines; the four distributions to `classification.from_distributions`.
 
 ## Running the sanity check
 
@@ -106,6 +129,6 @@ synthetic features are generated from the same table the pipeline recovers.
 ## Next steps once real data exists
 
 1. Replace `tests/synthetic_data.py` with a real loader, outside `tests/`.
-2. Define the answer → feature encoding and implement `trained` on top of `from_distributions`.
+2. ~~Define the answer → feature encoding and implement `trained`~~: done in Feature 9 (fixed cuts).
 3. Grouped stratified k-fold per classifier (the 2024 tree reported 0.94).
 4. Check that the real labels reconstruct `TYPE_TABLE`.
