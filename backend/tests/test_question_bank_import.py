@@ -1,4 +1,5 @@
 import csv
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -7,6 +8,7 @@ from sqlalchemy import select, text
 
 from app.db.models import AnswerOption, Question, Response, TestAttempt, User
 from app.db.models.enums import AttemptTier, GroupingSystem, QuestionType
+from app.ml.training import bank as training_bank
 from app.repositories import question_repository
 from app.services.question_bank import QuestionBankError, load_bank, validate_bank
 from scripts import import_question_bank
@@ -53,7 +55,7 @@ def test_fixture_is_read_with_its_bom_and_translated_to_the_canonical_vocabulary
     assert {q.grouping_system for q in bank} == set(GroupingSystem)
     assert {q.question_type for q in bank} == {QuestionType.SCENARIO, QuestionType.MULTIPLE_CHOICE}
     first = bank[0]
-    assert first.source_id == "T01"
+    assert first.source_id == "Q001"
     assert [o.group_label for o in first.options] == ["heart", "head", "gut"]
     assert "ítem" in first.prompt_text
 
@@ -112,7 +114,7 @@ def test_scenario_item_repeating_a_group_stops_the_load(tmp_path):
         rows[1]["group_label"] = rows[0]["group_label"]
 
     problems = problems_for(tmp_path, mutate)
-    assert any("Pregunta T01: un ítem de escenario" in p for p in problems)
+    assert any("Pregunta Q001: un ítem de escenario" in p for p in problems)
 
 
 def test_scenario_item_with_two_options_stops_the_load(tmp_path):
@@ -120,14 +122,14 @@ def test_scenario_item_with_two_options_stops_the_load(tmp_path):
         del rows[2]
 
     problems = problems_for(tmp_path, mutate)
-    assert any("Pregunta T01: un ítem de escenario" in p for p in problems)
+    assert any("Pregunta Q001: un ítem de escenario" in p for p in problems)
 
 
 def test_likert_item_without_five_options_stops_the_load(tmp_path):
     def mutate(rows):
-        del rows[7]  # one of T02's five options
+        del rows[7]  # one of Q002's five options
 
-    assert "Pregunta T02: un ítem Likert tiene que tener 5 opciones; tiene 4." in problems_for(
+    assert "Pregunta Q002: un ítem Likert tiene que tener 5 opciones; tiene 4." in problems_for(
         tmp_path, mutate
     )
 
@@ -137,13 +139,13 @@ def test_likert_item_mixing_groups_stops_the_load(tmp_path):
         rows[4]["group_label"] = "Mente"
 
     problems = problems_for(tmp_path, mutate)
-    assert any("Pregunta T02: las opciones de un ítem Likert" in p for p in problems)
+    assert any("Pregunta Q002: las opciones de un ítem Likert" in p for p in problems)
 
 
 def test_out_of_scope_question_type_stops_the_load(tmp_path):
     def mutate(rows):
         for row in rows:
-            if row["question_id"] == "T01":
+            if row["question_id"] == "Q001":
                 row["question_type"] = "ordering"
 
     assert "Línea 2: tipo de pregunta desconocido 'ordering'." in problems_for(tmp_path, mutate)
@@ -151,19 +153,85 @@ def test_out_of_scope_question_type_stops_the_load(tmp_path):
 
 def test_main_reports_a_broken_header_and_exits_nonzero(tmp_path, capsys):
     headers, rows = read_rows()
-    broken = ["prompt" if h == "prompt_text" else h for h in headers]
-    rows = [{("prompt" if k == "prompt_text" else k): v for k, v in row.items()} for row in rows]
+    broken = ["prompt_text" if h == "prompt" else h for h in headers]
+    rows = [{("prompt_text" if k == "prompt" else k): v for k, v in row.items()} for row in rows]
     path = write_csv(tmp_path, broken, rows)
 
     code = import_question_bank.main(["--csv", str(path), "--version", "1", "--dry-run"])
 
     assert code == 1
-    assert "Faltan columnas en el CSV: prompt_text." in capsys.readouterr().err
+    assert "Faltan columnas en el CSV: prompt." in capsys.readouterr().err
 
 
 def test_main_refuses_version_zero(capsys):
     assert import_question_bank.main(["--csv", str(FIXTURE), "--version", "0", "--dry-run"]) == 1
     assert "reservada para el relleno" in capsys.readouterr().err
+
+
+# --- question order from the id -----------------------------------------------------------------
+
+
+def test_question_order_is_the_number_in_the_id_and_option_order_is_display_order():
+    bank = read_bank_csv(FIXTURE)
+
+    assert {q.source_id: q.display_order for q in bank} == {f"Q{n:03d}": n for n in range(1, 9)}
+    likert = next(q for q in bank if q.source_id == "Q002")
+    assert [o.display_order for o in likert.options] == [1, 2, 3, 4, 5]
+    assert likert.options[0].option_text == "Nada de acuerdo"
+
+
+@pytest.mark.parametrize("bad_id", ["Q01", "Q0001", "T001", "q001", "Q00A"])
+def test_question_id_not_q_and_three_digits_stops_the_load_naming_the_line(tmp_path, bad_id):
+    def mutate(rows):
+        rows[3]["question_id"] = bad_id
+
+    assert (
+        f"Línea 5: el id de pregunta '{bad_id}' no tiene la forma Q seguida de 3 dígitos "
+        "(por ejemplo, Q007)."
+    ) in problems_for(tmp_path, mutate)
+
+
+def test_ignored_columns_do_not_change_the_bank(tmp_path):
+    headers, rows = read_rows()
+    for row in rows:
+        row.update(format="otro", type_coverage="", polarity="inversa", origin="X")
+
+    assert read_bank_csv(write_csv(tmp_path, headers, rows)) == read_bank_csv(FIXTURE)
+
+
+# --- the real bank (research/bank, PR #29) ------------------------------------------------------
+
+REAL_BANK = Path(__file__).resolve().parents[2] / "research" / "bank" / "NureonAI Prototype v4.1.2.csv"
+
+
+def read_real_bank():
+    assert REAL_BANK.is_file(), f"No está el banco real en {REAL_BANK}."
+    return read_bank_csv(REAL_BANK)
+
+
+def test_real_bank_is_read_and_validated_with_its_full_shape():
+    bank = read_real_bank()
+
+    assert validate_bank(bank) == []
+    assert len(bank) == 145
+    assert sum(len(q.options) for q in bank) == 533
+    scenarios = Counter(q.grouping_system for q in bank if q.question_type is QuestionType.SCENARIO)
+    assert scenarios == {system: 24 for system in GroupingSystem}
+    likert = Counter(q.grouping_system for q in bank if q.question_type is QuestionType.MULTIPLE_CHOICE)
+    assert likert == {
+        GroupingSystem.INTELLIGENCE_CENTERS: 12,
+        GroupingSystem.HORNEVIAN: 12,
+        GroupingSystem.HARMONIC: 12,
+        GroupingSystem.OBJECT_RELATIONS: 13,
+    }
+
+
+def test_real_bank_question_order_is_the_training_item_order():
+    """questions.display_order and app.ml.training's Item.order are the same number for every item."""
+    imported = {q.source_id: q.display_order for q in read_real_bank()}
+    trained = {item.code: item.order for item in training_bank.load_bank(REAL_BANK)}
+
+    assert imported == trained
 
 
 # --- loading ------------------------------------------------------------------------------------
@@ -205,8 +273,8 @@ def test_changed_question_without_responses_is_updated(db_session, tmp_path):
     load_bank(db_session, read_bank_csv(FIXTURE), version=1, activate=False)
     headers, rows = read_rows()
     for row in rows:
-        if row["question_id"] == "T01":
-            row["prompt_text"] = "Enunciado de prueba 1, corregido (relleno de test)."
+        if row["question_id"] == "Q001":
+            row["prompt"] = "Enunciado de prueba 1, corregido (relleno de test)."
 
     summary = load_bank(
         db_session, read_bank_csv(write_csv(tmp_path, headers, rows)), version=1, activate=False
@@ -246,7 +314,7 @@ def test_question_with_responses_is_never_modified(db_session, tmp_path):
 
     headers, rows = read_rows()
     for row in rows:
-        if row["question_id"] == "T01":
+        if row["question_id"] == "Q001":
             row["option_text"] = row["option_text"] + " Cambiada."
     with pytest.raises(QuestionBankError) as excinfo:
         load_bank(db_session, read_bank_csv(write_csv(tmp_path, headers, rows)), version=1, activate=False)
@@ -263,7 +331,7 @@ def test_question_with_responses_is_never_removed(db_session, tmp_path):
     _serve(db_session, question)
 
     headers, rows = read_rows()
-    rows = [row for row in rows if row["question_id"] != "T01"]
+    rows = [row for row in rows if row["question_id"] != "Q001"]
     with pytest.raises(QuestionBankError) as excinfo:
         load_bank(db_session, read_bank_csv(write_csv(tmp_path, headers, rows)), version=1, activate=False)
 
@@ -274,7 +342,7 @@ def test_question_with_responses_is_never_removed(db_session, tmp_path):
 def test_question_without_responses_missing_from_the_csv_is_removed(db_session, tmp_path):
     load_bank(db_session, read_bank_csv(FIXTURE), version=1, activate=False)
     headers, rows = read_rows()
-    rows = [row for row in rows if row["question_id"] != "T02"]
+    rows = [row for row in rows if row["question_id"] != "Q002"]
 
     summary = load_bank(
         db_session, read_bank_csv(write_csv(tmp_path, headers, rows)), version=1, activate=False
@@ -334,7 +402,7 @@ def test_reimporting_a_reordered_csv_without_responses_leaves_exactly_the_new_cs
     # was position 8 (a Likert item of another system), and so on. Rows are shuffled too.
     headers, rows = read_rows()
     for row in rows:
-        row["display_order"] = str(9 - int(row["display_order"]))
+        row["question_id"] = f"Q{9 - int(row['question_id'][1:]):03d}"
     rows.reverse()
     reordered = read_bank_csv(write_csv(tmp_path, headers, rows))
 
@@ -366,11 +434,11 @@ def test_reimporting_a_version_with_responses_is_rejected_whole(db_session, tmp_
     headers, rows = read_rows()
     if change == "edit_an_unanswered_question":
         for row in rows:
-            if row["question_id"] == "T05":
-                row["prompt_text"] = "Enunciado de prueba 5, corregido (relleno de test)."
+            if row["question_id"] == "Q005":
+                row["prompt"] = "Enunciado de prueba 5, corregido (relleno de test)."
     elif change == "reorder":
         for row in rows:
-            row["display_order"] = str(9 - int(row["display_order"]))
+            row["question_id"] = f"Q{9 - int(row['question_id'][1:]):03d}"
 
     with pytest.raises(QuestionBankError) as excinfo:
         load_bank(db_session, read_bank_csv(write_csv(tmp_path, headers, rows)), version=1, activate=True)

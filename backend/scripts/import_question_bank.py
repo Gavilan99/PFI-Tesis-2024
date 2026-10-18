@@ -2,11 +2,19 @@
 """
 Import the real question bank from its CSV companion into `questions` and `answer_options`.
 
-    python scripts/import_question_bank.py --csv "NureonAI Question Bank v1.csv" --version 1 --dry-run
-    python scripts/import_question_bank.py --csv "NureonAI Question Bank v1.csv" --version 1 --activate
+    python scripts/import_question_bank.py --csv "../research/bank/NureonAI Prototype v4.1.2.csv" --version 1 --dry-run
+    python scripts/import_question_bank.py --csv "../research/bank/NureonAI Prototype v4.1.2.csv" --version 1 --activate
 
-One row per question+answer pair. The CSV's real headers are not known yet (PA-3): adjust COLUMNS
-below. If a header is missing, the script stops and names it before reading any row.
+One row per question+answer pair, with the bank's real headers (COLUMNS below). If a header is
+missing, the script stops and names it before reading any row. The columns `format`,
+`type_coverage`, `polarity` and `origin` are not read: nothing in the database stores them.
+
+The CSV carries no question order: its `display_order` is the order of the option inside its item.
+The question order is the number in the item's id, `Q007` -> 7, so `questions.display_order` is
+always the number of the bank's `question_id`. That equivalence is part of the contract with the
+trained models: the backend rebuilds the `question_id` from `display_order`, and the training
+(`app/ml/training/bank.py`, `Item.order`) numbers items the same way. An id that is not `Q`
+followed by three digits, or a number repeated across questions, stops the load naming the line.
 
 The bank labels systems and groups in Spanish; the maps below translate them to the canonical
 vocabulary (CLAUDE.md, "Vocabulario canónico"). An unknown label stops the load.
@@ -27,6 +35,7 @@ Version 0 is reserved for filler (scripts/seed_filler_bank.py).
 
 import argparse
 import csv
+import re
 import sys
 import unicodedata
 from pathlib import Path
@@ -45,19 +54,21 @@ from app.services.question_bank import (  # noqa: E402
 from scripts._db import database_url, describe, open_session, utf8_output  # noqa: E402
 
 # ---------------------------------------------------------------------------------------------
-# Column map: logical field -> header in the CSV. Adjust the right-hand side to the real headers.
-# The first six are the ones the frontend's build_question_fixture.py already assumes.
+# Column map: logical field -> header in the CSV (bank v4.1.2). There is no question-order column:
+# it comes from the id (QUESTION_ID). The CSV's `display_order` is the option's order in its item.
 # ---------------------------------------------------------------------------------------------
 COLUMNS = {
     "question_id": "question_id",
     "question_type": "question_type",
-    "prompt_text": "prompt_text",
-    "question_order": "display_order",
+    "prompt_text": "prompt",
     "option_text": "option_text",
-    "option_order": "option_display_order",
+    "option_order": "display_order",
     "grouping_system": "grouping_system",
     "group_label": "group_label",
 }
+
+# `Q007` -> question order 7. Same numbering as app/ml/training/bank.py (Item.order).
+QUESTION_ID = re.compile(r"Q([0-9]{3})")
 
 # Bank label -> canonical value. Matching ignores case, surrounding spaces and Unicode form,
 # never accents: "Retraida" is not "Retraída".
@@ -122,6 +133,7 @@ def read_bank_csv(path: Path) -> list[BankQuestion]:
 
     problems: list[str] = []
     questions: dict[str, dict] = {}
+    id_by_order: dict[int, str] = {}
 
     for line, row in rows:
         def cell(field: str) -> str:
@@ -142,7 +154,7 @@ def read_bank_csv(path: Path) -> list[BankQuestion]:
         question_type = _TYPES.get(_key(cell("question_type")))
         if question_type is None:
             problems.append(f"{where}: tipo de pregunta desconocido '{cell('question_type')}'.")
-        question_order = _int(cell("question_order"), where, "orden de pregunta", problems)
+        question_order = _question_order(source_id, where, id_by_order, problems)
         option_order = _int(cell("option_order"), where, "orden de opción", problems)
         if None in (system, group, question_type, question_order, option_order):
             continue
@@ -180,6 +192,27 @@ def read_bank_csv(path: Path) -> list[BankQuestion]:
         )
         for source_id, q in questions.items()
     ]
+
+
+def _question_order(
+    source_id: str, where: str, id_by_order: dict[int, str], problems: list[str]
+) -> int | None:
+    """The question order encoded in the id (`Q007` -> 7), unique across questions."""
+    match = QUESTION_ID.fullmatch(source_id)
+    if match is None:
+        problems.append(
+            f"{where}: el id de pregunta '{source_id}' no tiene la forma Q seguida de 3 dígitos "
+            "(por ejemplo, Q007)."
+        )
+        return None
+    order = int(match.group(1))
+    other = id_by_order.setdefault(order, source_id)
+    if other != source_id:
+        problems.append(
+            f"{where}: el id de pregunta '{source_id}' repite el número {order} de '{other}'."
+        )
+        return None
+    return order
 
 
 def _int(raw: str, where: str, name: str, problems: list[str]) -> int | None:
