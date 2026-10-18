@@ -80,6 +80,12 @@ class TestAttempt(Base):
             unique=True,
             postgresql_where=sa.text("status = 'in_progress'"),
         ),
+        # A closed attempt is continued at most once, in a new attempt (migration 0004).
+        sa.UniqueConstraint("continued_from_attempt_id"),
+        sa.CheckConstraint(
+            "continued_from_attempt_id IS NULL OR continued_from_attempt_id <> id",
+            name="not_continued_from_itself",
+        ),
     )
     __test__ = False  # not a pytest test class, despite the name
 
@@ -93,14 +99,17 @@ class TestAttempt(Base):
     )
     started_at: Mapped[datetime] = created_now()
     completed_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+    # The closed attempt this one continues, with its answers copied. The copies appear in both: this
+    # link is what keeps an analysis from counting them twice.
+    continued_from_attempt_id: Mapped[uuid.UUID | None] = fk("test_attempts.id", nullable=True)
 
 
 class Response(Base):
-    """One row per question served to an attempt, created with the attempt.
+    """One row per question served to an attempt, created cut by cut.
 
     `selected_option_id` NULL means "asked and not answered"; no row means "not asked".
     `display_order` is the item's position inside that attempt. `option_order` is the order its options
-    were served in: shuffled per attempt for scenario items, bank order for Likert items.
+    were served in: the bank's, for every item since Feature 9 (the order the pilot saw).
     """
 
     __tablename__ = "responses"
