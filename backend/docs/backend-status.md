@@ -20,7 +20,7 @@ con Postgres y Cognito reales. Lo que sigue es qué de eso es real y qué no, si
 | Contacto | **Real pero provisorio:** SES en sandbox, casilla de Gmail, sólo a direcciones verificadas |
 | Freemium (RF09/RF10) | El tier lo decide el servidor (hoy siempre `free_reduced`), pero **el texto premium viaja en el bundle** |
 | Pagos (Mercado Pago, Feature 6) | **0%.** Postergada: no hay endpoint, ni SDK, ni flujo |
-| Despliegue (Feature 8) | **0%.** Postergada: no hay dominio, ni ECS, ni RDS, ni S3/CloudFront. Todo corre local |
+| Despliegue (Feature 8) | **Preparado, sin ejecutar.** Imagen, compose de producción y scripts de AWS CLI en `backend/infra/` ([runbook](./deploy-runbook.md)). En AWS no hay nada creado: se despliega en diciembre, para no gastar los créditos del plan gratuito antes de la demo. Todo corre local |
 
 ### Clasificación: qué es cada implementación
 
@@ -146,8 +146,10 @@ contra SES real: `204`, sin errores en el log.
 
 - **El límite de envíos vive en la memoria de cada proceso.** Con varios workers de gunicorn cada
   uno permite el límite; reiniciar lo pone en cero.
-- **Detrás del ALB (Feature 8) el origen es el balanceador**, no quien escribe: sin `ProxyFix`
-  configurado para un salto, todos comparten un solo contador. Va con el despliegue.
+- **Detrás del ALB (Feature 8) el origen es la dirección que agrega el ALB.** `ProxyFix` confía en
+  un solo salto (`TRUSTED_PROXY_HOPS=1` en producción, 0 en local): lo que el cliente escriba antes en
+  `X-Forwarded-For` no cambia su dirección. Con 1 worker por tarea, el límite efectivo es 5 por hora
+  por visitante y por tarea (hasta 10 con dos tareas).
 - **Emails con caracteres no ASCII se rechazan** en el formulario de contacto. Es el precio de
   aceptar sólo lo que puede ir a una cabecera sin codificar.
 - **Remitente de Gmail:** los mensajes probablemente caigan en spam hasta tener dominio propio (PA-21).

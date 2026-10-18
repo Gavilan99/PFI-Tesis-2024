@@ -1,15 +1,21 @@
 # AWS: lo que existe y cómo se recrea
 
-Región **`us-east-2`** (la única que permite la cuenta). Todo comando lleva
-`--profile nureon --region us-east-2` explícitos; el perfil `default` no se usa nunca.
+Región **`us-east-2`** (la única que permite la cuenta). Todo comando lleva el perfil y la región
+explícitos; el perfil `default` no se usa nunca. Hay dos perfiles:
 
-Sólo se crea lo de esta lista. Ids no secretos; ninguna credencial va en este archivo.
+- `nureon` (usuario `nureon-dev`): el backend local, contra Cognito y SES. Nada más.
+- `nureon-deploy` (usuario `nureon-deploy`): el despliegue (Feature 8). Ver la sección 4.
+
+Lo que crea el despliegue (red, base, ECR, servicio, frontend) está en el
+[runbook](./deploy-runbook.md), con sus scripts en `backend/infra/`. Este archivo cubre lo que se crea
+a mano o una sola vez. Ids no secretos; ninguna credencial va en este archivo.
 
 | Recurso | Id | Costo mensual |
 |---|---|---|
 | User pool `nureon-dev` | `us-east-2_ZllTXy0w0` | US$0 (plan Lite, 10.000 usuarios activos gratis por mes) |
 | App client `nureon-backend` | `216kporbavdvjbtthon6p28vel` | US$0 |
 | Identidad de SES (casilla de contacto, sólo en `.env`) + política `nureon-backend-ses-send` | ver sección 3 | US$0 al volumen del piloto |
+| Usuario de IAM `nureon-deploy` + política `nureon-deployer` | ver sección 4 | US$0 |
 
 ## 1. User pool
 
@@ -122,6 +128,31 @@ backend en la Feature 8.
 - **La identidad:** SES (us-east-2) → Identities → seleccionar la casilla → **Delete**. Volver a
   crearla pide verificarla de nuevo.
 
+## 4. Perfil de despliegue
+
+Creado por consola el 2026-10-18. Lo usan los scripts de `backend/infra/` y nada más.
+
+1. IAM → **Policies** → **Create policy** → **JSON**: pegar
+   [`backend/infra/iam/nureon-deployer-policy.json`](../infra/iam/nureon-deployer-policy.json) tal cual.
+   Nombre: `nureon-deployer`. Si el archivo cambia, se edita la política y se pega la versión nueva.
+2. IAM → **Users** → **Create user** `nureon-deploy`, sin acceso a consola, con *Attach policies
+   directly* → `nureon-deployer` y ninguna otra.
+3. El usuario → **Security credentials** → **Create access key** → *Command Line Interface (CLI)*.
+   En la máquina: `aws configure --profile nureon-deploy` (región `us-east-2`, formato `json`).
+   Comprobar con `aws sts get-caller-identity --profile nureon-deploy`. Borrar el CSV de la clave.
+
+Qué permite: leer todo lo que hace falta para verificar; crear y borrar, en `us-east-2`, sólo lo
+del despliegue (prefijo `nureon-` donde el servicio deja limitar por nombre); pasar a ECS sólo roles
+`nureon-*`; adjuntar sólo las dos políticas administradas de ECS. **No puede leer el valor de ningún
+secreto** (`GetSecretValue`): migraciones y carga del banco corren dentro de la VPC.
+
+Límite conocido: como crea sus propios roles, con `PutRolePolicy` podría darle a un rol `nureon-*` más
+permisos de los que tiene él y usarlo en una tarea. Se cierra con un *permissions boundary* si hiciera
+falta; la máquina ya tiene `default` con acceso total, así que no cambia el riesgo de hoy.
+
+Las access keys no vencen. Mientras no se despliega se pueden desactivar (usuario → *Security
+credentials* → *Deactivate*) y reactivar al retomar.
+
 ## Configuración del backend
 
 En `backend/.env` (no se commitea):
@@ -140,8 +171,9 @@ CONTACT_MAIL_TO=contacto@example.com
 ## Permisos de IAM del backend
 
 En desarrollo el backend corre con el perfil `nureon` (usuario de IAM `nureon-dev`), que ya tiene
-permisos de Cognito más amplios que estos: no se creó ninguna política nueva. Cuando el backend
-corra con su propio rol (Feature 8, despliegue), ese rol lleva sólo esto:
+permisos de Cognito más amplios que estos: no se creó ninguna política nueva. En producción corre con
+el rol de tarea `nureon-ecs-task`, que crea `backend/infra/05-roles.ps1` con esto y nada más, más el
+permiso de SES de la sección 3 sobre la misma identidad:
 
 ```json
 {
