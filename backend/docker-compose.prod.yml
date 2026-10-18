@@ -1,0 +1,60 @@
+# The production image against a local Postgres, to try the container before pushing it.
+#
+#     docker compose -f backend/docker-compose.prod.yml up -d --build
+#     docker compose -f backend/docker-compose.prod.yml run --rm api alembic upgrade head
+#     docker compose -f backend/docker-compose.prod.yml run --rm api python scripts/import_question_bank.py --csv "bank/NureonAI Prototype v4.1.2.csv" --version 1 --dry-run
+#     curl http://127.0.0.1:8000/api/health/ready
+#     docker compose -f backend/docker-compose.prod.yml down -v
+#
+# APP_ENV=production, so the app reads only what is set here, never backend/.env. There are no AWS
+# credentials in the container: health and the database work; anything that calls Cognito or SES
+# fails, as it should. The passwords are for this throwaway local database only.
+
+name: nureon-prod-local
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: nureon
+      POSTGRES_PASSWORD: ${LOCAL_DB_PASSWORD:-local-only}
+      POSTGRES_DB: nureon
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nureon"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+      args:
+        GIT_REF: ${GIT_REF:-local}
+    image: nureon-api:local
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      APP_ENV: production
+      SECRET_KEY: ${LOCAL_SECRET_KEY:-local-only}
+      # The database by parts, as in AWS, where ECS injects DB_USER and DB_PASSWORD from the RDS secret.
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: nureon
+      DB_USER: nureon
+      DB_PASSWORD: ${LOCAL_DB_PASSWORD:-local-only}
+      DB_SSLMODE: disable
+      CORS_ALLOWED_ORIGINS: http://localhost:4200
+      CLASSIFIER_BACKEND: stub
+      IDENTITY_PROVIDER: cognito
+      COGNITO_REGION: us-east-2
+      COGNITO_USER_POOL_ID: us-east-2_ZllTXy0w0
+      COGNITO_APP_CLIENT_ID: 216kporbavdvjbtthon6p28vel
+      MAIL_SENDER: ses
+      SES_REGION: us-east-2
+      CONTACT_MAIL_TO: contacto@example.invalid
+      # No balancer in front locally: the connecting address is the visitor's.
+      TRUSTED_PROXY_HOPS: "0"
