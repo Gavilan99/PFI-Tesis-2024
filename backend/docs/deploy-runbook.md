@@ -56,16 +56,21 @@ En orden. Antes de cada paso que crea algo, mirar su costo (está en la cabecera
 | 5 | `05-roles.ps1` | Roles de ejecución, de tarea y de infraestructura | seg. |
 | 6 | `06-cluster.ps1` | Cluster `nureon` y log group | seg. |
 | 7 | `07-frontend-infra.ps1` | Bucket, OAC, distribución. Imprime el dominio del frontend | ~5 min |
-| 8 | `08-image.ps1 -Ref <tag o commit>` | Build desde `git archive` y push. Imprime el tag de la imagen | ~5 min |
-| 9 | `09-service.ps1 -ImageTag <tag>` | Crea el servicio; abre 5432 en la base al security group del servicio. Imprime la URL de la API | ~10 min |
+| 8 | `08-image.ps1 -Ref <tag o commit> -Models <carpeta>` | Build desde `git archive`, con los artefactos **reales** de los modelos, y push. Imprime el tag de la imagen | ~5 min |
+| 9 | `09-service.ps1 -ImageTag <tag> -Classifier trained` | Crea el servicio; abre 5432 en la base al security group del servicio. Imprime la URL de la API | ~10 min |
 | 10 | `10-task.ps1 -Job migrate` | `alembic upgrade head` | 2 min |
 | 10 | `10-task.ps1 -Job bank-dry-run` | El banco v4.1.2 de la imagen, simulado: tiene que decir 145 preguntas, 533 opciones | 2 min |
 | 10 | `10-task.ps1 -Job bank-load` | El mismo, como versión 1 activa | 2 min |
 | 11 | `11-frontend-deploy.ps1 -Ref <tag o commit>` | Build del frontend con `apiBaseUrl` = URL de la API, subida e invalidación | ~5 min |
 | 12 | `12-smoke.ps1` | Humo de punta a punta. **Anotar el id de la cuenta abajo** | 1 min |
 
+**La imagen siempre lleva los artefactos reales** (desde la Feature 9): el plan de cortes 40/90/145
+sale de su `manifest.json`, y sin él la app no arranca, tampoco con el stub. Con artefactos sintéticos
+(`scripts/make_dev_artifacts.py`) la app se niega a arrancar en producción.
+
 **El banco se carga antes de que nadie cree un intento**, ni siquiera el humo: una sola respuesta
-congela la versión. **En producción nunca se corre `seed_filler_bank.py`**: no hay tarea para eso y el
+congela la versión. Todos los códigos del manifest (`Q001`…`Q145`) tienen que existir como preguntas
+activas de la versión cargada; si falta alguno, crear un intento responde 503. **En producción nunca se corre `seed_filler_bank.py`**: no hay tarea para eso y el
 script ni siquiera está en la imagen.
 
 En la primera vuelta (Feature 8) la imagen sale de la rama `feature/be-08-deploy`. Después del release
@@ -76,8 +81,8 @@ En la primera vuelta (Feature 8) la imagen sale de la rama `feature/be-08-deploy
 A producción va sólo lo que está en `main`, desde un tag `vX.Y.Z`.
 
 ```powershell
-powershell -File backend\infra\08-image.ps1 -Ref v1.0.1          # imprime el tag: v1.0.1
-powershell -File backend\infra\09-service.ps1 -ImageTag v1.0.1   # despliegue canario
+powershell -File backend\infra\08-image.ps1 -Ref v1.0.1 -Models C:\ruta\a\artifacts   # tag: v1.0.1-models-<hash>
+powershell -File backend\infra\09-service.ps1 -ImageTag v1.0.1-models-<hash> -Classifier trained   # canario
 powershell -File backend\infra\10-task.ps1 -Job migrate          # sólo si la versión trae migraciones
 powershell -File backend\infra\11-frontend-deploy.ps1 -Ref v1.0.1
 powershell -File backend\infra\logs.ps1 -Minutes 15 -Scan
@@ -91,20 +96,28 @@ Qué corre siempre se sabe: el tag de la imagen es el tag de git (o `sha-<commit
 
 ### Con los modelos entrenados
 
-Los artefactos no están versionados: los escribe `app/ml/training/train.py` en otra máquina.
+Los artefactos no están versionados: los escribe `app/ml/training/train.py` en otra máquina, sobre los
+datos privados del piloto (`cut_040/`, `cut_090/`, `cut_145/`, `manifest.json`,
+`precision_by_items.json`). **La imagen se construye con esos artefactos reales y el servicio corre con
+`CLASSIFIER_BACKEND=trained`:**
 
 ```powershell
 powershell -File backend\infra\08-image.ps1 -Ref v1.1.0 -Models C:\ruta\a\artifacts   # tag: v1.1.0-models-<hash>
 powershell -File backend\infra\09-service.ps1 -ImageTag v1.1.0-models-<hash> -Classifier trained
 ```
 
-Antes, probarlo local con el compose de producción (`CLASSIFIER_BACKEND: trained` y los artefactos en
-`backend/app/ml/artifacts/`). Hoy el backend `trained` se niega a arrancar aunque haya artefactos,
-hasta que esté definida la codificación respuestas → features. Si arranca mal en AWS, el ALB no lo da
-por sano, el despliegue canario no pasa el tráfico y la versión anterior sigue sirviendo. Para volver
-al stub: `09-service.ps1 -ImageTag <el mismo> -Classifier stub`.
+- **La app no arranca con artefactos sintéticos en producción** (`model_version` que empieza con
+  `synthetic-`, los de `scripts/make_dev_artifacts.py`), con ningún clasificador.
+- Tampoco arranca si el manifest no tiene los cortes 40/90/145 anidados, si falta alguno de los doce
+  `.joblib`, o si scikit-learn o numpy de la imagen no son las versiones con que se entrenó (el
+  manifest las guarda; `requirements.txt` fija scikit-learn).
+- Antes, probarlo local con el compose de producción (`CLASSIFIER_BACKEND: trained` y los artefactos
+  reales en `backend/app/ml/artifacts/`).
+- Si arranca mal en AWS, el ALB no lo da por sano, el despliegue canario no pasa el tráfico y la
+  versión anterior sigue sirviendo. Para volver al stub con la misma imagen (el stub sirve por el mismo
+  plan de cortes): `09-service.ps1 -ImageTag <el mismo> -Classifier stub`.
 
-## Migraciones y carga del banco
+## Migraciones, carga del banco y altas manuales
 
 Son tareas sueltas (`run-task`) con la imagen y la task definition del servicio, en sus subnets y con
 su security group; nunca corren al arrancar la app. `10-task.ps1` espera a que la tarea termine,
@@ -115,6 +128,16 @@ imprime su log y falla si salió con un código distinto de 0.
   (`bank/NureonAI Prototype v4.1.2.csv`). Una versión con respuestas no se modifica más: un banco
   cambiado entra como versión nueva, con `-BankVersion 2`, otra imagen que traiga ese CSV, y
   `--activate` desactiva las demás.
+- `-Job grant-subscription -Email <email> -Days <N>`: `scripts/grant_subscription.py`. **Alta manual de
+  una suscripción, sin pago asociado**, para las cuentas de las pruebas de usuario mientras no exista
+  la Feature 6 (Mercado Pago): da el tier pago (cortes 2 y 3) durante N días (1 a 366). Escribe una fila
+  de `subscriptions` `individual`, `active`, con `mercadopago_subscription_id` en NULL y sin fila en
+  `payments`. La cuenta tiene que existir (registrada desde el frontend). El log nombra la cuenta por
+  su `users.id`, nunca por el email; el email sí queda en el override de la tarea (ECS, CloudTrail).
+
+  ```powershell
+  powershell -File backend\infra\10-task.ps1 -Job grant-subscription -Email persona@ejemplo.com -Days 30
+  ```
 
 ## Volver atrás
 

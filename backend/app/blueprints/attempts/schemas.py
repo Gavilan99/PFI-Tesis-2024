@@ -1,5 +1,5 @@
 """The attempt contract of the frontend, field by field: `TestAttempt`, `Question`, `AnswerOption`,
-`TestResponse` and `NewResponseInput`.
+`TestResponse`, `NewResponseInput` and `CutStatus` (Feature 9).
 
 `QuestionOut` and `AnswerOptionOut` are the instrument's exposed surface. `grouping_system`,
 `group_label`, version and activity flags are not in them and must never be added: see "Lo que nunca
@@ -29,6 +29,10 @@ class CreateAttemptIn(ApiModel):
                 raise TierNotAccepted()
             data = {key: value for key, value in data.items() if key != "userId"}
         return data
+
+
+class ContinueAttemptIn(ApiModel):
+    """Continuing carries nothing: no body, or an empty object. The next cut is the server's to know."""
 
 
 class NewResponseIn(ApiModel):
@@ -78,3 +82,18 @@ class TestResponseOut(ApiOutput):
     free_text_response: str | None
     ordering_response: Any | None
     answered_at: datetime
+
+
+class CutStatusOut(ApiOutput):
+    """`CutStatus` (cut-status.model.ts). The accuracies are the estimated eneatype accuracy of each cut,
+    the number the product shows; no model version, margin or probability is part of it."""
+
+    current_cut: int
+    cut_count: int
+    served_items: int
+    answered_items: int
+    next_cut_items: int | None
+    can_continue: bool
+    current_cut_accuracy: float
+    next_cut_accuracy: float | None
+    continued_by_attempt_id: uuid.UUID | None

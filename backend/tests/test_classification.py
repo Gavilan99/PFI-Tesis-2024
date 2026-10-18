@@ -189,27 +189,7 @@ def test_legacy_tree_is_deterministic(legacy):
         assert legacy.classify(answers) == legacy.classify(rng.sample(answers, len(answers)))
 
 
-# --- trained ------------------------------------------------------------------------------------
-
-
-def test_starting_with_trained_and_no_artifacts_fails_and_says_so(monkeypatch, tmp_path):
-    monkeypatch.setenv("CLASSIFIER_BACKEND", "trained")
-    monkeypatch.setenv("CLASSIFIER_ARTIFACTS_DIR", str(tmp_path))
-    with pytest.raises(ConfigError) as error:
-        create_app("test")
-    message = str(error.value)
-    assert "CLASSIFIER_BACKEND=trained" in message
-    assert "intelligence_centers.joblib" in message
-    assert "no se usa el stub" in message
-
-
-def test_trained_does_not_start_even_with_artifacts_until_features_are_defined(monkeypatch, tmp_path):
-    for system in TAXONOMIES:
-        (tmp_path / f"{system}.joblib").write_bytes(b"")
-    monkeypatch.setenv("CLASSIFIER_BACKEND", "trained")
-    monkeypatch.setenv("CLASSIFIER_ARTIFACTS_DIR", str(tmp_path))
-    with pytest.raises(ConfigError, match="codificación"):
-        create_app("test")
+# --- trained: tests/test_cut_plan.py (startup) and tests/test_trained.py (classifying) -------------
 
 
 # --- the registry -------------------------------------------------------------------------------

@@ -1,14 +1,15 @@
 from flask import Blueprint, current_app, jsonify, request
 
 from app.blueprints.attempts.schemas import (
+    ContinueAttemptIn,
     CreateAttemptIn,
+    CutStatusOut,
     NewResponseIn,
     QuestionOut,
     TestAttemptOut,
     TestResponseOut,
 )
 from app.blueprints.schemas import parse_body
-from app.db.models.enums import AttemptTier
 from app.security import current_user
 from app.services import attempts
 
@@ -23,11 +24,7 @@ def _attempt(attempt):
 def create_attempt():
     # No body is the normal case; a body that is there must be valid JSON and pass the schema.
     parse_body(CreateAttemptIn, request.get_json(silent=True) if request.get_data() else {})
-    subset_sizes = {
-        AttemptTier.FREE_REDUCED: current_app.config["SUBSET_SIZE_FREE_REDUCED"],
-        AttemptTier.PAID_FULL: current_app.config["SUBSET_SIZE_PAID_FULL"],
-    }
-    attempt = attempts.create_attempt(current_user(), subset_sizes)
+    attempt = attempts.create_attempt(current_user(), current_app.extensions["cut_plan"])
     return jsonify(_attempt(attempt)), 201
 
 
@@ -70,6 +67,21 @@ def submit_response(attempt_id):
 def get_responses(attempt_id):
     responses = attempts.answered_responses(current_user(), attempt_id)
     return jsonify([TestResponseOut.model_validate(r).to_json() for r in responses])
+
+
+@bp.post("/<uuid:attempt_id>/continue")
+def continue_attempt(attempt_id):
+    """Serve the next cut. 200 with the same attempt when it was in progress; 201 with the new,
+    linked attempt when it was closed. Either way, the attempt the test goes on in."""
+    parse_body(ContinueAttemptIn, request.get_json(silent=True) if request.get_data() else {})
+    attempt, created = attempts.continue_attempt(current_user(), attempt_id, current_app.extensions["cut_plan"])
+    return jsonify(_attempt(attempt)), 201 if created else 200
+
+
+@bp.get("/<uuid:attempt_id>/cut")
+def cut_status(attempt_id):
+    state = attempts.cut_state(current_user(), attempt_id, current_app.extensions["cut_plan"])
+    return jsonify(CutStatusOut.model_validate(state).to_json())
 
 
 @bp.post("/<uuid:attempt_id>/complete")

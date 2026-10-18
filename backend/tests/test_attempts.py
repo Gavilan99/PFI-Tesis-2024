@@ -1,16 +1,16 @@
 """Attempts end to end (RF03, RF08, CU003): create, serve, answer, resume, complete, read.
 
-Everything runs against the filler bank, version 0.
+Everything runs against the filler bank, version 0, served by the session's synthetic cut plan:
+the plan's codes are resolved by `questions.display_order`, which the filler numbers 1 to 200 too.
+Continuing to the next cut is in tests/test_cuts.py.
 """
 
 import uuid
-from collections import Counter
 
 import pytest
 from sqlalchemy import event, select, update
 
 from app.db.models import Question, Response, TestAttempt
-from app.db.models.enums import AttemptTier
 from app.services import attempts as attempts_service
 from app.services.question_bank import load_bank
 from scripts.seed_filler_bank import build_filler_bank
@@ -24,6 +24,8 @@ from tests.attempt_helpers import (
     start,
 )
 from tests.auth_helpers import assert_error, registered
+from tests.cut_helpers import give_paid_tier
+from tests.log_helpers import captured_logs  # noqa: F401  (fixture)
 
 
 @pytest.fixture()
@@ -40,15 +42,6 @@ def _served_rows(db_session, attempt_id) -> list[Response]:
             .order_by(Response.display_order)
         )
     )
-
-
-def _systems(db_session, attempt_id) -> tuple[Counter, set[int]]:
-    rows = db_session.execute(
-        select(Question.grouping_system, Question.version)
-        .join(Response, Response.question_id == Question.id)
-        .where(Response.test_attempt_id == uuid.UUID(attempt_id))
-    ).all()
-    return Counter(system.value for system, _ in rows), {version for _, version in rows}
 
 
 # --- create -------------------------------------------------------------------------------------
@@ -95,43 +88,53 @@ def test_create_requires_authentication(api, question_bank):
     assert_error(api.post("/api/attempts"), 401, "UNAUTHORIZED")
 
 
-def test_free_reduced_serves_20_questions_5_per_system(api, person, db_session):
+def _bank_numbers(db_session, attempt_id) -> list[int]:
+    """The bank number (`questions.display_order`) of each served item, in serving order."""
+    return list(
+        db_session.scalars(
+            select(Question.display_order)
+            .join(Response, Response.question_id == Question.id)
+            .where(Response.test_attempt_id == uuid.UUID(attempt_id))
+            .order_by(Response.display_order)
+        )
+    )
+
+
+def _versions(db_session, attempt_id) -> set[int]:
+    return set(
+        db_session.scalars(
+            select(Question.version)
+            .join(Response, Response.question_id == Question.id)
+            .where(Response.test_attempt_id == uuid.UUID(attempt_id))
+        )
+    )
+
+
+def test_create_serves_cut_1_the_40_items_of_the_plan_in_its_order(api, app, person, db_session):
     _, headers = person
     attempt = start(api, headers)
-    assert len(questions(api, headers, attempt["id"])) == 20
-    systems, versions = _systems(db_session, attempt["id"])
-    assert systems == {
-        "intelligence_centers": 5, "hornevian": 5, "harmonic": 5, "object_relations": 5,
-    }
-    assert versions == {0}
+    first = app.extensions["cut_plan"].cuts[0]
+    assert len(questions(api, headers, attempt["id"])) == 40
+    assert _bank_numbers(db_session, attempt["id"]) == list(first.new_item_orders)
+    assert _versions(db_session, attempt["id"]) == {0}
 
 
-def test_paid_full_serves_60_questions_15_per_system(api, person, db_session, monkeypatch):
-    monkeypatch.setattr(attempts_service, "resolve_attempt_tier", lambda user: AttemptTier.PAID_FULL)
+def test_everyone_gets_the_same_items_in_the_same_order(api, person):
     _, headers = person
-    attempt = start(api, headers)
-    assert attempt["tier"] == "paid_full"
-    assert len(questions(api, headers, attempt["id"])) == 60
-    systems, _ = _systems(db_session, attempt["id"])
-    assert systems == {
-        "intelligence_centers": 15, "hornevian": 15, "harmonic": 15, "object_relations": 15,
-    }
+    other_headers = registered(api)[1]
+    mine = questions(api, headers, start(api, headers)["id"])
+    theirs = questions(api, other_headers, start(api, other_headers)["id"])
+    assert [q["id"] for q in mine] == [q["id"] for q in theirs]
+    assert [[o["id"] for o in q["answerOptions"]] for q in mine] == [
+        [o["id"] for o in q["answerOptions"]] for q in theirs
+    ]
 
 
-def test_the_subset_size_comes_from_configuration(api, app, person, db_session, monkeypatch):
-    monkeypatch.setitem(app.config, "SUBSET_SIZE_FREE_REDUCED", 8)
-    _, headers = person
-    attempt = start(api, headers)
-    assert len(questions(api, headers, attempt["id"])) == 8
-    systems, _ = _systems(db_session, attempt["id"])
-    assert set(systems.values()) == {2}
-
-
-def test_the_subset_is_stored_as_unanswered_rows_in_serving_order(api, person, db_session):
+def test_cut_1_is_stored_as_unanswered_rows_in_serving_order(api, person, db_session):
     _, headers = person
     attempt = start(api, headers)
     rows = _served_rows(db_session, attempt["id"])
-    assert [row.display_order for row in rows] == list(range(1, 21))
+    assert [row.display_order for row in rows] == list(range(1, 41))
     assert all(row.selected_option_id is None and row.answered_at is None for row in rows)
     served = questions(api, headers, attempt["id"])
     assert [q["id"] for q in served] == [str(row.question_id) for row in rows]
@@ -155,19 +158,29 @@ def test_the_current_version_is_the_highest_active_and_versions_never_mix(api, p
     _, headers = person
     attempt = start(api, headers)
     assert attempt["questionnaireVersion"] == 1
-    _, versions = _systems(db_session, attempt["id"])
-    assert versions == {1}
+    assert _versions(db_session, attempt["id"]) == {1}
 
 
-def test_inactive_questions_are_never_served(api, person, db_session):
-    inactive = db_session.scalars(select(Question.id).where(Question.version == 0).limit(100)).all()
-    db_session.execute(update(Question).where(Question.id.in_(inactive)).values(is_active=False))
+def _deactivate(db_session, number: int, version: int = 0) -> None:
+    db_session.execute(
+        update(Question)
+        .where(Question.version == version, Question.display_order == number)
+        .values(is_active=False)
+    )
+    db_session.commit()
+
+
+def test_inactive_questions_outside_the_plan_change_nothing(api, app, person, db_session):
+    plan = app.extensions["cut_plan"]
+    planned = set(plan.cuts[-1].model_items)
+    outside = [n for n in range(1, 201) if f"Q{n:03d}" not in planned]
+    db_session.execute(
+        update(Question).where(Question.version == 0, Question.display_order.in_(outside)).values(is_active=False)
+    )
     db_session.commit()
     _, headers = person
-    for _ in range(5):
-        attempt = start(api, headers)
-        served = {uuid.UUID(q["id"]) for q in questions(api, headers, attempt["id"])}
-        assert not served & set(inactive)
+    attempt = start(api, headers)
+    assert _bank_numbers(db_session, attempt["id"]) == list(plan.cuts[0].new_item_orders)
 
 
 def test_no_active_version_is_503(api, db_session, identity):
@@ -175,20 +188,21 @@ def test_no_active_version_is_503(api, db_session, identity):
     assert_error(api.post("/api/attempts", headers=headers), 503, "QUESTIONNAIRE_UNAVAILABLE")
 
 
-def test_a_system_too_small_for_the_subset_is_503_and_creates_nothing(
-    api, app, person, db_session, monkeypatch
+def test_an_item_of_the_plan_missing_from_the_active_version_is_503_and_creates_nothing(
+    api, app, person, db_session, captured_logs
 ):
-    monkeypatch.setitem(app.config, "SUBSET_SIZE_PAID_FULL", 204)  # 51 per system; the filler has 50
-    monkeypatch.setattr(attempts_service, "resolve_attempt_tier", lambda user: AttemptTier.PAID_FULL)
+    code = app.extensions["cut_plan"].cuts[0].serve_new_items[7]
+    _deactivate(db_session, int(code[1:]))
     _, headers = person
     assert_error(api.post("/api/attempts", headers=headers), 503, "QUESTIONNAIRE_UNAVAILABLE")
     assert db_session.scalar(select(TestAttempt.id)) is None
+    assert any(code in line for line in captured_logs)
 
 
-def test_a_failed_create_leaves_the_attempt_in_progress_alone(api, person, app, db_session, monkeypatch):
+def test_a_failed_create_leaves_the_attempt_in_progress_alone(api, person, app, db_session):
     _, headers = person
     attempt = start(api, headers)
-    monkeypatch.setitem(app.config, "SUBSET_SIZE_FREE_REDUCED", 204)
+    _deactivate(db_session, app.extensions["cut_plan"].cuts[0].new_item_orders[0])
     assert_error(api.post("/api/attempts", headers=headers), 503, "QUESTIONNAIRE_UNAVAILABLE")
     assert api.get(f"/api/attempts/{attempt['id']}", headers=headers).get_json()["status"] == "in_progress"
 
@@ -263,7 +277,7 @@ def test_answering_again_replaces_the_previous_answer(api, person, db_session):
     responses = api.get(f"/api/attempts/{attempt['id']}/responses", headers=headers).get_json()
     assert len(responses) == 1
     assert responses[0]["selectedOptionId"] == question["answerOptions"][2]["id"]
-    assert len(_served_rows(db_session, attempt["id"])) == 20
+    assert len(_served_rows(db_session, attempt["id"])) == 40
 
 
 def test_only_answered_items_are_listed(api, person):
@@ -363,7 +377,7 @@ def test_completing_an_incomplete_attempt_is_409_and_changes_nothing(api, person
         "Quedan preguntas sin responder: el test no se puede cerrar todavía.",
     )
     assert api.get(f"/api/attempts/{attempt['id']}", headers=headers).get_json() == before
-    assert len(api.get(f"/api/attempts/{attempt['id']}/responses", headers=headers).get_json()) == 19
+    assert len(api.get(f"/api/attempts/{attempt['id']}/responses", headers=headers).get_json()) == 39
 
 
 def test_completing_twice_returns_the_same_and_duplicates_nothing(api, person, db_session):
@@ -378,7 +392,7 @@ def test_completing_twice_returns_the_same_and_duplicates_nothing(api, person, d
     assert first.get_json()["status"] == "completed"
     assert first.get_json()["completedAt"]
     assert len(db_session.scalars(select(TestAttempt.id)).all()) == 1
-    assert len(_served_rows(db_session, attempt["id"])) == 20
+    assert len(_served_rows(db_session, attempt["id"])) == 40
 
 
 def test_the_completion_hook_runs_once(api, person, monkeypatch):
@@ -449,6 +463,8 @@ def test_get_attempt_that_does_not_exist_is_404(api, person):
         ("get", "/api/attempts/{id}/responses"),
         ("post", "/api/attempts/{id}/responses"),
         ("post", "/api/attempts/{id}/complete"),
+        ("post", "/api/attempts/{id}/continue"),
+        ("get", "/api/attempts/{id}/cut"),
     ],
 )
 def test_every_endpoint_requires_authentication(api, question_bank, method, path):
@@ -471,15 +487,19 @@ def _count_queries(app, call) -> list[str]:
     return statements
 
 
-def test_serving_the_subset_takes_the_same_few_queries_whatever_its_size(api, app, person, monkeypatch):
-    """Authentication, ownership, the items, their options: four queries for 20 items or for 60."""
-    _, headers = person
-    small = start(api, headers)
-    monkeypatch.setattr(attempts_service, "resolve_attempt_tier", lambda user: AttemptTier.PAID_FULL)
+def test_serving_takes_the_same_few_queries_whatever_the_cut(api, app, person, db_session):
+    """Authentication, ownership, the items, their options: four queries for 40 items or for 90."""
+    user, headers = person
+    small = start(api, headers)  # abandoned by the next start, and still readable
     large = start(api, headers)
+    answer_all(api, headers, large["id"], questions(api, headers, large["id"]))
+    give_paid_tier(db_session, user["id"])
+    assert api.post(f"/api/attempts/{large['id']}/continue", headers=headers).status_code == 200
 
     counts = []
-    for attempt in (small, large):
-        statements = _count_queries(app, lambda: questions(api, headers, attempt["id"]))
+    for attempt, size in ((small, 40), (large, 90)):
+        served = []
+        statements = _count_queries(app, lambda: served.extend(questions(api, headers, attempt["id"])))
+        assert len(served) == size
         counts.append(len([s for s in statements if s.lstrip().upper().startswith("SELECT")]))
     assert counts == [4, 4]

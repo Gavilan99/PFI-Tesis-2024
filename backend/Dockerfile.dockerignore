@@ -18,3 +18,6 @@
 backend/app/**/tests
 # The filler (version 0) is never loaded in production: it is not even in the image.
 backend/scripts/seed_filler_bank.py
+# Neither are the synthetic artifacts and respondents: production refuses synthetic models anyway.
+backend/scripts/make_dev_artifacts.py
+backend/scripts/synthetic_pilot.py

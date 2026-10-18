@@ -14,6 +14,11 @@ def get_live_by_sub(session: Session, sub: str, *, for_update: bool = False) -> 
     return session.scalar(query)
 
 
+def get_live_by_email(session: Session, email: str) -> User | None:
+    """`email` must already be normalized, as in `live_email_exists`."""
+    return session.scalar(select(User).where(User.email == email, User.is_deleted.is_(False)))
+
+
 def live_email_exists(session: Session, email: str) -> bool:
     """`email` must already be normalized: the unique index compares `lower(email)`."""
     return session.scalar(

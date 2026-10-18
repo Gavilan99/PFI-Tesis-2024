@@ -14,9 +14,10 @@ from tests.db_helpers import bound_session
 
 
 @contextmanager
-def app_with_backend(main_app, monkeypatch, backend: str):
+def app_with_backend(main_app, monkeypatch, backend: str, *, real_bank: bool = False):
     """A second app built with `CLASSIFIER_BACKEND=backend`, exactly as a deployment would build it,
-    with its own rolled-back session and the filler bank loaded.
+    with its own rolled-back session and the filler bank loaded (or bank v4.1.2 with `real_bank`, which
+    is what the trained models were trained on).
 
     Building an app points the shared session factory at its engine, so a test using this must not
     also use `db_session`/`api` of the main app. The main app's engine is restored afterwards.
@@ -25,8 +26,13 @@ def app_with_backend(main_app, monkeypatch, backend: str):
     other = create_app("test")
     try:
         with bound_session(other) as session:
-            load_bank(session, build_filler_bank(), version=FILLER_VERSION, activate=True)
-            session.commit()
+            if real_bank:
+                from tests.cut_helpers import load_real_bank
+
+                load_real_bank(session)
+            else:
+                load_bank(session, build_filler_bank(), version=FILLER_VERSION, activate=True)
+                session.commit()
             yield other, session
     finally:
         session_factory.configure(bind=main_app.extensions["sqlalchemy_engine"])
@@ -42,6 +48,7 @@ def scenario(system: str, group: str) -> Answer:
         group_label=group,
         option_position=1,
         option_count=3,
+        question_order=1,
     )
 
 
@@ -54,6 +61,7 @@ def likert(system: str, group: str, position: int) -> Answer:
         group_label=group,
         option_position=position,
         option_count=5,
+        question_order=1,
     )
 
 

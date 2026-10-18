@@ -14,7 +14,9 @@ mensaje genérico en español.
 **Verificado automáticamente** (`tests/test_contract.py`): para cada una de las catorce rutas de la
 tabla de abajo, el conjunto de claves de la respuesta es *igual* al de la interfaz TypeScript con la
 que el frontend la lee. Las claves esperadas no están copiadas en el test: se leen de los `.ts` del
-frontend, así que un campo agregado o sacado de cualquiera de los dos lados lo rompe.
+frontend, así que un campo agregado o sacado de cualquiera de los dos lados lo rompe. Lo mismo para
+las dos rutas de los cortes (Feature 9), que todavía no tienen método en `ApiService`: ver
+[Feature 9](#feature-9-cortes-fijos).
 
 ## Las catorce rutas y `HttpApiService`
 
@@ -181,11 +183,12 @@ Un `{id}` que no es un UUID responde `404 NOT_FOUND`.
 
 ### `POST /api/attempts` — `createTestAttempt(userId)`
 
-Sin cuerpo. Si viene uno, sólo puede traer `userId`, que se ignora. El tier lo decide el servidor
-(hoy siempre `free_reduced`; la Feature 6 lo resuelve por suscripción). Si el usuario tenía un intento
-`in_progress`, pasa a `abandoned` en la misma transacción. Se usa la versión más alta con preguntas
-activas, y el subset queda fijado: `SUBSET_SIZE_FREE_REDUCED` (20) o `SUBSET_SIZE_PAID_FULL` (60)
-preguntas, la misma cantidad de cada sistema de agrupamiento, mezcladas. `201` con el `TestAttempt`.
+Sin cuerpo. Si viene uno, sólo puede traer `userId`, que se ignora. El tier lo decide el servidor:
+un intento nuevo es siempre `free_reduced`, también para quien paga, y pasa a `paid_full` al seguir al
+corte 2 (Feature 9). Si el usuario tenía un intento `in_progress`, pasa a `abandoned` en la misma
+transacción. Se usa la versión más alta con preguntas activas, y se sirve **el corte 1**: los 40 ítems
+del plan de cortes, los mismos para todos y en el mismo orden (`serve_new_items` del manifest de los
+modelos), guardados como filas sin responder con `displayOrder` de 1 a 40. `201` con el `TestAttempt`.
 
 | Status | `code` | `message` |
 |---|---|---|
@@ -193,12 +196,14 @@ preguntas, la misma cantidad de cada sistema de agrupamiento, mezcladas. `201` c
 | 400 | `VALIDATION_ERROR` | Los datos enviados no son válidos. |
 | 503 | `QUESTIONNAIRE_UNAVAILABLE` | El cuestionario no está disponible en este momento. Probá de nuevo más tarde. |
 
-El 503 es un problema de carga del banco (no hay versión activa, o algún sistema no alcanza para el
-subset), no del usuario: queda en el log como error. No se crea ni se abandona nada.
+El 503 es un problema de carga del banco (no hay versión activa, o le falta algún ítem del plan de
+cortes: cada código `Q007` se busca por `questions.display_order` = 7 entre las preguntas activas), no
+del usuario: queda en el log como error, con los códigos que faltan. No se crea ni se abandona nada.
 
 ### `GET /api/attempts/{id}/questions` — `getQuestions(attemptId)`
 
-`200` con **el subset entero**, en el orden del intento. Recargar devuelve lo mismo.
+`200` con **todo lo servido hasta ahora** (40, 90 o 145 ítems), en el orden del intento. Recargar
+devuelve lo mismo.
 
 ```json
 [
@@ -215,9 +220,9 @@ subset), no del usuario: queda en el log como error. No se crea ni se abandona n
 ```
 
 Nada más. `displayOrder` es la posición servida, no la del banco: de 1 a N para las preguntas y de 1
-a k para las opciones. Las opciones de los ítems `scenario` salen mezcladas por intento (y siempre en
-el mismo orden para ese intento); las de los Likert (`multiple_choice`), en el orden del banco, que
-es la escala. `grouping_system` y `group_label` no salen nunca.
+a k para las opciones. Desde la Feature 9 **todas las opciones salen en el orden del banco**, también
+las de escenario: es el orden que vio el piloto con el que se entrenaron los modelos. El orden servido
+se sigue guardando en `responses.option_order`. `grouping_system` y `group_label` no salen nunca.
 
 ### `POST /api/attempts/{id}/responses` — `submitResponse(attemptId, response)`
 
@@ -256,9 +261,10 @@ responder no aparecen.
 
 ### `POST /api/attempts/{id}/complete` — `completeTestAttempt(attemptId)`
 
-Cierra el intento y calcula su resultado, en la misma transacción (Feature 4.1). `200` con el
-`TestAttempt` en `completed`. Llamarlo otra vez devuelve lo mismo y no cambia nada: no vuelve a
-clasificar ni pisa el resultado.
+Cierra el intento y calcula su resultado, en la misma transacción (Feature 4.1). Sólo con todo lo
+servido respondido; cierra en el corte en que esté, y el resultado sale de los modelos de ese corte.
+`200` con el `TestAttempt` en `completed`. Llamarlo otra vez devuelve lo mismo y no cambia nada: no
+vuelve a clasificar ni pisa el resultado.
 
 | Status | `code` | `message` |
 |---|---|---|
@@ -312,6 +318,69 @@ es ajeno, está `in_progress` o `abandoned`) responde lo mismo:
 | 404 | `RESULT_NOT_FOUND` | El resultado no existe. |
 
 Un `{id}` que no es un UUID responde `404 NOT_FOUND`.
+
+## Feature 9: cortes fijos
+
+El test se sirve en tres cortes fijos y anidados de **40, 90 y 145 ítems** (bloques de 40 + 50 + 55).
+Después de cada corte la persona ve la precisión estimada del corte que terminó y la del siguiente, y
+elige entre ver su resultado o seguir. El corte 1 es el nivel gratuito; el 2 y el 3 requieren tier
+pago (una suscripción `active` con `current_period_end` vacío o futuro). Estas dos rutas todavía no
+tienen método en `ApiService` (Feature 10); sus formas sí están en el frontend.
+
+### `POST /api/attempts/{id}/continue`
+
+Sin cuerpo (o `{}`). Sirve el corte siguiente y responde con **el intento en el que sigue el test**:
+
+- **Intento en curso** con su corte entero respondido: se le agregan las filas del corte siguiente,
+  con `displayOrder` a continuación (41–90 o 91–145). `200` con el mismo `TestAttempt`; si el corte
+  siguiente es pago, el intento pasa a `paid_full`.
+- **Intento cerrado:** no se reabre ni se pisa su resultado. Se crea un intento nuevo enlazado al
+  anterior, con sus respuestas copiadas (misma pregunta, opción, orden de opciones, `displayOrder` y
+  `answeredAt`) y las filas del corte siguiente sin responder. `201` con el `TestAttempt` nuevo, en
+  `in_progress` y `paid_full`. Sólo desde el último intento cerrado de la persona, una sola vez, y si
+  su versión del cuestionario sigue activa. Si había otro intento en curso, pasa a `abandoned`.
+
+| Status | `code` | `message` |
+|---|---|---|
+| 402 | `PAID_TIER_REQUIRED` | Para seguir con más preguntas necesitás una suscripción activa. |
+| 409 | `CUT_INCOMPLETE` | Quedan preguntas sin responder: respondelas antes de seguir. |
+| 409 | `LAST_CUT_REACHED` | Ya respondiste el test completo: no quedan preguntas para seguir. |
+| 409 | `ATTEMPT_ALREADY_CONTINUED` | Este test ya se siguió en otro intento. |
+| 409 | `ATTEMPT_NOT_CONTINUABLE` | Este intento ya no se puede seguir. Podés empezar un test nuevo. |
+| 400 | `VALIDATION_ERROR` | Los datos enviados no son válidos. (Un cuerpo con campos.) |
+| 503 | `QUESTIONNAIRE_UNAVAILABLE` | El cuestionario no está disponible en este momento. Probá de nuevo más tarde. |
+
+Los 409 se evalúan antes que el 402: el pago sólo importa si lo demás permite seguir.
+`ATTEMPT_NOT_CONTINUABLE` cubre un intento `abandoned`, un cerrado que no es el último cerrado de la
+persona, y uno cuya versión del cuestionario ya no está activa.
+
+### `GET /api/attempts/{id}/cut`
+
+Para la pantalla entre cortes y la de resultado; responde en cualquier estado del intento. `200` con
+`CutStatus` (igual a `cut-status.model.ts`):
+
+```json
+{
+  "currentCut": 1,
+  "cutCount": 3,
+  "servedItems": 40,
+  "answeredItems": 40,
+  "nextCutItems": 50,
+  "canContinue": false,
+  "currentCutAccuracy": 0.62,
+  "nextCutAccuracy": 0.71,
+  "continuedByAttemptId": null
+}
+```
+
+- `nextCutItems`: cuántos ítems agrega el corte siguiente; `null` en el último. `nextCutAccuracy`,
+  ídem.
+- `canContinue`: `true` si `POST .../continue` hoy respondería `200` o `201`. Es la misma regla.
+- `currentCutAccuracy` / `nextCutAccuracy`: la precisión estimada de eneatipo de cada corte, entre 0
+  y 1 (`estimated_type_accuracy` de `precision_by_items.json`). **Es pública a propósito:** es el
+  número que el producto muestra. No sale nada más de los modelos: ni versiones, ni márgenes, ni
+  probabilidades.
+- `continuedByAttemptId`: si el intento ya se siguió, el id del intento que lo continuó.
 
 ## Feature 5: comentarios y contacto
 
@@ -369,10 +438,10 @@ que existe en la base y no sale:
 | Dato | Por qué no sale |
 |---|---|
 | `grouping_system` y `group_label` de preguntas y opciones | Son la clave de corrección del instrumento: con ellas, cualquiera falsea su resultado desde devtools |
-| El orden de las opciones en el banco | Las de escenario salen mezcladas por intento: el orden fijo también podría delatar el grupo |
 | Las predicciones de los clasificadores: grupo, probabilidades, `model_version` | Internas (PDR): no se muestran ni como número ni en palabras |
 | `results.confidence_margin` | Ídem. Mostrar la confianza es un punto abierto del plan, no una decisión del backend |
 | `questions.version`, `is_active`, `created_at` | Metadatos del banco: el servidor ya resuelve la versión activa |
+| `test_attempts.continued_from_attempt_id` | El enlace entre intentos lo expone, al revés, `continuedByAttemptId` de `CutStatus` |
 | `users.cognito_sub`, `deleted_at`, `created_at` | Internos de la cuenta |
 | Los comentarios (`feedback`) | No hay endpoint de lectura: se leen de la base, para el piloto |
 | Los mensajes de contacto | No se guardan en ningún lado |
@@ -390,6 +459,9 @@ frontend.
 | `GET /api/health/ready` | Readiness: `503 SERVICE_UNAVAILABLE` si no hay base |
 | `GET /api/users/me` | El `User` del token. El frontend no lo usa |
 | `DELETE /api/users/me` | Borrado con anonimización (Ley 25.326). Sin pantalla todavía (PA-7) |
+| `POST /api/attempts/{id}/continue` | Seguir al corte siguiente. Pantalla y método de `ApiService`: Feature 10 |
+| `GET /api/attempts/{id}/cut` | Estado del corte. Pantalla y método de `ApiService`: Feature 10 |
 
 Al revés no hay huecos: todo método de `ApiService` tiene su ruta. Pagos (Feature 6) no existe todavía,
-ni en el contrato ni en el backend.
+ni en el contrato ni en el backend: el tier pago sale de filas de `subscriptions` dadas de alta a mano
+(`scripts/grant_subscription.py`).

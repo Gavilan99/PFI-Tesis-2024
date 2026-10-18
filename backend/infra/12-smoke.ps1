@@ -4,8 +4,8 @@
 #     powershell -File backend\infra\12-smoke.ps1 -ApiUrl https://... -Origin https://dxxxx.cloudfront.net
 #
 # health -> CORS (the frontend's origin allowed, another one not) -> register a test account ->
-# create an attempt -> questions -> answer them all -> complete -> result -> delete the account ->
-# the old token is refused.
+# create an attempt -> its 40 questions (cut 1) -> answer them all -> the cut status -> complete ->
+# result -> delete the account -> the old token is refused.
 # Only after 10-task.ps1 bank-load: the attempt is served from the active version and freezes it.
 # The account is recognizable (nureon-smoke-<when>@smoke.nureon.invalid, a domain that cannot receive
 # mail). Deleting it anonymizes it but keeps its attempt: the printed user id goes in
@@ -80,14 +80,22 @@ $token = $reg.accessToken
 $userId = $reg.user.id
 Done "email $email"
 
-Step 'Intento completo'
+Step 'Intento: corte 1'
 $attempt = Call POST '/api/attempts' $null $token 201
 $questions = @(Call GET "/api/attempts/$($attempt.id)/questions" $null $token 200)
 Done ("{0} preguntas, tier {1}, versión {2}" -f $questions.Count, $attempt.tier, $attempt.questionnaireVersion)
+if ($questions.Count -ne 40) { throw "El corte 1 tiene que servir 40 preguntas; sirvió $($questions.Count)." }
 foreach ($q in $questions) {
     $body = @{ questionId = $q.id; selectedOptionId = $q.answerOptions[0].id; freeTextResponse = $null; orderingResponse = $null }
     $null = Call POST "/api/attempts/$($attempt.id)/responses" $body $token 200 6>$null
 }
+Done '40 respuestas'
+$cut = Call GET "/api/attempts/$($attempt.id)/cut" $null $token 200
+if ($cut.currentCut -ne 1 -or $cut.cutCount -ne 3 -or $cut.servedItems -ne 40 -or $cut.answeredItems -ne 40 -or $cut.nextCutItems -ne 50) {
+    throw "Estado del corte inesperado: $($cut | ConvertTo-Json -Compress)"
+}
+Done ("corte {0} de {1}, precisión estimada {2:P0}; el siguiente agrega {3} ítems ({4:P0}); puede seguir: {5}" -f `
+    $cut.currentCut, $cut.cutCount, $cut.currentCutAccuracy, $cut.nextCutItems, $cut.nextCutAccuracy, $cut.canContinue)
 $completed = Call POST "/api/attempts/$($attempt.id)/complete" $null $token 200
 if ($completed.status -ne 'completed') { throw "El intento quedó en '$($completed.status)'." }
 $result = Call GET "/api/attempts/$($attempt.id)/result" $null $token 200
