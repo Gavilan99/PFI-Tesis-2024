@@ -3,6 +3,11 @@
 #     powershell -File backend\infra\10-task.ps1 -Job migrate         # alembic upgrade head
 #     powershell -File backend\infra\10-task.ps1 -Job bank-dry-run    # import_question_bank.py --version 1 --dry-run
 #     powershell -File backend\infra\10-task.ps1 -Job bank-load       # import_question_bank.py --version 1 --activate
+#     powershell -File backend\infra\10-task.ps1 -Job grant-subscription -Email persona@ejemplo.com -Days 30
+#
+# grant-subscription: scripts/grant_subscription.py, a MANUAL paid tier with no payment behind it, for
+# the accounts of the user tests until Feature 6 (Mercado Pago) exists. The email goes in the task's
+# command override (visible in ECS and CloudTrail); the script's output names only the users.id.
 #
 # Never at app start: each is an explicit step. The bank CSV is the one inside the image.
 # There is no job for seed_filler_bank.py: version 0 is never loaded in production, and the script is
@@ -14,16 +19,24 @@
 # Cost: Fargate by the second, 1 minute minimum: under US$0.01 per run.
 
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('migrate', 'bank-dry-run', 'bank-load')][string]$Job,
-    [int]$BankVersion = 1
+    [Parameter(Mandatory = $true)][ValidateSet('migrate', 'bank-dry-run', 'bank-load', 'grant-subscription')][string]$Job,
+    [int]$BankVersion = 1,
+    [string]$Email,
+    [int]$Days = 0
 )
 
 . "$PSScriptRoot\_common.ps1"
+
+if ($Job -eq 'grant-subscription') {
+    if (-not $Email -or $Days -lt 1) { throw 'grant-subscription necesita -Email y -Days (1 a 366).' }
+    Write-Host 'ALTA MANUAL DE SUSCRIPCIÓN, SIN PAGO ASOCIADO.' -ForegroundColor Yellow
+}
 
 $commands = @{
     'migrate'      = @('alembic', 'upgrade', 'head')
     'bank-dry-run' = @('python', 'scripts/import_question_bank.py', '--csv', $BankCsvInImage, '--version', [string]$BankVersion, '--dry-run')
     'bank-load'    = @('python', 'scripts/import_question_bank.py', '--csv', $BankCsvInImage, '--version', [string]$BankVersion, '--activate')
+    'grant-subscription' = @('python', 'scripts/grant_subscription.py', '--email', [string]$Email, '--days', [string]$Days)
 }
 
 $ecs = Get-EcsService
