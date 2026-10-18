@@ -1,19 +1,16 @@
-"""The instrument's answer key never leaves the server. Three layers, each with its own tests, plus the
+"""The instrument's answer key never leaves the server. Two layers, each with its own tests, plus the
 tests that prove the suite-wide guard (tests/leak_guard.py) fails when something leaks.
 
 (a) Keys: `group_label` and `grouping_system` are in no response, in any casing.
 (b) Values: no group label or system name of the canonical vocabulary is in any response.
-(c) Order: scenario options are shuffled per attempt (stable within it), Likert options never are,
-    and the subset is served shuffled, so no position gives away a group or a system.
 
-Layer (c) is tested against a worst-case bank, too: every scenario item lists its groups in the same
-order and the bank is sorted by system. The filler is already shuffled, so on its own it would hide a
-missing shuffle.
+(c) Order, since Feature 9, is fixed and not a secret: the bank with its groups is public in the
+repository (`research/bank/`), every option is served in the bank's order (the order the pilot saw,
+which the models were trained on), and the items in the order of the cut plan, which alternates the
+four systems (`serve_order`). Its tests check exactly that.
 """
 
-import dataclasses
 import uuid
-from collections import Counter
 
 import pytest
 from flask import Flask, jsonify
@@ -22,13 +19,11 @@ from sqlalchemy import select
 from app.blueprints.attempts.schemas import AnswerOptionOut, QuestionOut
 from app.blueprints.results.schemas import ResultOut
 from app.db.models import AnswerOption, Question, Response
-from app.db.models.enums import GROUP_LABELS, GROUPS_BY_SYSTEM, AttemptTier, GroupingSystem, QuestionType
-from app.services import attempts as attempts_service
-from app.services.question_bank import load_bank
-from scripts.seed_filler_bank import build_filler_bank
+from app.db.models.enums import GROUP_LABELS, GroupingSystem
 from tests import leak_guard
 from tests.attempt_helpers import OPTION_FIELDS, QUESTION_FIELDS, answer, answer_all, questions, start
 from tests.auth_helpers import registered
+from tests.cut_helpers import load_real_bank
 
 SYSTEM_NAMES = {system.value for system in GroupingSystem}
 FORBIDDEN_KEY_SPELLINGS = ("group_label", "groupLabel", "grouping_system", "groupingSystem")
@@ -44,12 +39,6 @@ def person(api, question_bank):
     return registered(api)
 
 
-@pytest.fixture()
-def paid_full(monkeypatch):
-    """60 items per attempt: more items per request, fewer requests per statistic."""
-    monkeypatch.setattr(attempts_service, "resolve_attempt_tier", lambda user: AttemptTier.PAID_FULL)
-
-
 def _every_attempt_response(api, headers) -> list:
     """One response of every attempt endpoint, along a full attempt."""
     created = api.post("/api/attempts", headers=headers)
@@ -61,7 +50,9 @@ def _every_attempt_response(api, headers) -> list:
         collected.append(answer(api, headers, attempt_id, item))
     collected += [
         api.get(f"/api/attempts/{attempt_id}/responses", headers=headers),
+        api.get(f"/api/attempts/{attempt_id}/cut", headers=headers),
         api.post(f"/api/attempts/{attempt_id}/complete", headers=headers),
+        api.get(f"/api/attempts/{attempt_id}/cut", headers=headers),
         api.get(f"/api/attempts/{attempt_id}/result", headers=headers),
         api.get(f"/api/attempts/{attempt_id}", headers=headers),
         api.get("/api/attempts/latest", headers=headers),
@@ -94,30 +85,6 @@ def _bank_rows(db_session) -> dict[uuid.UUID, tuple]:
             question.grouping_system, question.question_type, question.display_order, options
         )
     return rows
-
-
-def _worst_case_bank():
-    """The filler, rearranged the way a careless CSV could come: scenario options always in the
-    vocabulary's group order, and questions sorted by system."""
-    bank = []
-    for question in build_filler_bank():
-        options = question.options
-        if question.question_type is QuestionType.SCENARIO:
-            rank = GROUPS_BY_SYSTEM[question.grouping_system].index
-            options = tuple(
-                dataclasses.replace(o, display_order=k)
-                for k, o in enumerate(sorted(options, key=lambda o: rank(o.group_label)), start=1)
-            )
-        bank.append(dataclasses.replace(question, options=options))
-    systems = list(GroupingSystem)
-    bank.sort(key=lambda q: (systems.index(q.grouping_system), q.display_order))
-    return [dataclasses.replace(q, display_order=k) for k, q in enumerate(bank, start=1)]
-
-
-@pytest.fixture()
-def worst_case_bank(db_session):
-    load_bank(db_session, _worst_case_bank(), version=1, activate=True)
-    db_session.commit()
 
 
 # --- (a) keys -----------------------------------------------------------------------------------
@@ -159,31 +126,20 @@ def test_b_no_response_carries_a_canonical_label_or_system_as_a_value(api, perso
 # --- (c) order ----------------------------------------------------------------------------------
 
 
-def test_c_scenario_options_are_shuffled_per_attempt(api, person, db_session, paid_full, worst_case_bank):
-    """Against a bank where the position *is* the group, each position must carry every group."""
+def test_c_every_option_is_served_in_the_banks_order_scenario_and_likert(api, person, db_session):
     _, headers = person
     bank = _bank_rows(db_session)
-    by_position: dict[int, Counter] = {1: Counter(), 2: Counter(), 3: Counter()}
-    for _ in range(15):
-        for item in questions(api, headers, start(api, headers)["id"]):
-            system, question_type, _, options = bank[uuid.UUID(item["id"])]
-            if question_type is not QuestionType.SCENARIO:
-                continue
-            group = dict(options)
-            for option in item["answerOptions"]:
-                rank = GROUPS_BY_SYSTEM[system].index(group[uuid.UUID(option["id"])])
-                by_position[option["displayOrder"]][rank] += 1
-
-    for position, ranks in by_position.items():
-        total = sum(ranks.values())
-        assert total > 500
-        shares = {rank: count / total for rank, count in ranks.items()}
-        # Uniform is 1/3 each. Without the shuffle, one rank would hold 100% of its position.
-        assert set(shares) == {0, 1, 2}, (position, shares)
-        assert all(0.25 < share < 0.42 for share in shares.values()), (position, shares)
+    served = questions(api, headers, start(api, headers)["id"])
+    types = set()
+    for item in served:
+        _, question_type, _, options = bank[uuid.UUID(item["id"])]
+        types.add(question_type)
+        assert [uuid.UUID(o["id"]) for o in item["answerOptions"]] == [option_id for option_id, _ in options]
+        assert [o["displayOrder"] for o in item["answerOptions"]] == list(range(1, len(options) + 1))
+    assert len(types) == 2  # scenario and Likert, both checked
 
 
-def test_c_scenario_option_order_is_stable_within_an_attempt_and_is_the_stored_one(api, person, db_session):
+def test_c_option_order_is_stable_and_is_the_stored_one(api, person, db_session):
     _, headers = person
     attempt = start(api, headers)
     first = questions(api, headers, attempt["id"])
@@ -198,55 +154,18 @@ def test_c_scenario_option_order_is_stable_within_an_attempt_and_is_the_stored_o
         assert [uuid.UUID(o["id"]) for o in item["answerOptions"]] == stored[uuid.UUID(item["id"])]
 
 
-def test_c_scenario_option_order_changes_between_attempts(api, person, db_session, paid_full):
+def test_c_items_follow_the_cut_plan_and_alternate_the_four_systems(api, app, person, db_session):
+    """On the real bank: the plan's serving order, round-robin across systems, never in blocks."""
+    load_real_bank(db_session)
     _, headers = person
     bank = _bank_rows(db_session)
-    permutations: Counter = Counter()
-    same_as_bank = scenario_items = 0
-    for _ in range(10):
-        for item in questions(api, headers, start(api, headers)["id"]):
-            _, question_type, _, options = bank[uuid.UUID(item["id"])]
-            if question_type is not QuestionType.SCENARIO:
-                continue
-            served = [uuid.UUID(o["id"]) for o in item["answerOptions"]]
-            bank_ids = [option_id for option_id, _ in options]
-            permutations[tuple(bank_ids.index(i) for i in served)] += 1
-            scenario_items += 1
-            same_as_bank += served == bank_ids
-    assert len(permutations) == 6
-    assert 0.08 < same_as_bank / scenario_items < 0.28  # 1/6 expected
-
-
-def test_c_likert_options_are_never_shuffled(api, person, db_session, paid_full, worst_case_bank):
-    _, headers = person
-    bank = _bank_rows(db_session)
-    likert_items = 0
-    for _ in range(10):
-        for item in questions(api, headers, start(api, headers)["id"]):
-            _, question_type, _, options = bank[uuid.UUID(item["id"])]
-            if question_type is not QuestionType.MULTIPLE_CHOICE:
-                continue
-            likert_items += 1
-            served = [uuid.UUID(o["id"]) for o in item["answerOptions"]]
-            assert served == [option_id for option_id, _ in options]
-            assert [o["displayOrder"] for o in item["answerOptions"]] == [1, 2, 3, 4, 5]
-    assert likert_items > 50
-
-
-def test_c_questions_are_served_shuffled(api, person, db_session, paid_full, worst_case_bank):
-    """Against a bank sorted by system, the served position must not give the system away."""
-    _, headers = person
-    bank = _bank_rows(db_session)
-    first_systems: Counter = Counter()
-    for _ in range(12):
-        served = questions(api, headers, start(api, headers)["id"])
-        bank_orders = [bank[uuid.UUID(item["id"])][2] for item in served]
-        assert bank_orders != sorted(bank_orders)
-        systems = [bank[uuid.UUID(item["id"])][0] for item in served]
-        # In a sorted serve, the first 15 items would all be one system.
-        assert len(set(systems[:15])) > 1
-        first_systems[systems[0]] += 1
-    assert len(first_systems) > 1
+    served = questions(api, headers, start(api, headers)["id"])
+    assert [bank[uuid.UUID(item["id"])][2] for item in served] == list(
+        app.extensions["cut_plan"].cuts[0].new_item_orders
+    )
+    systems = [bank[uuid.UUID(item["id"])][0] for item in served]
+    for start_at in range(0, len(systems), 4):
+        assert len(set(systems[start_at:start_at + 4])) == 4, systems[start_at:start_at + 4]
 
 
 def test_c_the_stored_answer_is_the_option_id_and_nothing_about_its_group(api, person, db_session):

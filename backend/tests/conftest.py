@@ -1,4 +1,7 @@
 import os
+import shutil
+import tempfile
+from pathlib import Path
 
 os.environ.setdefault("APP_ENV", "test")
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
@@ -6,6 +9,10 @@ os.environ.setdefault("CORS_ALLOWED_ORIGINS", "http://localhost:4200")
 # Not setdefault: a developer's shell or .env choosing legacy_tree must not change what the suite
 # runs. Tests that need another backend build their own app (tests/classifier_helpers.py).
 os.environ["CLASSIFIER_BACKEND"] = "stub"
+# Synthetic artifacts, generated once per session in a temporary folder (pytest_configure): every app
+# needs a cut plan, and `trained` the twelve models. Never app/ml/artifacts/, whatever .env says.
+ARTIFACTS_DIR = Path(tempfile.mkdtemp(prefix="nureon-test-artifacts-"))
+os.environ["CLASSIFIER_ARTIFACTS_DIR"] = str(ARTIFACTS_DIR)
 
 import pytest
 
@@ -22,6 +29,13 @@ def pytest_configure(config):
     # Every JSON response of the whole suite goes through the answer-key guard. Not optional, and not
     # per endpoint: see tests/leak_guard.py.
     leak_guard.install()
+    from scripts.make_dev_artifacts import make
+
+    leak_guard.register_model_version(make(ARTIFACTS_DIR, quiet=True))
+
+
+def pytest_unconfigure(config):
+    shutil.rmtree(ARTIFACTS_DIR, ignore_errors=True)
 
 
 def pytest_terminal_summary(terminalreporter):

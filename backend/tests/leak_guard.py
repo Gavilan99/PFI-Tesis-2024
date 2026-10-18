@@ -13,9 +13,11 @@ Two layers are checked here:
   too: the margin must not leave renamed or derived.
 - Values. No string value is, or contains as a word, a grouping system or group label of the
   canonical vocabulary. No key is one either (`{"gut": 3}` leaks as much as `{"group": "gut"}`).
-  No string names a classifier's model version.
+  No string names a classifier's model version: the stub's, the legacy tree's, the trained models'
+  of this session, or anything shaped like a cut model version (`.../cut_040`).
 
-The third layer, order, cannot be seen in a single payload; it has its own tests.
+The order layer (shuffled options and questions) was retired in Feature 9: the bank with its groups is
+public in the repository (`research/bank/`), and the serving order is fixed for everyone.
 """
 
 import json
@@ -42,7 +44,9 @@ FORBIDDEN_KEYS = frozenset(
 # Normalized like the above, matched anywhere inside a key: `confidenceLevel`, `margin_pct`.
 FORBIDDEN_KEY_PARTS = ("confidence", "margin", "probabilit")
 CANONICAL_VALUES = frozenset(GROUP_LABELS) | frozenset(system.value for system in GroupingSystem)
-MODEL_VERSIONS = (STUB_MODEL_VERSION, LEGACY_MODEL_VERSION)
+MODEL_VERSIONS = [STUB_MODEL_VERSION, LEGACY_MODEL_VERSION]
+# Prefixes the training and the synthetic artifacts write, and the cut suffix of a stored version.
+MODEL_VERSION_MARKERS = ("rf-cuts-", "synthetic-", "/cut_0", "/cut_1")
 
 # A canonical value as a whole word: "gut" leaks, "gutural" does not. Underscores and hyphens belong to
 # the word, so "positive_outlook" matches as one, and a base64url token (access tokens are) does not
@@ -52,6 +56,12 @@ _VALUE_PATTERN = re.compile(
     + "|".join(sorted(map(re.escape, CANONICAL_VALUES), key=len, reverse=True))
     + r")(?![a-z0-9_-])"
 )
+
+
+def register_model_version(version: str) -> None:
+    """A model version known only at runtime (the session's synthetic artifacts)."""
+    if version not in MODEL_VERSIONS:
+        MODEL_VERSIONS.append(version)
 
 
 class AnswerKeyLeak(AssertionError):
@@ -88,8 +98,8 @@ def find_leaks(payload: Any, path: str = "$") -> list[str]:
         match = _VALUE_PATTERN.search(payload.lower())
         if match:
             leaks.append(f"{path}: value contains canonical label '{match.group(0)}'")
-        for version in MODEL_VERSIONS:
-            if version in payload.lower():
+        for version in (*MODEL_VERSIONS, *MODEL_VERSION_MARKERS):
+            if version.lower() in payload.lower():
                 leaks.append(f"{path}: value contains model version '{version}'")
     return leaks
 

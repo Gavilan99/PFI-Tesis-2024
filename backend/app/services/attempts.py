@@ -1,46 +1,51 @@
-"""Test attempts: create, serve, answer, resume, complete and read them (RF03, RF08, RNF10, CU003).
+"""Test attempts: create, serve by cuts, answer, continue, resume, complete and read them
+(RF03, RF08, RNF10, CU003).
+
+Since Feature 9 (decision of 17/10) the test is served in three fixed, nested cuts of 40, 90 and 145
+items (`app.ml.cut_plan`). Everyone gets the same items in the same order, with the options in the
+bank's order, which is what the pilot the models were trained on saw. Creating an attempt serves cut 1;
+continuing adds the next cut's rows, numbered after the ones already served.
+
+Continuing:
+- an attempt in progress, with its cut fully answered, gets the next cut's rows in place;
+- a closed attempt is never reopened and its result never overwritten: the test goes on in a new
+  attempt linked to it (`continued_from_attempt_id`), which starts with its answers copied. Only from
+  the person's latest closed attempt, once, and while its questionnaire version is still active;
+- the second and third cuts require the paid tier (`app.services.tiers`). An attempt that continues to
+  a paid cut becomes `paid_full`.
 
 The instrument's answer key never leaves this module towards the client: nothing here returns
-`group_label` or `grouping_system`, and the read paths do not even load them. It hides in two more
-places, and both are closed when the attempt is created:
-
-- Option order. Each scenario item covers its system's three groups once, so a fixed order would
-  make the position the group. Scenario options are shuffled per attempt; Likert options never are,
-  because their order is the signal. The order served is stored in `responses.option_order`.
-- Question order. The subset is shuffled as a whole, so an item's position says nothing about its
-  system.
-
-All of it is decided once, at creation, and stored: reloading serves the same items in the same order.
+`group_label` or `grouping_system`, and the read paths do not even load them.
 """
 
 import logging
-import random
 import uuid
-from collections import defaultdict
-from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from app.db.models import Response, TestAttempt, User
-from app.db.models.enums import AttemptStatus, AttemptTier, GroupingSystem, QuestionType
+from app.db.models.enums import AttemptStatus, AttemptTier, QuestionType
 from app.db.session import Session
 from app.exceptions import (
+    AppError,
+    AttemptAlreadyContinued,
     AttemptIncomplete,
+    AttemptNotContinuable,
     AttemptNotFound,
     AttemptNotInProgress,
+    CutIncomplete,
+    LastCutReached,
     OptionNotInQuestion,
+    PaidTierRequired,
     QuestionNotInAttempt,
     QuestionnaireUnavailable,
 )
 from app.ml.classification import Classifier
+from app.ml.cut_plan import Cut, CutPlan, question_code
 from app.repositories import attempt_repository
-from app.services import results
-from app.services.tiers import resolve_attempt_tier
+from app.services import results, tiers
 
 logger = logging.getLogger(__name__)
-
-# Unpredictable on purpose: a seeded generator would make the subset and the option order guessable.
-_rng = random.SystemRandom()
 
 
 @dataclass(frozen=True)
@@ -60,21 +65,38 @@ class ServedQuestion:
     answer_options: list[ServedOption]
 
 
-def create_attempt(user: User, subset_sizes: Mapping[AttemptTier, int]) -> TestAttempt:
-    """Start an attempt for `user`, abandoning the one in progress if there is one, in one transaction."""
+@dataclass(frozen=True)
+class CutState:
+    """Where an attempt stands in the cuts. The accuracy is the estimated eneatype accuracy of a cut:
+    public on purpose, it is the number the product shows. Nothing else of the models is."""
+
+    current_cut: int
+    cut_count: int
+    served_items: int
+    answered_items: int
+    next_cut_items: int | None
+    can_continue: bool
+    current_cut_accuracy: float
+    next_cut_accuracy: float | None
+    continued_by_attempt_id: uuid.UUID | None
+
+
+def create_attempt(user: User, plan: CutPlan) -> TestAttempt:
+    """Start an attempt for `user` with cut 1, abandoning the one in progress, in one transaction."""
     session = Session()
     try:
         attempt_repository.lock_user(session, user.id)
         attempt_repository.abandon_in_progress(session, user.id)
 
-        tier = resolve_attempt_tier(user)
         version = attempt_repository.current_version(session)
         if version is None:
             logger.error("No active questionnaire version: attempts cannot be created")
             raise QuestionnaireUnavailable()
-        items = _pick_subset(session, version, subset_sizes[tier])
+        items = _resolve_cut(session, version, plan.cuts[0])
 
-        attempt = attempt_repository.insert_attempt(session, user_id=user.id, tier=tier, version=version)
+        attempt = attempt_repository.insert_attempt(
+            session, user_id=user.id, tier=tiers.new_attempt_tier(), version=version
+        )
         attempt_repository.insert_served_items(session, attempt.id, items)
         session.commit()
     except Exception:
@@ -83,38 +105,118 @@ def create_attempt(user: User, subset_sizes: Mapping[AttemptTier, int]) -> TestA
     return attempt
 
 
-def _pick_subset(session, version: int, size: int) -> list[tuple[uuid.UUID, list[uuid.UUID]]]:
-    """`size` active questions of `version`, the same number from each grouping system, shuffled,
-    each with the order its options will be served in."""
-    per_system = size // len(GroupingSystem)
-    pool: dict[GroupingSystem, list] = defaultdict(list)
-    for question in attempt_repository.active_questions(session, version):
-        pool[question.grouping_system].append(question)
+def continue_attempt(user: User, attempt_id: uuid.UUID, plan: CutPlan) -> tuple[TestAttempt, bool]:
+    """Serve the next cut. Returns the attempt the test goes on in, and whether it is a new one."""
+    session = Session()
+    try:
+        # Serializes with creating an attempt: both may abandon the one in progress.
+        attempt_repository.lock_user(session, user.id)
+        attempt = _owned(session, user, attempt_id, for_update=True)
+        cut, served, answered = _cut_of(session, plan, attempt)
+        following = plan.next_cut(cut)
+        blocked = _continuation_block(session, user, attempt, following, served, answered)
+        if blocked is not None:
+            raise blocked
 
-    short = {system.value: len(pool[system]) for system in GroupingSystem if len(pool[system]) < per_system}
-    if short:
+        items = _resolve_cut(session, attempt.questionnaire_version, following)
+        tier = attempt.tier
+        if tiers.required_tier(following.number) is AttemptTier.PAID_FULL:
+            tier = AttemptTier.PAID_FULL
+        if attempt.status is AttemptStatus.IN_PROGRESS:
+            if tier is not attempt.tier:
+                attempt_repository.set_tier(session, attempt, tier)
+            attempt_repository.insert_served_items(session, attempt.id, items, first=served + 1)
+            target, created = attempt, False
+        else:
+            attempt_repository.abandon_in_progress(session, user.id)
+            target = attempt_repository.insert_attempt(
+                session,
+                user_id=user.id,
+                tier=tier,
+                version=attempt.questionnaire_version,
+                continued_from=attempt.id,
+            )
+            attempt_repository.copy_responses(session, attempt.id, target.id)
+            attempt_repository.insert_served_items(session, target.id, items, first=served + 1)
+            created = True
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    return target, created
+
+
+def cut_state(user: User, attempt_id: uuid.UUID, plan: CutPlan) -> CutState:
+    """For the screen between cuts and the result screen: in progress, closed or abandoned alike."""
+    session = Session()
+    attempt = _owned(session, user, attempt_id)
+    cut, served, answered = _cut_of(session, plan, attempt)
+    following = plan.next_cut(cut)
+    return CutState(
+        current_cut=cut.number,
+        cut_count=len(plan.cuts),
+        served_items=served,
+        answered_items=answered,
+        next_cut_items=len(following.serve_new_items) if following else None,
+        can_continue=_continuation_block(session, user, attempt, following, served, answered) is None,
+        current_cut_accuracy=cut.estimated_accuracy,
+        next_cut_accuracy=following.estimated_accuracy if following else None,
+        continued_by_attempt_id=attempt_repository.continuation_of(session, attempt.id),
+    )
+
+
+def _continuation_block(
+    session, user: User, attempt: TestAttempt, following: Cut | None, served: int, answered: int
+) -> AppError | None:
+    """Why the attempt cannot go on to the next cut, or None if it can. The one rule behind both the
+    continue route and `canContinue`. State first; the tier only matters when the rest allows it."""
+    if attempt.status is AttemptStatus.ABANDONED:
+        return AttemptNotContinuable()
+    if following is None:
+        return LastCutReached()
+    if answered < served:
+        return CutIncomplete()
+    if attempt.status is AttemptStatus.COMPLETED:
+        if attempt_repository.continuation_of(session, attempt.id) is not None:
+            return AttemptAlreadyContinued()
+        if attempt_repository.latest_completed_for_user(session, user.id) != attempt.id:
+            return AttemptNotContinuable()
+        if attempt_repository.current_version(session) != attempt.questionnaire_version:
+            return AttemptNotContinuable()
+    if not tiers.may_take_cut(session, user.id, following.number):
+        return PaidTierRequired()
+    return None
+
+
+def _cut_of(session, plan: CutPlan, attempt: TestAttempt) -> tuple[Cut, int, int]:
+    served, answered = attempt_repository.served_and_answered(session, attempt.id)
+    cut = plan.cut_by_size(served)
+    if cut is None:
+        # An attempt served before the cuts existed (the Feature 3 subsets of 20 or 60).
+        logger.error("Attempt %s has %s served items: no cut of the plan has that size", attempt.id, served)
+        raise AttemptNotContinuable()
+    return cut, served, answered
+
+
+def _resolve_cut(session, version: int, cut: Cut) -> list[tuple[uuid.UUID, list[uuid.UUID]]]:
+    """The cut's new items as (question id, option ids in bank order), in serving order. A code that is
+    not an active question of `version` stops it: nothing is created."""
+    orders = list(cut.new_item_orders)
+    ids = attempt_repository.active_question_ids_by_order(session, version, orders)
+    missing = [question_code(order) for order in orders if order not in ids]
+    if missing:
         logger.error(
-            "Questionnaire version %s cannot fill a subset of %s (%s per system); active questions: %s",
-            version, size, per_system, short,
+            "Questionnaire version %s lacks %s active items of cut %s (%s items): %s",
+            version, len(missing), cut.number, cut.size, ", ".join(missing),
         )
         raise QuestionnaireUnavailable()
-
-    chosen = [question for system in GroupingSystem for question in _rng.sample(pool[system], per_system)]
-    _rng.shuffle(chosen)
-
-    bank_order = attempt_repository.option_ids_in_bank_order(session, [q.id for q in chosen])
-    items = []
-    for question in chosen:
-        order = bank_order[question.id]
-        if question.question_type is QuestionType.SCENARIO:
-            order = _rng.sample(order, len(order))
-        items.append((question.id, order))
-    return items
+    bank_order = attempt_repository.option_ids_in_bank_order(session, list(ids.values()))
+    return [(ids[order], bank_order[ids[order]]) for order in orders]
 
 
 def served_questions(user: User, attempt_id: uuid.UUID) -> list[ServedQuestion]:
-    """The whole subset in one go, in the attempt's order. `display_order` is the position served,
-    for questions and for options alike, never the bank's."""
+    """Everything served so far in one go, in the attempt's order. `display_order` is the position
+    served, for questions and for options alike; options are served in the bank's order."""
     session = Session()
     attempt = _owned(session, user, attempt_id)
     rows = attempt_repository.served_questions(session, attempt.id)
@@ -139,7 +241,7 @@ def served_questions(user: User, attempt_id: uuid.UUID) -> list[ServedQuestion]:
 def submit_response(
     user: User, attempt_id: uuid.UUID, *, question_id: uuid.UUID, selected_option_id: uuid.UUID
 ) -> Response:
-    """Record (or replace) the answer to one question of the subset. Only the option id is stored;
+    """Record (or replace) the answer to one served question. Only the option id is stored;
     the group it maps to is resolved by the server when it is needed, never here."""
     session = Session()
     try:
@@ -170,8 +272,8 @@ def complete_attempt(user: User, attempt_id: uuid.UUID, classifier: Classifier) 
     """Close the attempt and compute its result. Idempotent: closing a completed attempt returns it
     unchanged, and neither classifies again nor touches the result it already has.
 
-    Rejected while any item of the subset is unanswered: an incomplete attempt marked completed would
-    contaminate the dataset. The interface never tries it.
+    Rejected while any served item is unanswered: an incomplete attempt marked completed would
+    contaminate the dataset. It closes in whatever cut it is in.
     """
     session = Session()
     try:

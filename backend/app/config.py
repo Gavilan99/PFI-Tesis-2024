@@ -36,24 +36,6 @@ IDENTITY_PROVIDERS = ("cognito", "local")
 MAIL_SENDERS = ("ses", "local")
 LOCAL_CONTACT_MAIL_TO = "contacto@nureon.invalid"
 
-# The subset is balanced across the four grouping systems, so its size must split evenly among them.
-GROUPING_SYSTEM_COUNT = 4
-
-
-def _subset_size(name: str, default: int) -> int:
-    raw = os.environ.get(name, str(default)).strip()
-    try:
-        size = int(raw)
-    except ValueError:
-        raise ConfigError(f"{name} tiene que ser un número entero; vale '{raw}'.") from None
-    if size <= 0 or size % GROUPING_SYSTEM_COUNT:
-        raise ConfigError(
-            f"{name} tiene que ser un múltiplo positivo de {GROUPING_SYSTEM_COUNT}, "
-            f"para repartirse en partes iguales entre los sistemas de agrupamiento; vale {size}."
-        )
-    return size
-
-
 def _positive_int(name: str, default: int) -> int:
     raw = os.environ.get(name, str(default)).strip()
     try:
@@ -143,13 +125,11 @@ class BaseConfig:
 
         self.AWS_PROFILE = os.environ.get("AWS_PROFILE") or None
 
-        # Questions served per attempt tier, split evenly across the grouping systems.
-        self.SUBSET_SIZE_FREE_REDUCED = _subset_size("SUBSET_SIZE_FREE_REDUCED", 20)
-        self.SUBSET_SIZE_PAID_FULL = _subset_size("SUBSET_SIZE_PAID_FULL", 60)
-
         # Which classifier closes an attempt: stub | legacy_tree | trained. Validated when the app is
         # created (app.ml.registry), where the backends are known.
         self.CLASSIFIER_BACKEND = os.environ.get("CLASSIFIER_BACKEND", "stub").strip().lower()
+        # The training's output: the cut plan (manifest.json, precision_by_items.json), which every
+        # backend serves by, and the twelve models `trained` loads. Unset, app/ml/artifacts/.
         self.CLASSIFIER_ARTIFACTS_DIR = os.environ.get("CLASSIFIER_ARTIFACTS_DIR") or None
 
         # The contact form: mailed to CONTACT_MAIL_TO, never stored. The sender is chosen per

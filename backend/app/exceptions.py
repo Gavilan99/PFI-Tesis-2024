@@ -88,6 +88,38 @@ class AttemptIncomplete(AppError):
     message = "Quedan preguntas sin responder: el test no se puede cerrar todavía."
 
 
+class CutIncomplete(AppError):
+    status_code = 409
+    code = "CUT_INCOMPLETE"
+    message = "Quedan preguntas sin responder: respondelas antes de seguir."
+
+
+class LastCutReached(AppError):
+    status_code = 409
+    code = "LAST_CUT_REACHED"
+    message = "Ya respondiste el test completo: no quedan preguntas para seguir."
+
+
+class AttemptAlreadyContinued(AppError):
+    status_code = 409
+    code = "ATTEMPT_ALREADY_CONTINUED"
+    message = "Este test ya se siguió en otro intento."
+
+
+class AttemptNotContinuable(AppError):
+    """Abandoned, not the person's latest closed attempt, or its questionnaire version was retired."""
+
+    status_code = 409
+    code = "ATTEMPT_NOT_CONTINUABLE"
+    message = "Este intento ya no se puede seguir. Podés empezar un test nuevo."
+
+
+class PaidTierRequired(AppError):
+    status_code = 402
+    code = "PAID_TIER_REQUIRED"
+    message = "Para seguir con más preguntas necesitás una suscripción activa."
+
+
 class ResultNotFound(AppError):
     """No result to show: the attempt does not exist, is someone else's, or is not closed yet."""
 
@@ -117,7 +149,7 @@ class OptionNotInQuestion(AppError):
 
 
 class QuestionnaireUnavailable(AppError):
-    """No active version, or one too small to fill a balanced subset. A setup problem, not the user's."""
+    """No active version, or one missing an item of the cut plan. A setup problem, not the user's."""
 
     status_code = 503
     code = "QUESTIONNAIRE_UNAVAILABLE"

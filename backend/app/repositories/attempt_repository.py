@@ -2,7 +2,7 @@ import uuid
 from collections import defaultdict
 from datetime import datetime
 
-from sqlalchemy import func, select, update
+from sqlalchemy import func, insert, literal, select, update
 from sqlalchemy.engine import Row
 from sqlalchemy.orm import Session
 
@@ -30,14 +30,15 @@ def current_version(session: Session) -> int | None:
     return session.scalar(select(func.max(Question.version)).where(Question.is_active))
 
 
-def active_questions(session: Session, version: int) -> list[Row]:
-    return list(
-        session.execute(
-            select(Question.id, Question.grouping_system, Question.question_type).where(
-                Question.version == version, Question.is_active
-            )
+def active_question_ids_by_order(session: Session, version: int, orders: list[int]) -> dict[int, uuid.UUID]:
+    """`questions.display_order` -> id, among the active questions of `version`. The display order is
+    the number of the bank code (`Q007` -> 7), so this is how a cut's codes become questions."""
+    rows = session.execute(
+        select(Question.display_order, Question.id).where(
+            Question.version == version, Question.is_active, Question.display_order.in_(orders)
         )
     )
+    return {order: question_id for order, question_id in rows}
 
 
 def option_ids_in_bank_order(
@@ -54,11 +55,19 @@ def option_ids_in_bank_order(
     return options
 
 
-def insert_attempt(session: Session, *, user_id: uuid.UUID, tier: AttemptTier, version: int) -> TestAttempt:
+def insert_attempt(
+    session: Session,
+    *,
+    user_id: uuid.UUID,
+    tier: AttemptTier,
+    version: int,
+    continued_from: uuid.UUID | None = None,
+) -> TestAttempt:
     attempt = TestAttempt(
         user_id=user_id,
         tier=tier,
         questionnaire_version=version,
+        continued_from_attempt_id=continued_from,
         # The column default is now(), the transaction's start time. clock_timestamp() is the moment
         # of the insert, so attempts created close together still sort newest first.
         started_at=func.clock_timestamp(),
@@ -70,16 +79,61 @@ def insert_attempt(session: Session, *, user_id: uuid.UUID, tier: AttemptTier, v
 
 
 def insert_served_items(
-    session: Session, attempt_id: uuid.UUID, items: list[tuple[uuid.UUID, list[uuid.UUID]]]
+    session: Session, attempt_id: uuid.UUID, items: list[tuple[uuid.UUID, list[uuid.UUID]]], *, first: int = 1
 ) -> None:
-    """One unanswered row per (question id, option order), in serving order."""
+    """One unanswered row per (question id, option order), in serving order, numbered from `first`."""
     session.add_all(
         Response(
             test_attempt_id=attempt_id, question_id=question_id, display_order=position, option_order=order
         )
-        for position, (question_id, order) in enumerate(items, start=1)
+        for position, (question_id, order) in enumerate(items, start=first)
     )
     session.flush()
+
+
+def copy_responses(session: Session, source_id: uuid.UUID, target_id: uuid.UUID) -> None:
+    """Every row of `source` into `target`, as it is: question, chosen option, option order, display
+    order and answered time. The source rows are not touched."""
+    session.execute(
+        insert(Response).from_select(
+            ["test_attempt_id", "question_id", "selected_option_id", "answered_at", "display_order", "option_order"],
+            select(
+                literal(target_id, type_=Response.__table__.c.test_attempt_id.type),
+                Response.question_id,
+                Response.selected_option_id,
+                Response.answered_at,
+                Response.display_order,
+                Response.option_order,
+            ).where(Response.test_attempt_id == source_id),
+        )
+    )
+    session.flush()
+
+
+def set_tier(session: Session, attempt: TestAttempt, tier: AttemptTier) -> None:
+    attempt.tier = tier
+    session.flush()
+
+
+def continuation_of(session: Session, attempt_id: uuid.UUID) -> uuid.UUID | None:
+    """The attempt that continued this one, if any."""
+    return session.scalar(select(TestAttempt.id).where(TestAttempt.continued_from_attempt_id == attempt_id))
+
+
+def latest_completed_for_user(session: Session, user_id: uuid.UUID) -> uuid.UUID | None:
+    return session.scalar(
+        select(TestAttempt.id)
+        .where(TestAttempt.user_id == user_id, TestAttempt.status == AttemptStatus.COMPLETED)
+        .order_by(TestAttempt.completed_at.desc(), TestAttempt.id.desc())
+        .limit(1)
+    )
+
+
+def served_and_answered(session: Session, attempt_id: uuid.UUID) -> tuple[int, int]:
+    served, answered = session.execute(
+        select(func.count(), func.count(Response.selected_option_id)).where(Response.test_attempt_id == attempt_id)
+    ).one()
+    return served, answered
 
 
 def get_owned(

@@ -13,6 +13,7 @@ from app.config import ConfigError, get_config, load_env_file
 from app.errors import register_error_handlers
 from app.extensions import cors, init_db
 from app.logging_config import configure_logging
+from app.ml.cut_plan import load_cut_plan
 from app.ml.registry import build_classifier
 from app.security import init_auth
 from app.services.identity import LocalIdentityProvider, build_identity_provider
@@ -26,7 +27,15 @@ def create_app(config_name: str | None = None) -> Flask:
     config = get_config(config_name)
 
     identity = build_identity_provider(config)
-    # Before anything else is set up: a backend that cannot run stops the app here, by name.
+    # Before anything else is set up: an invalid cut plan or a backend that cannot run stops the app
+    # here, by name.
+    cut_plan = load_cut_plan(config)
+    if config_name == "production" and cut_plan.synthetic:
+        raise ConfigError(
+            f"Los artefactos de {cut_plan.directory} son sintéticos ({cut_plan.model_version}): sirven para "
+            "desarrollo y tests, no son un modelo. En producción la app no arranca con ellos: la imagen "
+            "se construye con los artefactos reales."
+        )
     classifier = build_classifier(config)
     # Config already refuses this; checked again on the object actually built.
     if config_name == "production" and isinstance(identity, LocalIdentityProvider):
@@ -45,6 +54,7 @@ def create_app(config_name: str | None = None) -> Flask:
             app.wsgi_app, x_for=config.TRUSTED_PROXY_HOPS, x_proto=0, x_host=0, x_port=0, x_prefix=0
         )
     app.extensions["identity_provider"] = identity
+    app.extensions["cut_plan"] = cut_plan
     app.extensions["classifier"] = classifier
     app.extensions["mail_sender"] = mail_sender
     app.extensions["contact_rate_limiter"] = SlidingWindowLimiter(
