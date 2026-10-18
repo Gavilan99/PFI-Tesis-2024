@@ -8,6 +8,10 @@ much a defect as a key too few.
 
 One request per `ApiService` method, fourteen in all, with the local identity and the filler bank. A
 test also checks that the fourteen here are exactly the methods `ApiService` declares.
+
+The two routes of the fixed item cuts (Feature 9) have no `ApiService` method yet (that is Feature 10),
+only their interfaces: `POST /api/attempts/{id}/continue` answers a `TestAttempt`, and
+`GET /api/attempts/{id}/cut` a `CutStatus` (cut-status.model.ts). They have their own test below.
 """
 
 import re
@@ -75,6 +79,7 @@ def shapes() -> dict[str, set[str]]:
         "AnswerOption": ts_keys("answer-option.model.ts", "AnswerOption"),
         "TestResponse": ts_keys("response.model.ts", "TestResponse"),
         "Result": ts_keys("result.model.ts", "Result"),
+        "CutStatus": ts_keys("cut-status.model.ts", "CutStatus"),
     }
 
 
@@ -87,6 +92,10 @@ def test_the_parser_reads_the_interfaces_it_is_trusted_with(shapes):
     assert shapes["Question"] == {"id", "questionType", "promptText", "displayOrder", "answerOptions"}
     assert shapes["Result"] == {"id", "testAttemptId", "eneatype", "descriptionText", "generatedAt"}
     assert shapes["AuthResponse"] == {"user", "accessToken", "expiresIn"}
+    assert shapes["CutStatus"] == {
+        "currentCut", "cutCount", "servedItems", "answeredItems", "nextCutItems", "canContinue",
+        "currentCutAccuracy", "nextCutAccuracy", "continuedByAttemptId",
+    }
 
 
 def _keys(body) -> set[str]:
@@ -205,4 +214,46 @@ def test_every_route_answers_exactly_the_shape_of_its_interface(api, question_ba
     checked["submitContactMessage"] = _empty(response)
 
     assert set(checked) == ts_methods("api.service.ts", "ApiService"), "a method of ApiService is not covered"
+    assert [name for name, ok in checked.items() if not ok] == []
+
+
+def test_the_cut_routes_answer_exactly_their_interfaces(api, question_bank, db_session, shapes):
+    from tests.cut_helpers import give_paid_tier
+
+    response = api.post(
+        "/api/auth/register",
+        json={"username": "Persona cortes", "email": unique_email("cortes"), "password": PASSWORD},
+    )
+    user, headers = response.get_json()["user"], bearer(response.get_json()["accessToken"])
+    attempt = api.post("/api/attempts", headers=headers).get_json()
+    attempt_url = f"/api/attempts/{attempt['id']}"
+
+    def answer_served():
+        for item in api.get(f"{attempt_url}/questions", headers=headers).get_json():
+            body = answer_body(item["id"], item["answerOptions"][0]["id"])
+            assert api.post(f"{attempt_url}/responses", headers=headers, json=body).status_code == 200
+
+    checked = {}
+    # GET /api/attempts/{id}/cut, in progress.
+    response = api.get(f"{attempt_url}/cut", headers=headers)
+    assert response.status_code == 200, response.get_json()
+    checked["cut in progress"] = _keys(response.get_json()) == shapes["CutStatus"]
+
+    # POST /api/attempts/{id}/continue, in progress: 200 with the same attempt.
+    answer_served()
+    give_paid_tier(db_session, user["id"])
+    response = api.post(f"{attempt_url}/continue", headers=headers)
+    assert response.status_code == 200, response.get_json()
+    checked["continue in progress"] = _keys(response.get_json()) == shapes["TestAttempt"]
+
+    # Closed: the cut status still answers, and continuing gives the new attempt with 201.
+    answer_served()
+    assert api.post(f"{attempt_url}/complete", headers=headers).status_code == 200
+    response = api.get(f"{attempt_url}/cut", headers=headers)
+    assert response.status_code == 200, response.get_json()
+    checked["cut closed"] = _keys(response.get_json()) == shapes["CutStatus"]
+    response = api.post(f"{attempt_url}/continue", headers=headers)
+    assert response.status_code == 201, response.get_json()
+    checked["continue closed"] = _keys(response.get_json()) == shapes["TestAttempt"]
+
     assert [name for name, ok in checked.items() if not ok] == []
