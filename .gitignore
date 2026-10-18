@@ -165,3 +165,17 @@ CLAUDE.md
 
 # Claude Code
 CLAUDE.md
+
+# Pilot data: answers and typings of real people. Never in this public repository, in any folder.
+# research/.gitignore covers research/; trained models are covered by backend/app/ml/.gitignore.
+NureonAI — Cuestionario de personalidad*.csv
+*.xlsx
+respuestas*.csv
+tipificaciones*.csv
+version_por_respondente*.csv
+responses*.csv
+code_fixes.json
+excluidos.txt
+# Pilot outputs that research/.gitignore does not cover. Scoped to research/ only.
+research/**/pm*.txt
+research/**/verificar_redaccion_n*.txt

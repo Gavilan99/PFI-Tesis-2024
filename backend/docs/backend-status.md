@@ -13,7 +13,7 @@ con Postgres y Cognito reales. Lo que sigue es qué de eso es real y qué no, si
 | Recuperación de contraseña | **No existe.** Ni pantalla ni método en el contrato |
 | Login con Google / Facebook (RNF09) | **No existe.** Los botones del frontend son una ranura inerte |
 | Sesión | Access token de 1 hora, sin refresh: al vencer se vuelve a ingresar |
-| Banco de preguntas | **Relleno, versión 0.** Lo dice en el texto de cada ítem. El banco v1 no está cargado |
+| Banco de preguntas | **Banco real v4.1.2 como versión 1** (145 ítems), cargado en la base local con `scripts/import_question_bank.py`. El relleno sigue siendo la versión 0 (ver abajo, "Banco real") |
 | Clasificación | **`stub` activo por defecto** en desarrollo. **No es ML** (ver abajo) |
 | Resultado | Real en el sentido de guardado y servido; el eneatipo sale del `stub` y la descripción es provisoria |
 | Comentarios (RF06) | **Real.** Se guardan en la base; no hay pantalla para leerlos |
@@ -40,6 +40,28 @@ con Postgres y Cognito reales. Lo que sigue es qué de eso es real y qué no, si
 
 En `production` la variable es obligatoria, sin valor por defecto: elegir qué se muestra en la defensa
 es una decisión explícita.
+
+### Banco real: v4.1.2 como versión 1
+
+`scripts/import_question_bank.py` lee el CSV del banco tal como está en el repo
+(`research/bank/NureonAI Prototype v4.1.2.csv`): 145 ítems (96 de escenario, 24 por sistema, y 49
+Likert, 12/12/12/13) y 533 filas, una por opción. El enunciado sale de `prompt`; el `display_order`
+del CSV es el orden de la **opción** dentro del ítem. `format`, `type_coverage`, `polarity` y
+`origin` no se leen ni se guardan.
+
+- **El orden de pregunta es el número del id: `questions.display_order` = `Q007` → 7.** El CSV no
+  trae orden de pregunta, así que el import lo deriva del `question_id`, exige la forma `Q` + tres
+  dígitos y frena nombrando la línea si no se cumple o si un número se repite. **Esta equivalencia es
+  parte del contrato con los modelos entrenados:** el backend reconstruye el `question_id` desde
+  `display_order`, y el entrenamiento (`app/ml/training/bank.py`, `Item.order`) numera igual. Un test
+  lo comprueba ítem por ítem sobre el CSV real. Cambiar la numeración del banco rompe los modelos.
+
+#### Limitaciones declaradas
+
+- **El `stub` no aplica `polarity`.** Suma `(posición − 1) / 4` al grupo del ítem Likert sea directo
+  o inverso, así que en los 7 Likert inversos del banco estar de acuerdo suma a ese grupo cuando
+  debería restarle: el conteo empuja para el lado equivocado. Es una limitación conocida del stub,
+  que no es el modelo del producto; `polarity` tampoco se guarda en la base.
 
 ### Lo que sabe el navegador
 

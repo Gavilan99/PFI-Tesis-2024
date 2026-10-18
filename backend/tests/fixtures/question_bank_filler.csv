@@ -1,33 +1,33 @@
-﻿question_id,question_type,prompt_text,display_order,option_text,option_display_order,grouping_system,group_label
-T01,scenario,"Enunciado de prueba 1 (relleno de test, no es un ítem real).",1,Opción de prueba A.,1,Centros de Inteligencia,Corazón
-T01,scenario,"Enunciado de prueba 1 (relleno de test, no es un ítem real).",1,Opción de prueba B.,2,Centros de Inteligencia,Mente
-T01,scenario,"Enunciado de prueba 1 (relleno de test, no es un ítem real).",1,Opción de prueba C.,3,Centros de Inteligencia,Cuerpo
-T02,multiple_choice,"Afirmación de prueba 2 (relleno de test, no es un ítem real).",2,Nada de acuerdo,1,Centros de Inteligencia,Corazón
-T02,multiple_choice,"Afirmación de prueba 2 (relleno de test, no es un ítem real).",2,Poco de acuerdo,2,Centros de Inteligencia,Corazón
-T02,multiple_choice,"Afirmación de prueba 2 (relleno de test, no es un ítem real).",2,Ni de acuerdo ni en desacuerdo,3,Centros de Inteligencia,Corazón
-T02,multiple_choice,"Afirmación de prueba 2 (relleno de test, no es un ítem real).",2,Bastante de acuerdo,4,Centros de Inteligencia,Corazón
-T02,multiple_choice,"Afirmación de prueba 2 (relleno de test, no es un ítem real).",2,Completamente de acuerdo,5,Centros de Inteligencia,Corazón
-T03,scenario,"Enunciado de prueba 3 (relleno de test, no es un ítem real).",3,Opción de prueba A.,1,Conjunto Horneviano,Retraída
-T03,scenario,"Enunciado de prueba 3 (relleno de test, no es un ítem real).",3,Opción de prueba B.,2,Conjunto Horneviano,Asertiva
-T03,scenario,"Enunciado de prueba 3 (relleno de test, no es un ítem real).",3,Opción de prueba C.,3,Conjunto Horneviano,Complaciente
-T04,multiple_choice,"Afirmación de prueba 4 (relleno de test, no es un ítem real).",4,Nada de acuerdo,1,Conjunto Horneviano,Asertiva
-T04,multiple_choice,"Afirmación de prueba 4 (relleno de test, no es un ítem real).",4,Poco de acuerdo,2,Conjunto Horneviano,Asertiva
-T04,multiple_choice,"Afirmación de prueba 4 (relleno de test, no es un ítem real).",4,Ni de acuerdo ni en desacuerdo,3,Conjunto Horneviano,Asertiva
-T04,multiple_choice,"Afirmación de prueba 4 (relleno de test, no es un ítem real).",4,Bastante de acuerdo,4,Conjunto Horneviano,Asertiva
-T04,multiple_choice,"Afirmación de prueba 4 (relleno de test, no es un ítem real).",4,Completamente de acuerdo,5,Conjunto Horneviano,Asertiva
-T05,scenario,"Enunciado de prueba 5 (relleno de test, no es un ítem real).",5,Opción de prueba A.,1,Conjunto Armónico,Competente
-T05,scenario,"Enunciado de prueba 5 (relleno de test, no es un ítem real).",5,Opción de prueba B.,2,Conjunto Armónico,Reactiva
-T05,scenario,"Enunciado de prueba 5 (relleno de test, no es un ítem real).",5,Opción de prueba C.,3,Conjunto Armónico,Positiva
-T06,multiple_choice,"Afirmación de prueba 6 (relleno de test, no es un ítem real).",6,Nada de acuerdo,1,Conjunto Armónico,Positiva
-T06,multiple_choice,"Afirmación de prueba 6 (relleno de test, no es un ítem real).",6,Poco de acuerdo,2,Conjunto Armónico,Positiva
-T06,multiple_choice,"Afirmación de prueba 6 (relleno de test, no es un ítem real).",6,Ni de acuerdo ni en desacuerdo,3,Conjunto Armónico,Positiva
-T06,multiple_choice,"Afirmación de prueba 6 (relleno de test, no es un ítem real).",6,Bastante de acuerdo,4,Conjunto Armónico,Positiva
-T06,multiple_choice,"Afirmación de prueba 6 (relleno de test, no es un ítem real).",6,Completamente de acuerdo,5,Conjunto Armónico,Positiva
-T07,scenario,"Enunciado de prueba 7 (relleno de test, no es un ítem real).",7,Opción de prueba A.,1,Conjunto de Relaciones Objetales,Frustración
-T07,scenario,"Enunciado de prueba 7 (relleno de test, no es un ítem real).",7,Opción de prueba B.,2,Conjunto de Relaciones Objetales,Rechazo
-T07,scenario,"Enunciado de prueba 7 (relleno de test, no es un ítem real).",7,Opción de prueba C.,3,Conjunto de Relaciones Objetales,Apego
-T08,multiple_choice,"Afirmación de prueba 8 (relleno de test, no es un ítem real).",8,Nada de acuerdo,1,Conjunto de Relaciones Objetales,Frustración
-T08,multiple_choice,"Afirmación de prueba 8 (relleno de test, no es un ítem real).",8,Poco de acuerdo,2,Conjunto de Relaciones Objetales,Frustración
-T08,multiple_choice,"Afirmación de prueba 8 (relleno de test, no es un ítem real).",8,Ni de acuerdo ni en desacuerdo,3,Conjunto de Relaciones Objetales,Frustración
-T08,multiple_choice,"Afirmación de prueba 8 (relleno de test, no es un ítem real).",8,Bastante de acuerdo,4,Conjunto de Relaciones Objetales,Frustración
-T08,multiple_choice,"Afirmación de prueba 8 (relleno de test, no es un ítem real).",8,Completamente de acuerdo,5,Conjunto de Relaciones Objetales,Frustración
+﻿question_id,grouping_system,question_type,format,prompt,option_text,group_label,type_coverage,polarity,display_order,origin
+Q001,Centros de Inteligencia,scenario,scenario,"Enunciado de prueba 1 (relleno de test, no es un ítem real).",Opción de prueba A.,Corazón,2|3|4,n/a,1,N
+Q001,Centros de Inteligencia,scenario,scenario,"Enunciado de prueba 1 (relleno de test, no es un ítem real).",Opción de prueba B.,Mente,5|6|7,n/a,2,N
+Q001,Centros de Inteligencia,scenario,scenario,"Enunciado de prueba 1 (relleno de test, no es un ítem real).",Opción de prueba C.,Cuerpo,1|8|9,n/a,3,N
+Q002,Centros de Inteligencia,multiple_choice,likert,"Afirmación de prueba 2 (relleno de test, no es un ítem real).",Nada de acuerdo,Corazón,2|3|4,directa,1,N
+Q002,Centros de Inteligencia,multiple_choice,likert,"Afirmación de prueba 2 (relleno de test, no es un ítem real).",Poco de acuerdo,Corazón,2|3|4,directa,2,N
+Q002,Centros de Inteligencia,multiple_choice,likert,"Afirmación de prueba 2 (relleno de test, no es un ítem real).",Ni de acuerdo ni en desacuerdo,Corazón,2|3|4,directa,3,N
+Q002,Centros de Inteligencia,multiple_choice,likert,"Afirmación de prueba 2 (relleno de test, no es un ítem real).",Bastante de acuerdo,Corazón,2|3|4,directa,4,N
+Q002,Centros de Inteligencia,multiple_choice,likert,"Afirmación de prueba 2 (relleno de test, no es un ítem real).",Completamente de acuerdo,Corazón,2|3|4,directa,5,N
+Q003,Conjunto Horneviano,scenario,scenario,"Enunciado de prueba 3 (relleno de test, no es un ítem real).",Opción de prueba A.,Retraída,4|5|9,n/a,1,N
+Q003,Conjunto Horneviano,scenario,scenario,"Enunciado de prueba 3 (relleno de test, no es un ítem real).",Opción de prueba B.,Asertiva,3|7|8,n/a,2,N
+Q003,Conjunto Horneviano,scenario,scenario,"Enunciado de prueba 3 (relleno de test, no es un ítem real).",Opción de prueba C.,Complaciente,1|2|6,n/a,3,N
+Q004,Conjunto Horneviano,multiple_choice,likert,"Afirmación de prueba 4 (relleno de test, no es un ítem real).",Nada de acuerdo,Asertiva,3|7|8,directa,1,N
+Q004,Conjunto Horneviano,multiple_choice,likert,"Afirmación de prueba 4 (relleno de test, no es un ítem real).",Poco de acuerdo,Asertiva,3|7|8,directa,2,N
+Q004,Conjunto Horneviano,multiple_choice,likert,"Afirmación de prueba 4 (relleno de test, no es un ítem real).",Ni de acuerdo ni en desacuerdo,Asertiva,3|7|8,directa,3,N
+Q004,Conjunto Horneviano,multiple_choice,likert,"Afirmación de prueba 4 (relleno de test, no es un ítem real).",Bastante de acuerdo,Asertiva,3|7|8,directa,4,N
+Q004,Conjunto Horneviano,multiple_choice,likert,"Afirmación de prueba 4 (relleno de test, no es un ítem real).",Completamente de acuerdo,Asertiva,3|7|8,directa,5,N
+Q005,Conjunto Armónico,scenario,scenario,"Enunciado de prueba 5 (relleno de test, no es un ítem real).",Opción de prueba A.,Competente,1|3|5,n/a,1,N
+Q005,Conjunto Armónico,scenario,scenario,"Enunciado de prueba 5 (relleno de test, no es un ítem real).",Opción de prueba B.,Reactiva,4|6|8,n/a,2,N
+Q005,Conjunto Armónico,scenario,scenario,"Enunciado de prueba 5 (relleno de test, no es un ítem real).",Opción de prueba C.,Positiva,2|7|9,n/a,3,N
+Q006,Conjunto Armónico,multiple_choice,likert,"Afirmación de prueba 6 (relleno de test, no es un ítem real).",Nada de acuerdo,Positiva,2|7|9,directa,1,N
+Q006,Conjunto Armónico,multiple_choice,likert,"Afirmación de prueba 6 (relleno de test, no es un ítem real).",Poco de acuerdo,Positiva,2|7|9,directa,2,N
+Q006,Conjunto Armónico,multiple_choice,likert,"Afirmación de prueba 6 (relleno de test, no es un ítem real).",Ni de acuerdo ni en desacuerdo,Positiva,2|7|9,directa,3,N
+Q006,Conjunto Armónico,multiple_choice,likert,"Afirmación de prueba 6 (relleno de test, no es un ítem real).",Bastante de acuerdo,Positiva,2|7|9,directa,4,N
+Q006,Conjunto Armónico,multiple_choice,likert,"Afirmación de prueba 6 (relleno de test, no es un ítem real).",Completamente de acuerdo,Positiva,2|7|9,directa,5,N
+Q007,Conjunto de Relaciones Objetales,scenario,scenario,"Enunciado de prueba 7 (relleno de test, no es un ítem real).",Opción de prueba A.,Frustración,1|4|7,n/a,1,N
+Q007,Conjunto de Relaciones Objetales,scenario,scenario,"Enunciado de prueba 7 (relleno de test, no es un ítem real).",Opción de prueba B.,Rechazo,2|5|8,n/a,2,N
+Q007,Conjunto de Relaciones Objetales,scenario,scenario,"Enunciado de prueba 7 (relleno de test, no es un ítem real).",Opción de prueba C.,Apego,3|6|9,n/a,3,N
+Q008,Conjunto de Relaciones Objetales,multiple_choice,likert,"Afirmación de prueba 8 (relleno de test, no es un ítem real).",Nada de acuerdo,Frustración,1|4|7,directa,1,N
+Q008,Conjunto de Relaciones Objetales,multiple_choice,likert,"Afirmación de prueba 8 (relleno de test, no es un ítem real).",Poco de acuerdo,Frustración,1|4|7,directa,2,N
+Q008,Conjunto de Relaciones Objetales,multiple_choice,likert,"Afirmación de prueba 8 (relleno de test, no es un ítem real).",Ni de acuerdo ni en desacuerdo,Frustración,1|4|7,directa,3,N
+Q008,Conjunto de Relaciones Objetales,multiple_choice,likert,"Afirmación de prueba 8 (relleno de test, no es un ítem real).",Bastante de acuerdo,Frustración,1|4|7,directa,4,N
+Q008,Conjunto de Relaciones Objetales,multiple_choice,likert,"Afirmación de prueba 8 (relleno de test, no es un ítem real).",Completamente de acuerdo,Frustración,1|4|7,directa,5,N
