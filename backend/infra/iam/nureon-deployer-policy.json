@@ -68,6 +68,8 @@
         "rds:RebootDBInstance",
         "rds:DeleteDBInstance",
         "rds:CreateDBSnapshot",
+        "rds:DeleteDBSnapshot",
+        "rds:DeleteDBInstanceAutomatedBackup",
         "rds:RestoreDBInstanceFromDBSnapshot",
         "rds:AddTagsToResource"
       ],
