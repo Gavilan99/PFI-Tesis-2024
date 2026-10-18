@@ -1,0 +1,20 @@
+# Build context is the repository root (docker build -f backend/Dockerfile .). BuildKit reads this
+# file because it sits next to the Dockerfile. Allowlist: everything is out unless named below.
+*
+
+!backend/requirements.txt
+!backend/alembic.ini
+!backend/wsgi.py
+!backend/migrations
+!backend/scripts
+!backend/app
+!research/bank/NureonAI Prototype v4.1.2.csv
+
+# Never in the image, even inside an allowed folder.
+**/.env
+**/.env.*
+**/__pycache__
+**/*.py[cod]
+backend/app/**/tests
+# The filler (version 0) is never loaded in production: it is not even in the image.
+backend/scripts/seed_filler_bank.py

@@ -80,8 +80,11 @@ python -m app.ml.legacy.train     # reentrena el árbol de 2024 y lo compara con
 
 ## Variables de entorno
 
-Ver [.env.example](./.env.example). En `production`, `SECRET_KEY`, `DATABASE_URL` y
+Ver [.env.example](./.env.example). En `production`, `SECRET_KEY`, la base y
 `CORS_ALLOWED_ORIGINS` son obligatorias: si falta alguna, la app no arranca y lo dice por nombre.
+La base va como `DATABASE_URL` o por partes (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`,
+`DB_PASSWORD`, `DB_SSLMODE`, con TLS por defecto), que es como la inyecta ECS desde el secreto de
+RDS. El despliegue está en [docs/deploy-runbook.md](./docs/deploy-runbook.md).
 En `development` y `test` tienen valores por defecto de uso local, no aptos para producción.
 
 ## Cuentas e identidad

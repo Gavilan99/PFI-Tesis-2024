@@ -24,8 +24,8 @@ def submit_contact_message():
     contact.send_contact_message(
         current_app.extensions["mail_sender"],
         current_app.extensions["contact_rate_limiter"],
-        # The connecting address. Behind the ALB (Feature 8) this needs ProxyFix, or every request
-        # shares the balancer's address and the limit becomes global.
+        # The visitor's address. Behind the ALB, ProxyFix (TRUSTED_PROXY_HOPS) rewrites it from the
+        # entry the ALB appended to X-Forwarded-For; without it every visitor would share one counter.
         origin=request.remote_addr or "unknown",
         name=data.name,
         email=data.email,
