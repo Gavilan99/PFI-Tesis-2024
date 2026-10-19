@@ -15,7 +15,8 @@ mensaje genérico en español.
 tabla de abajo, el conjunto de claves de la respuesta es *igual* al de la interfaz TypeScript con la
 que el frontend la lee. Las claves esperadas no están copiadas en el test: se leen de los `.ts` del
 frontend, así que un campo agregado o sacado de cualquiera de los dos lados lo rompe. Lo mismo para
-las dos rutas de los cortes (Feature 9), que todavía no tienen método en `ApiService`: ver
+las dos rutas de los cortes (Feature 9), con su método en `ApiService` desde la Feature 10
+(`continueTestAttempt` y `getCutStatus`), en un test aparte porque necesitan el tier pago: ver
 [Feature 9](#feature-9-cortes-fijos).
 
 ## Las catorce rutas y `HttpApiService`
@@ -324,10 +325,10 @@ Un `{id}` que no es un UUID responde `404 NOT_FOUND`.
 El test se sirve en tres cortes fijos y anidados de **40, 90 y 145 ítems** (bloques de 40 + 50 + 55).
 Después de cada corte la persona ve la precisión estimada del corte que terminó y la del siguiente, y
 elige entre ver su resultado o seguir. El corte 1 es el nivel gratuito; el 2 y el 3 requieren tier
-pago (una suscripción `active` con `current_period_end` vacío o futuro). Estas dos rutas todavía no
-tienen método en `ApiService` (Feature 10); sus formas sí están en el frontend.
+pago (una suscripción `active` con `current_period_end` vacío o futuro). Desde la Feature 10 las dos
+rutas tienen método en `ApiService`; `HttpApiService` no hace nada además de la llamada.
 
-### `POST /api/attempts/{id}/continue`
+### `POST /api/attempts/{id}/continue` — `continueTestAttempt(attemptId)`
 
 Sin cuerpo (o `{}`). Sirve el corte siguiente y responde con **el intento en el que sigue el test**:
 
@@ -354,7 +355,7 @@ Los 409 se evalúan antes que el 402: el pago sólo importa si lo demás permite
 `ATTEMPT_NOT_CONTINUABLE` cubre un intento `abandoned`, un cerrado que no es el último cerrado de la
 persona, y uno cuya versión del cuestionario ya no está activa.
 
-### `GET /api/attempts/{id}/cut`
+### `GET /api/attempts/{id}/cut` — `getCutStatus(attemptId)`
 
 Para la pantalla entre cortes y la de resultado; responde en cualquier estado del intento. `200` con
 `CutStatus` (igual a `cut-status.model.ts`):
@@ -459,8 +460,6 @@ frontend.
 | `GET /api/health/ready` | Readiness: `503 SERVICE_UNAVAILABLE` si no hay base |
 | `GET /api/users/me` | El `User` del token. El frontend no lo usa |
 | `DELETE /api/users/me` | Borrado con anonimización (Ley 25.326). Sin pantalla todavía (PA-7) |
-| `POST /api/attempts/{id}/continue` | Seguir al corte siguiente. Pantalla y método de `ApiService`: Feature 10 |
-| `GET /api/attempts/{id}/cut` | Estado del corte. Pantalla y método de `ApiService`: Feature 10 |
 
 Al revés no hay huecos: todo método de `ApiService` tiene su ruta. Pagos (Feature 6) no existe todavía,
 ni en el contrato ni en el backend: el tier pago sale de filas de `subscriptions` dadas de alta a mano

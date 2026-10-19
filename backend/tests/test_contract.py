@@ -6,12 +6,11 @@ The expected keys are not written here. They are parsed from the frontend's own 
 field added or removed on either side fails this test. Equality, not containment: a key too many is as
 much a defect as a key too few.
 
-One request per `ApiService` method, fourteen in all, with the local identity and the filler bank. A
-test also checks that the fourteen here are exactly the methods `ApiService` declares.
-
-The two routes of the fixed item cuts (Feature 9) have no `ApiService` method yet (that is Feature 10),
-only their interfaces: `POST /api/attempts/{id}/continue` answers a `TestAttempt`, and
-`GET /api/attempts/{id}/cut` a `CutStatus` (cut-status.model.ts). They have their own test below.
+One request per `ApiService` method, with the local identity and the filler bank: fourteen in the first
+test, and the two of the fixed item cuts (Feature 9, methods since Feature 10) in their own test below,
+since they need the paid tier. `continueTestAttempt` answers a `TestAttempt` and `getCutStatus` a
+`CutStatus` (cut-status.model.ts). Between them, the two tests check that every method `ApiService`
+declares is covered.
 """
 
 import re
@@ -65,6 +64,10 @@ def ts_keys(file: str, name: str, folder: Path = MODELS) -> set[str]:
 
 def ts_methods(file: str, name: str, folder: Path = SERVICES) -> set[str]:
     return {m.group(1) for line in _interface_body(folder / file, name) if (m := _METHOD.match(line))}
+
+
+# The methods of the cut routes, covered by their own test.
+CUT_METHODS = {"continueTestAttempt", "getCutStatus"}
 
 
 @pytest.fixture(scope="module")
@@ -213,7 +216,9 @@ def test_every_route_answers_exactly_the_shape_of_its_interface(api, question_ba
     )
     checked["submitContactMessage"] = _empty(response)
 
-    assert set(checked) == ts_methods("api.service.ts", "ApiService"), "a method of ApiService is not covered"
+    assert set(checked) == ts_methods("api.service.ts", "ApiService") - CUT_METHODS, (
+        "a method of ApiService is not covered"
+    )
     assert [name for name, ok in checked.items() if not ok] == []
 
 
@@ -234,26 +239,28 @@ def test_the_cut_routes_answer_exactly_their_interfaces(api, question_bank, db_s
             assert api.post(f"{attempt_url}/responses", headers=headers, json=body).status_code == 200
 
     checked = {}
-    # GET /api/attempts/{id}/cut, in progress.
+    # getCutStatus(attemptId) -> GET /api/attempts/{id}/cut, in progress.
     response = api.get(f"{attempt_url}/cut", headers=headers)
     assert response.status_code == 200, response.get_json()
-    checked["cut in progress"] = _keys(response.get_json()) == shapes["CutStatus"]
+    checked["getCutStatus in progress"] = _keys(response.get_json()) == shapes["CutStatus"]
 
-    # POST /api/attempts/{id}/continue, in progress: 200 with the same attempt.
+    # continueTestAttempt(attemptId) -> POST /api/attempts/{id}/continue, in progress: 200, same attempt.
     answer_served()
     give_paid_tier(db_session, user["id"])
     response = api.post(f"{attempt_url}/continue", headers=headers)
     assert response.status_code == 200, response.get_json()
-    checked["continue in progress"] = _keys(response.get_json()) == shapes["TestAttempt"]
+    checked["continueTestAttempt in progress"] = _keys(response.get_json()) == shapes["TestAttempt"]
 
     # Closed: the cut status still answers, and continuing gives the new attempt with 201.
     answer_served()
     assert api.post(f"{attempt_url}/complete", headers=headers).status_code == 200
     response = api.get(f"{attempt_url}/cut", headers=headers)
     assert response.status_code == 200, response.get_json()
-    checked["cut closed"] = _keys(response.get_json()) == shapes["CutStatus"]
+    checked["getCutStatus closed"] = _keys(response.get_json()) == shapes["CutStatus"]
     response = api.post(f"{attempt_url}/continue", headers=headers)
     assert response.status_code == 201, response.get_json()
-    checked["continue closed"] = _keys(response.get_json()) == shapes["TestAttempt"]
+    checked["continueTestAttempt closed"] = _keys(response.get_json()) == shapes["TestAttempt"]
 
+    assert {name.split()[0] for name in checked} == CUT_METHODS
+    assert CUT_METHODS <= ts_methods("api.service.ts", "ApiService"), "a cut method is missing from ApiService"
     assert [name for name, ok in checked.items() if not ok] == []

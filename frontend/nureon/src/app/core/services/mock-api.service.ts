@@ -11,11 +11,25 @@ import { User, UpdateProfileInput, withEmptyProfile } from '../models/user.model
 import { LoginInput, RegisterInput } from '../models/auth.model';
 import { SubmitFeedbackInput } from '../models/feedback.model';
 import { SubmitContactMessageInput } from '../models/contact-message.model';
+import { CutStatus } from '../models/cut-status.model';
+import { ApiError, PAID_TIER_REQUIRED } from './api-error';
+import { CUT_ENDS, cutOfServed } from '../cuts/cut-plan';
 
 // Seeded so the error paths (duplicate email on registro, wrong credentials
 // on ingreso) are testable without having to register twice by hand.
 const DEMO_ACCOUNT_EMAIL = 'demo@nureon.ai';
 const DEMO_ACCOUNT_PASSWORD = 'Demo1234';
+
+// Feature 10: an account with the paid tier, so build:demo can walk the
+// cuts past the first one (the backend's equivalent is a subscription given
+// by scripts/grant_subscription.py). Starts with no attempts.
+const PREMIUM_ACCOUNT_EMAIL = 'premium@nureon.ai';
+const PREMIUM_ACCOUNT_PASSWORD = 'Demo1234';
+const PREMIUM_USER_ID = 'user-premium';
+
+// Example accuracies per cut, 0-1: the real ones come from the trained
+// models' precision_by_items.json. Same shape, made-up numbers.
+const MOCK_CUT_ACCURACY = [0.62, 0.71, 0.77];
 
 const MOCK_DELAY_MS = 150;
 
@@ -63,6 +77,12 @@ interface PersistedState {
   // multi-account registration and exposed the bug: with only one implicit
   // session, nobody noticed every user's attempts lived in one shared space.
   latestAttemptIdByUser: Record<string, string>;
+  // Feature 10, the fixed cuts. How many items each attempt has been served
+  // (one of CUT_ENDS; an attempt persisted before this existed counts as
+  // 40), which attempt continued which, and who has the paid tier.
+  servedByAttempt: Record<string, number>;
+  continuedFromByAttempt: Record<string, string>;
+  premiumUserIds: string[];
   nextId: number;
 }
 
@@ -106,21 +126,55 @@ function defaultState(): PersistedState {
         generatedAt: attempt.completedAt!,
       },
     },
-    usersByEmail: {
-      [DEMO_ACCOUNT_EMAIL]: {
-        password: DEMO_ACCOUNT_PASSWORD,
-        user: withEmptyProfile({
-          id: DEMO_USER_ID,
-          displayName: 'Cuenta demo',
-          email: DEMO_ACCOUNT_EMAIL,
-        }),
-      },
-    },
+    usersByEmail: seededAccounts(),
     feedback: [],
     contactMessages: [],
     latestAttemptIdByUser: { [DEMO_USER_ID]: attempt.id },
+    servedByAttempt: { [attempt.id]: CUT_ENDS[0] },
+    continuedFromByAttempt: {},
+    premiumUserIds: [PREMIUM_USER_ID],
     nextId: 1,
   };
+}
+
+function seededAccounts(): PersistedState['usersByEmail'] {
+  return {
+    [DEMO_ACCOUNT_EMAIL]: {
+      password: DEMO_ACCOUNT_PASSWORD,
+      user: withEmptyProfile({ id: DEMO_USER_ID, displayName: 'Cuenta demo', email: DEMO_ACCOUNT_EMAIL }),
+    },
+    [PREMIUM_ACCOUNT_EMAIL]: {
+      password: PREMIUM_ACCOUNT_PASSWORD,
+      user: withEmptyProfile({
+        id: PREMIUM_USER_ID,
+        displayName: 'Cuenta premium',
+        email: PREMIUM_ACCOUNT_EMAIL,
+      }),
+    },
+  };
+}
+
+// The fixture has 40 questions, one cut's worth. Cuts 2 and 3 (50 + 55
+// more) recycle them in order, under derived ids so every served item is
+// still its own question with its own options: the counts on screen are the
+// real ones (40 / 90 / 145) and the demo walks the same flow as production.
+function servedPool(fixture: Question[]): Question[] {
+  const total = CUT_ENDS[CUT_ENDS.length - 1];
+  return Array.from({ length: total }, (_, index) => {
+    const base = fixture[index % fixture.length];
+    const round = Math.floor(index / fixture.length);
+    const id = round === 0 ? base.id : `${base.id}-r${round}`;
+    return {
+      ...base,
+      id,
+      displayOrder: index + 1,
+      answerOptions: base.answerOptions.map((option) => ({
+        ...option,
+        id: round === 0 ? option.id : `${option.id}-r${round}`,
+        questionId: id,
+      })),
+    };
+  });
 }
 
 function hashCode(value: string): number {
@@ -192,34 +246,39 @@ export class MockApiService implements ApiService {
       startedAt: new Date().toISOString(),
       completedAt: null,
     };
+    this.abandonInProgress(userId);
     this.state.attempts[id] = attempt;
     this.state.responsesByAttempt[id] = [];
+    this.state.servedByAttempt[id] = CUT_ENDS[0];
     this.state.latestAttemptIdByUser[userId] = id;
     this.saveState();
     return of(attempt).pipe(delay(MOCK_DELAY_MS));
   }
 
-  getQuestions(_attemptId: string): Observable<Question[]> {
+  getQuestions(attemptId: string): Observable<Question[]> {
     if (!this.questions$) {
       this.questions$ = this.http.get<QuestionFixtureFile>(QUESTIONS_ASSET_URL).pipe(
         map((fixture) =>
-          fixture.questions.map((q) => ({
-            id: q.id,
-            questionType: q.questionType,
-            promptText: q.promptText,
-            displayOrder: q.displayOrder,
-            answerOptions: q.options.map((o) => ({
-              id: o.id,
-              questionId: q.id,
-              optionText: o.optionText,
-              displayOrder: o.displayOrder,
+          servedPool(
+            fixture.questions.map((q) => ({
+              id: q.id,
+              questionType: q.questionType,
+              promptText: q.promptText,
+              displayOrder: q.displayOrder,
+              answerOptions: q.options.map((o) => ({
+                id: o.id,
+                questionId: q.id,
+                optionText: o.optionText,
+                displayOrder: o.displayOrder,
+              })),
             })),
-          })),
+          ),
         ),
         shareReplay(1),
       );
     }
-    return this.questions$;
+    // Everything served so far, like the backend: 40, 90 or 145 items.
+    return this.questions$.pipe(map((pool) => pool.slice(0, this.served(attemptId))));
   }
 
   submitResponse(attemptId: string, response: NewResponseInput): Observable<TestResponse> {
@@ -276,6 +335,70 @@ export class MockApiService implements ApiService {
     return of(attempt).pipe(delay(MOCK_DELAY_MS));
   }
 
+  // Same rules, in the same order, as the backend's continue route: state
+  // first, the tier only when the rest allows it.
+  continueTestAttempt(attemptId: string): Observable<TestAttempt> {
+    const attempt = this.state.attempts[attemptId];
+    if (!attempt) {
+      return throwError(() => new ApiError('El intento no existe.', 'ATTEMPT_NOT_FOUND', 404));
+    }
+    const blocked = this.continuationBlock(attempt);
+    if (blocked) {
+      return throwError(() => blocked);
+    }
+    const nextServed = CUT_ENDS[cutOfServed(this.served(attemptId))];
+    if (attempt.status === 'in_progress') {
+      attempt.tier = 'paid_full';
+      this.state.servedByAttempt[attemptId] = nextServed;
+      this.saveState();
+      return of(attempt).pipe(delay(MOCK_DELAY_MS));
+    }
+    const userId = attempt.userId!;
+    this.abandonInProgress(userId);
+    const id = `attempt-${this.state.nextId++}`;
+    const continued: TestAttempt = {
+      ...attempt,
+      id,
+      tier: 'paid_full',
+      status: 'in_progress',
+      startedAt: new Date().toISOString(),
+      completedAt: null,
+    };
+    this.state.attempts[id] = continued;
+    this.state.responsesByAttempt[id] = (this.state.responsesByAttempt[attemptId] ?? []).map((r) => ({
+      ...r,
+      id: `response-${this.state.nextId++}`,
+      testAttemptId: id,
+    }));
+    this.state.servedByAttempt[id] = nextServed;
+    this.state.continuedFromByAttempt[id] = attemptId;
+    this.state.latestAttemptIdByUser[userId] = id;
+    this.saveState();
+    return of(continued).pipe(delay(MOCK_DELAY_MS));
+  }
+
+  getCutStatus(attemptId: string): Observable<CutStatus> {
+    const attempt = this.state.attempts[attemptId];
+    if (!attempt) {
+      return throwError(() => new ApiError('El intento no existe.', 'ATTEMPT_NOT_FOUND', 404));
+    }
+    const served = this.served(attemptId);
+    const cut = cutOfServed(served);
+    const isLast = cut >= CUT_ENDS.length;
+    const status: CutStatus = {
+      currentCut: cut,
+      cutCount: CUT_ENDS.length,
+      servedItems: served,
+      answeredItems: this.answered(attemptId),
+      nextCutItems: isLast ? null : CUT_ENDS[cut] - served,
+      canContinue: this.continuationBlock(attempt) === null,
+      currentCutAccuracy: MOCK_CUT_ACCURACY[cut - 1],
+      nextCutAccuracy: isLast ? null : MOCK_CUT_ACCURACY[cut],
+      continuedByAttemptId: this.continuedBy(attemptId),
+    };
+    return of(status).pipe(delay(MOCK_DELAY_MS));
+  }
+
   getResult(attemptId: string): Observable<Result> {
     const result = this.state.resultsByAttempt[attemptId];
     if (!result) {
@@ -325,6 +448,64 @@ export class MockApiService implements ApiService {
     return of(undefined).pipe(delay(MOCK_DELAY_MS));
   }
 
+  private served(attemptId: string): number {
+    return this.state.servedByAttempt[attemptId] ?? CUT_ENDS[0];
+  }
+
+  private answered(attemptId: string): number {
+    return (this.state.responsesByAttempt[attemptId] ?? []).filter((r) => r.selectedOptionId).length;
+  }
+
+  private continuedBy(attemptId: string): string | null {
+    const entry = Object.entries(this.state.continuedFromByAttempt).find(([, from]) => from === attemptId);
+    return entry ? entry[0] : null;
+  }
+
+  private abandonInProgress(userId: string): void {
+    for (const attempt of Object.values(this.state.attempts)) {
+      if (attempt.userId === userId && attempt.status === 'in_progress') {
+        attempt.status = 'abandoned';
+      }
+    }
+  }
+
+  private latestCompletedId(userId: string): string | null {
+    const completed = Object.values(this.state.attempts)
+      .filter((a) => a.userId === userId && a.status === 'completed')
+      .sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime());
+    return completed[0]?.id ?? null;
+  }
+
+  // Why `attempt` can't go on to the next cut, or null if it can: what
+  // canContinue reports and what continueTestAttempt rejects with. Same
+  // codes as the backend; one message for the 409s, which the screens never
+  // show (they have their own text for any error but the paid tier).
+  private continuationBlock(attempt: TestAttempt): ApiError | null {
+    const served = this.served(attempt.id);
+    const conflict = (code: string) => new ApiError('Este intento no se puede seguir.', code, 409);
+    if (attempt.status === 'abandoned') {
+      return conflict('ATTEMPT_NOT_CONTINUABLE');
+    }
+    if (cutOfServed(served) >= CUT_ENDS.length) {
+      return conflict('LAST_CUT_REACHED');
+    }
+    if (this.answered(attempt.id) < served) {
+      return conflict('CUT_INCOMPLETE');
+    }
+    if (attempt.status === 'completed') {
+      if (this.continuedBy(attempt.id)) {
+        return conflict('ATTEMPT_ALREADY_CONTINUED');
+      }
+      if (this.latestCompletedId(attempt.userId!) !== attempt.id) {
+        return conflict('ATTEMPT_NOT_CONTINUABLE');
+      }
+    }
+    if (!this.state.premiumUserIds.includes(attempt.userId!)) {
+      return new ApiError('Para seguir con más preguntas necesitás una suscripción activa.', PAID_TIER_REQUIRED, 402);
+    }
+    return null;
+  }
+
   private loadState(): PersistedState {
     if (!this.isBrowser) {
       return defaultState();
@@ -334,7 +515,15 @@ export class MockApiService implements ApiService {
       if (!raw) {
         return defaultState();
       }
-      return { ...defaultState(), ...JSON.parse(raw) };
+      const persisted = JSON.parse(raw) as Partial<PersistedState>;
+      const defaults = defaultState();
+      // A state saved before an account was seeded still gets it.
+      return {
+        ...defaults,
+        ...persisted,
+        usersByEmail: { ...seededAccounts(), ...persisted.usersByEmail },
+        premiumUserIds: defaults.premiumUserIds,
+      };
     } catch {
       return defaultState();
     }

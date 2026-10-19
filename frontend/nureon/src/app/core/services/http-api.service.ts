@@ -4,6 +4,7 @@ import { Observable, catchError, map, of, tap, throwError } from 'rxjs';
 import { ApiService } from './api.service';
 import { environment } from '../../../environments/environment';
 import { SessionTokenStore } from '../auth/session-token.store';
+import { ApiError } from './api-error';
 import { Question } from '../models/question.model';
 import { TestAttempt } from '../models/test-attempt.model';
 import { NewResponseInput, TestResponse } from '../models/response.model';
@@ -12,6 +13,11 @@ import { User, UpdateProfileInput } from '../models/user.model';
 import { LoginInput, RegisterInput } from '../models/auth.model';
 import { SubmitFeedbackInput } from '../models/feedback.model';
 import { SubmitContactMessageInput } from '../models/contact-message.model';
+import { CutStatus } from '../models/cut-status.model';
+
+// Moved to api-error.ts so MockApiService can reject with it too; re-exported
+// so existing imports keep working.
+export { ApiError } from './api-error';
 
 // What register and login answer: the User of the contract, plus the access
 // token beside it. Only the User goes on to AuthService; the token stays in
@@ -25,20 +31,6 @@ interface AuthResponse {
 // The backend's single error shape — see backend/docs/api-contract.md.
 interface ApiErrorBody {
   error: { code: string; message: string };
-}
-
-// The Error every method rejects with. `message` is Spanish and meant to be
-// shown as is (the registro and ingreso forms already do); `code` and
-// `status` are there for whoever needs to tell errors apart.
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    readonly code: string,
-    readonly status: number,
-  ) {
-    super(message);
-    this.name = 'ApiError';
-  }
 }
 
 const NETWORK_ERROR_MESSAGE = 'No pudimos conectarnos con el servidor. Probá de nuevo en unos minutos.';
@@ -112,6 +104,18 @@ export class HttpApiService implements ApiService {
   completeTestAttempt(attemptId: string): Observable<TestAttempt> {
     return this.http
       .post<TestAttempt>(this.url(`/api/attempts/${encodeURIComponent(attemptId)}/complete`), null)
+      .pipe(catchError(toApiError));
+  }
+
+  continueTestAttempt(attemptId: string): Observable<TestAttempt> {
+    return this.http
+      .post<TestAttempt>(this.url(`/api/attempts/${encodeURIComponent(attemptId)}/continue`), null)
+      .pipe(catchError(toApiError));
+  }
+
+  getCutStatus(attemptId: string): Observable<CutStatus> {
+    return this.http
+      .get<CutStatus>(this.url(`/api/attempts/${encodeURIComponent(attemptId)}/cut`))
       .pipe(catchError(toApiError));
   }
 

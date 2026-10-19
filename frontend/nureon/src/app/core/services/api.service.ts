@@ -8,6 +8,7 @@ import { User, UpdateProfileInput } from '../models/user.model';
 import { LoginInput, RegisterInput } from '../models/auth.model';
 import { SubmitFeedbackInput } from '../models/feedback.model';
 import { SubmitContactMessageInput } from '../models/contact-message.model';
+import { CutStatus } from '../models/cut-status.model';
 
 // Frontend-facing contract only — see PDR — NureonAI Data Model for the full
 // DB schema. Components depend on this interface and the API_SERVICE token,
@@ -41,6 +42,16 @@ export interface ApiService {
   // and what was selected, without re-deriving it from anything else.
   getResponses(attemptId: string): Observable<TestResponse[]>;
   completeTestAttempt(attemptId: string): Observable<TestAttempt>;
+  // The test is served in three fixed, nested cuts (40 / 90 / 145 items).
+  // Serves the next cut and answers the attempt the test goes on in: the
+  // same one if it was in progress, or a new one linked to it if it was
+  // closed (its answers come along, its result stays). Rejects with an
+  // ApiError whose code is PAID_TIER_REQUIRED when the account's tier
+  // doesn't include that cut (see api-error.ts).
+  continueTestAttempt(attemptId: string): Observable<TestAttempt>;
+  // Where the attempt stands in the cuts, in any status: for the screen
+  // between cuts and the result screen.
+  getCutStatus(attemptId: string): Observable<CutStatus>;
   getResult(attemptId: string): Observable<Result>;
   // Most recent attempt for this user, or null if none exists yet. Drives the
   // user-journey state machine (UserJourneyStateService).
