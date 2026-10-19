@@ -1,0 +1,40 @@
+<section class="between-cuts" aria-live="polite">
+  <h1 class="nureon-heading">{{ copy.finishedPart(status.currentCut, status.cutCount) }}</h1>
+
+  @if (currentPercent !== null) {
+    <p class="between-cuts__accuracy">{{ copy.currentAccuracy(status.answeredItems, currentPercent) }}</p>
+  }
+
+  @if (canContinue) {
+    @if (nextPercent !== null) {
+      <p class="between-cuts__accuracy">{{ copy.nextAccuracy(moreItems, nextPercent) }}</p>
+    }
+    <div class="between-cuts__actions">
+      <app-brand-button variant="primary" [disabled]="busy" (click)="!busy && seeResult.emit()">
+        {{ copy.seeResult }}
+      </app-brand-button>
+      <app-brand-button variant="secondary" [disabled]="busy" (click)="!busy && continue.emit()">
+        {{ copy.continueWith(moreItems) }}
+      </app-brand-button>
+    </div>
+  } @else if (showPlans) {
+    <p class="between-cuts__plans">
+      {{ copy.plansCanContinue(moreItems, nextPercent) }}
+      {{ copy.plansIncludedParts(status.currentCut + 1, status.cutCount) }}
+    </p>
+    <div class="between-cuts__actions">
+      <span class="between-cuts__premium">
+        <app-brand-button variant="secondary" [disabled]="true">{{ copy.goPremium }}</app-brand-button>
+        <span class="between-cuts__soon">{{ copy.comingSoon }}</span>
+      </span>
+      <app-brand-button variant="primary" [disabled]="busy" (click)="!busy && seeResult.emit()">
+        {{ copy.seeResult }}
+      </app-brand-button>
+    </div>
+  }
+
+  <div class="between-cuts__feedback">
+    <h2>¿Qué te pareció el test?</h2>
+    <app-feedback-form [testAttemptId]="attemptId"></app-feedback-form>
+  </div>
+</section>

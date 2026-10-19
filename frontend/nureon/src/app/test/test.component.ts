@@ -1,9 +1,14 @@
 import { Component, HostListener, Inject, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { API_SERVICE, ApiService } from '../core/services/api.service';
+import { isPaidTierRequired } from '../core/services/api-error';
 import { AuthService } from '../core/services/auth.service';
 import { Question } from '../core/models/question.model';
 import { TestAttempt } from '../core/models/test-attempt.model';
+import { CutStatus } from '../core/models/cut-status.model';
+import { CUT_COPY } from '../core/cuts/cut-copy';
+import { cutStart, hasNextCut } from '../core/cuts/cut-plan';
 import { PageContainerComponent } from '../shared/layout/page-container/page-container.component';
 import { ProgressBarComponent } from '../shared/components/progress-bar/progress-bar.component';
 import { ErrorStateComponent } from '../shared/components/error-state/error-state.component';
@@ -12,6 +17,7 @@ import { BrandButtonComponent } from '../shared/components/brand-button/brand-bu
 import { ScenarioItemComponent } from './scenario-item/scenario-item.component';
 import { LikertItemComponent } from './likert-item/likert-item.component';
 import { FeedbackFormComponent } from '../shared/components/feedback-form/feedback-form.component';
+import { BetweenCutsComponent } from './between-cuts/between-cuts.component';
 
 // CU003 — El test. One item per screen, auto-advance on select (the one
 // thing rescued from the old test component), progress always visible,
@@ -19,6 +25,11 @@ import { FeedbackFormComponent } from '../shared/components/feedback-form/feedba
 // shortcuts, save-as-you-go so a reload resumes. Dispatches to a renderer
 // per questionType — adding 'ordering'/'text' later means adding a
 // renderer, not touching this component.
+//
+// Feature 10: the test is served in three fixed cuts (40 / 90 / 145 items).
+// Progress counts within the current cut, going back stops at its first
+// item, and answering its last item opens the screen between cuts instead
+// of closing the attempt, except on the last cut, which closes as before.
 @Component({
   selector: 'app-test',
   standalone: true,
@@ -31,6 +42,7 @@ import { FeedbackFormComponent } from '../shared/components/feedback-form/feedba
     ScenarioItemComponent,
     LikertItemComponent,
     FeedbackFormComponent,
+    BetweenCutsComponent,
   ],
   templateUrl: './test.component.html',
   styleUrl: './test.component.scss',
@@ -46,9 +58,18 @@ export class TestComponent implements OnInit {
   attemptId: string | null = null;
   private readonly selections = new Map<string, string>();
 
+  // Where the attempt stands in the cuts; refreshed when a cut is finished,
+  // since canContinue only turns true once every served item is answered.
+  cut: CutStatus | null = null;
+  betweenCuts = false;
+  // Closing or continuing from the screen between cuts is in flight.
+  busy = false;
+  paidTierRequired = false;
+
   constructor(
     @Inject(API_SERVICE) private readonly api: ApiService,
     private readonly auth: AuthService,
+    private readonly router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -57,6 +78,25 @@ export class TestComponent implements OnInit {
 
   get currentQuestion(): Question | null {
     return this.questions[this.currentIndex] ?? null;
+  }
+
+  // Index of the current cut's first item among everything served. An
+  // attempt whose served count isn't on the plan counts from the start.
+  get cutStartIndex(): number {
+    const start = this.cut ? cutStart(this.cut.currentCut) : 0;
+    return start < this.questions.length ? start : 0;
+  }
+
+  get progressPrefix(): string {
+    return this.cut ? CUT_COPY.progressPrefix(this.cut.currentCut, this.cut.cutCount) : '';
+  }
+
+  get progressCurrent(): number {
+    return this.currentIndex - this.cutStartIndex + 1;
+  }
+
+  get progressTotal(): number {
+    return this.questions.length - this.cutStartIndex;
   }
 
   get selectedOptionId(): string | null {
@@ -87,10 +127,46 @@ export class TestComponent implements OnInit {
       });
   }
 
+  // Within the current cut: the previous cuts' answers are already behind
+  // the screen between cuts (and, from a closed attempt, behind its result).
   goBack(): void {
-    if (this.currentIndex > 0) {
+    if (this.currentIndex > this.cutStartIndex) {
       this.currentIndex--;
     }
+  }
+
+  // "Ver mi resultado" between cuts: closes the attempt in the cut it's in
+  // and goes straight to the result, one click, like the end of the test.
+  seeResult(): void {
+    if (!this.attemptId || this.busy) {
+      return;
+    }
+    this.busy = true;
+    this.api.completeTestAttempt(this.attemptId).subscribe({
+      next: () => this.router.navigateByUrl('/resultados'),
+      error: () => this.fail(),
+    });
+  }
+
+  continueToNextCut(): void {
+    if (!this.attemptId || this.busy) {
+      return;
+    }
+    this.busy = true;
+    this.api.continueTestAttempt(this.attemptId).subscribe({
+      next: (attempt) => {
+        this.loading = true;
+        this.resume(attempt);
+      },
+      error: (error: unknown) => {
+        this.busy = false;
+        if (isPaidTierRequired(error)) {
+          this.paidTierRequired = true;
+          return;
+        }
+        this.fail(CUT_COPY.continueError);
+      },
+    });
   }
 
   // Digits select the option at that position (1-indexed, matching the
@@ -98,7 +174,7 @@ export class TestComponent implements OnInit {
   // on-screen legend — the badges are the only hint.
   @HostListener('window:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
-    if (this.loading || this.error || this.done) {
+    if (this.loading || this.error || this.done || this.betweenCuts) {
       return;
     }
     if (event.key === 'ArrowLeft') {
@@ -134,13 +210,18 @@ export class TestComponent implements OnInit {
     });
   }
 
+  // Also where a new attempt and a continued one land: whatever is served
+  // and answered, the test picks up at the first unanswered item. With the
+  // whole of a cut answered and a cut after it, that's the screen between
+  // cuts; with the whole of the last cut answered, its last item, as before.
   private resume(attempt: TestAttempt): void {
     this.attemptId = attempt.id;
     forkJoin({
       questions: this.api.getQuestions(attempt.id),
       responses: this.api.getResponses(attempt.id),
+      cut: this.api.getCutStatus(attempt.id),
     }).subscribe({
-      next: ({ questions, responses }) => {
+      next: ({ questions, responses, cut }) => {
         this.questions = [...questions].sort((a, b) => a.displayOrder - b.displayOrder);
         this.selections.clear();
         for (const response of responses) {
@@ -148,8 +229,12 @@ export class TestComponent implements OnInit {
             this.selections.set(response.questionId, response.selectedOptionId);
           }
         }
+        this.cut = cut;
+        this.busy = false;
+        this.paidTierRequired = false;
         const firstUnanswered = this.questions.findIndex((q) => !this.selections.has(q.id));
         this.currentIndex = firstUnanswered === -1 ? this.questions.length - 1 : firstUnanswered;
+        this.betweenCuts = firstUnanswered === -1 && hasNextCut(cut);
         this.loading = false;
       },
       error: () => this.fail(),
@@ -158,17 +243,7 @@ export class TestComponent implements OnInit {
 
   private startNew(userId: string): void {
     this.api.createTestAttempt(userId).subscribe({
-      next: (attempt) => {
-        this.attemptId = attempt.id;
-        this.api.getQuestions(attempt.id).subscribe({
-          next: (questions) => {
-            this.questions = [...questions].sort((a, b) => a.displayOrder - b.displayOrder);
-            this.currentIndex = 0;
-            this.loading = false;
-          },
-          error: () => this.fail(),
-        });
-      },
+      next: (attempt) => this.resume(attempt),
       error: () => this.fail(),
     });
   }
@@ -176,9 +251,24 @@ export class TestComponent implements OnInit {
   private advance(): void {
     if (this.currentIndex < this.questions.length - 1) {
       this.currentIndex++;
+    } else if (this.cut && hasNextCut(this.cut)) {
+      this.openBetweenCuts();
     } else {
       this.finish();
     }
+  }
+
+  private openBetweenCuts(): void {
+    if (!this.attemptId) {
+      return;
+    }
+    this.api.getCutStatus(this.attemptId).subscribe({
+      next: (cut) => {
+        this.cut = cut;
+        this.betweenCuts = true;
+      },
+      error: () => this.fail(),
+    });
   }
 
   private finish(): void {
@@ -193,8 +283,9 @@ export class TestComponent implements OnInit {
     });
   }
 
-  private fail(): void {
+  private fail(message = 'No pudimos cargar el test.'): void {
     this.loading = false;
-    this.error = 'No pudimos cargar el test.';
+    this.busy = false;
+    this.error = message;
   }
 }

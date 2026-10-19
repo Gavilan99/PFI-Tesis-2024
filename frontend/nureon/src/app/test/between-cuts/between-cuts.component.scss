@@ -1,0 +1,66 @@
+@use '../../../styles/tokens' as tokens;
+
+.between-cuts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--nureon-space-sm);
+  padding: var(--nureon-space-xl) 0;
+}
+
+.between-cuts__accuracy,
+.between-cuts__plans {
+  font: var(--nureon-text-body-lg-weight) var(--nureon-text-body-lg-size) /
+    var(--nureon-text-body-lg-line-height) var(--nureon-font-body);
+  max-width: 40rem;
+}
+
+.between-cuts__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--nureon-space-xs);
+  margin-top: var(--nureon-space-xs);
+  width: 100%;
+
+  @include tokens.nureon-from-tablet {
+    flex-direction: row;
+    align-items: center;
+    width: auto;
+  }
+}
+
+// On a phone every action is a full-width row, thumb-sized.
+.between-cuts__actions ::ng-deep .mdc-button {
+  width: 100%;
+}
+
+.between-cuts__premium {
+  display: flex;
+  align-items: center;
+  gap: var(--nureon-space-2xs);
+}
+
+.between-cuts__premium app-brand-button {
+  flex: 1;
+}
+
+.between-cuts__soon {
+  flex: none;
+  padding: var(--nureon-space-3xs) var(--nureon-space-2xs);
+  border-radius: var(--nureon-radius-full);
+  background: var(--nureon-amber);
+  font-size: var(--nureon-text-caption-size);
+  font-weight: var(--nureon-text-caption-weight);
+}
+
+.between-cuts__feedback {
+  margin-top: var(--nureon-space-lg);
+  width: 100%;
+}
+
+.between-cuts__feedback h2 {
+  font: var(--nureon-text-h3-weight) var(--nureon-text-h3-size) / var(--nureon-text-h3-line-height)
+    var(--nureon-text-h3-font);
+  margin-bottom: var(--nureon-space-xs);
+}
