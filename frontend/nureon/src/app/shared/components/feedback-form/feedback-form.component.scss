@@ -42,6 +42,9 @@ form {
 }
 
 .feedback-form__comment {
+  // Padding and border inside the 100%: without it the box overflowed its
+  // container by the border width and gave the page a horizontal scroll.
+  box-sizing: border-box;
   width: 100%;
   min-height: 72px;
   padding: var(--nureon-space-xs);
