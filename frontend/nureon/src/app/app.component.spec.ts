@@ -1,3 +1,4 @@
+import { NgZone } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { AsyncPipe } from '@angular/common';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -57,7 +58,9 @@ describe('AppComponent', () => {
         withEmptyProfile({ id: 'user-1', displayName: 'Cuenta de prueba', email: 'prueba@example.test' }),
       );
       fixture.detectChanges();
-      await router.navigateByUrl(url);
+      // Inside the zone, as a real navigation would be: outside it the router
+      // warns, and change detection wouldn't follow on its own.
+      await TestBed.inject(NgZone).run(() => router.navigateByUrl(url));
       await fixture.whenStable();
       fixture.detectChanges();
       return { fixture, router };
@@ -68,7 +71,7 @@ describe('AppComponent', () => {
         (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('app-header button'),
       ).find((b) => b.textContent?.includes('Cerrar sesión'));
       expect(button).withContext('"Cerrar sesión" in the header').toBeDefined();
-      button!.click();
+      TestBed.inject(NgZone).run(() => button!.click());
     }
 
     it('leaves a protected route for /ingresar', async () => {
