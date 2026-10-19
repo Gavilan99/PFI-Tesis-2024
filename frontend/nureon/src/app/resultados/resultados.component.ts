@@ -1,8 +1,12 @@
 import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
-import { Observable, Subscription, map, of, switchMap } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Observable, Subscription, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { API_SERVICE, ApiService } from '../core/services/api.service';
+import { isPaidTierRequired } from '../core/services/api-error';
+import { CutStatus } from '../core/models/cut-status.model';
+import { CUT_COPY } from '../core/cuts/cut-copy';
+import { hasNextCut } from '../core/cuts/cut-plan';
 import { AuthService } from '../core/services/auth.service';
 import { AttemptTier, TestAttempt } from '../core/models/test-attempt.model';
 import { AccountType } from '../core/models/user.model';
@@ -12,6 +16,7 @@ import { LoadingStateComponent } from '../shared/components/loading-state/loadin
 import { BrandButtonComponent } from '../shared/components/brand-button/brand-button.component';
 import { EnneagramDiagramComponent, ENEATYPE_STRUCTURE } from './enneagram-diagram/enneagram-diagram.component';
 import { FreemiumInfoDialogComponent } from './freemium-info-dialog/freemium-info-dialog.component';
+import { RefineResultComponent } from './refine-result/refine-result.component';
 import { ENEATYPE_CONTENT, EneatypeContent, FRAMING_TEXT } from './eneatype-content';
 
 // CU004 — layered reading, top to bottom: eneatype + name, one-line summary,
@@ -22,6 +27,11 @@ import { ENEATYPE_CONTENT, EneatypeContent, FRAMING_TEXT } from './eneatype-cont
 // Doubles as /resultados (latest completed attempt, fresh off the test) and
 // /resultados/:attemptId (a specific past attempt, RF08 history, Stage 7) —
 // same layered reading either way, only which attempt differs.
+//
+// Feature 10: below the reading, if the attempt has a next cut and hasn't
+// been continued, a block offers to refine the result with it. The answers
+// already given are kept: continuing a closed attempt makes a new one that
+// carries them, and this result stays in the history.
 @Component({
   selector: 'app-resultados',
   standalone: true,
@@ -32,6 +42,7 @@ import { ENEATYPE_CONTENT, EneatypeContent, FRAMING_TEXT } from './eneatype-cont
     BrandButtonComponent,
     EnneagramDiagramComponent,
     FreemiumInfoDialogComponent,
+    RefineResultComponent,
   ],
   templateUrl: './resultados.component.html',
   styleUrl: './resultados.component.scss',
@@ -55,15 +66,23 @@ export class ResultadosComponent implements OnInit {
   // once in ngOnInit kept showing A under B's URL.
   private attemptId: string | null = null;
   private loadSubscription: Subscription | null = null;
+  private refineSubscription: Subscription | null = null;
+  private loadedAttemptId: string | null = null;
 
   // See FreemiumInfoDialogComponent for what "Desbloquear mi perfil
   // completo" (RF09/RF10) actually opens.
   showFreemiumInfo = false;
 
+  // The "afinar tu resultado" block: null when it doesn't show. Loaded after
+  // the result and apart from it, so a failure here only hides the block.
+  refine: { status: CutStatus; canContinue: boolean } | null = null;
+  continuing = false;
+
   constructor(
     @Inject(API_SERVICE) private readonly api: ApiService,
     private readonly auth: AuthService,
     private readonly route: ActivatedRoute,
+    private readonly router: Router,
     private readonly destroyRef: DestroyRef,
   ) {}
 
@@ -104,6 +123,31 @@ export class ResultadosComponent implements OnInit {
     this.load();
   }
 
+  // Continues the closed attempt into a new one (its answers come along) and
+  // resumes it in /test, at the first item of the next cut.
+  continueFromResult(): void {
+    const attemptId = this.loadedAttemptId;
+    if (!attemptId || this.continuing || !this.refine?.canContinue) {
+      return;
+    }
+    this.continuing = true;
+    this.api
+      .continueTestAttempt(attemptId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => this.router.navigateByUrl('/test'),
+        error: (error: unknown) => {
+          this.continuing = false;
+          if (isPaidTierRequired(error) && this.refine) {
+            this.refine = { ...this.refine, canContinue: false };
+            return;
+          }
+          this.loading = false;
+          this.error = CUT_COPY.continueError;
+        },
+      });
+  }
+
   openFreemiumInfo(): void {
     this.showFreemiumInfo = true;
   }
@@ -121,6 +165,10 @@ export class ResultadosComponent implements OnInit {
     this.eneatype = null;
     this.tier = null;
     this.showFreemiumInfo = false;
+    this.refineSubscription?.unsubscribe();
+    this.refine = null;
+    this.continuing = false;
+    this.loadedAttemptId = null;
 
     let attempt$: Observable<TestAttempt | null>;
     if (this.attemptId) {
@@ -147,9 +195,46 @@ export class ResultadosComponent implements OnInit {
           }
           this.tier = loaded.attempt.tier;
           this.eneatype = loaded.result.eneatype;
+          this.loadedAttemptId = loaded.attempt.id;
           this.loading = false;
+          this.loadRefine(loaded.attempt);
         },
         error: () => this.fail(),
+      });
+  }
+
+  // canContinue alone can't tell "no paid tier" from the other reasons a
+  // closed attempt can't go on, and the frontend has no tier of its own to
+  // ask. The other reasons this block can meet are an attempt that isn't the
+  // person's latest closed one (opened from the history) and one closed with
+  // items unanswered (only the mock's seeded attempt): neither can ever be
+  // continued, so they show no block at all.
+  private loadRefine(attempt: TestAttempt): void {
+    const userId = this.auth.currentUser?.id;
+    if (!userId) {
+      return;
+    }
+    this.refineSubscription?.unsubscribe();
+    this.refineSubscription = forkJoin({
+      status: this.api.getCutStatus(attempt.id),
+      history: this.api.getAttemptHistory(userId),
+    })
+      .pipe(
+        catchError(() => of(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((loaded) => {
+        if (!loaded || loaded.status.continuedByAttemptId !== null || !hasNextCut(loaded.status)) {
+          return;
+        }
+        const { status } = loaded;
+        if (
+          !status.canContinue &&
+          (latestCompletedId(loaded.history) !== attempt.id || status.answeredItems < status.servedItems)
+        ) {
+          return;
+        }
+        this.refine = { status: loaded.status, canContinue: loaded.status.canContinue };
       });
   }
 
@@ -157,4 +242,13 @@ export class ResultadosComponent implements OnInit {
     this.loading = false;
     this.error = 'No pudimos cargar tu resultado.';
   }
+}
+
+// Same order as the backend's "latest closed attempt" (completedAt, newest
+// first): the only closed attempt that can be continued.
+function latestCompletedId(attempts: TestAttempt[]): string | null {
+  const completed = attempts
+    .filter((a) => a.status === 'completed' && a.completedAt)
+    .sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime());
+  return completed[0]?.id ?? null;
 }

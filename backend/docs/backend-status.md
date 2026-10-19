@@ -14,7 +14,7 @@ con Postgres y Cognito reales. Lo que sigue es qué de eso es real y qué no, si
 | Login con Google / Facebook (RNF09) | **No existe.** Los botones del frontend son una ranura inerte |
 | Sesión | Access token de 1 hora, sin refresh: al vencer se vuelve a ingresar |
 | Banco de preguntas | **Banco real v4.1.2 como versión 1** (145 ítems), cargado en la base local con `scripts/import_question_bank.py`. El relleno sigue siendo la versión 0 (ver abajo, "Banco real") |
-| Cortes fijos (Feature 9) | **Real.** 40 / 90 / 145 ítems, los mismos para todos, desde el manifest de los modelos. Seguir después de un corte, también después de ver el resultado. **Sin frontend todavía** (Feature 10) |
+| Cortes fijos (Feature 9) | **Real.** 40 / 90 / 145 ítems, los mismos para todos, desde el manifest de los modelos. Seguir después de un corte, también después de ver el resultado. Pantalla entre cortes y bloque para seguir desde el resultado: Feature 10 |
 | Clasificación | **`stub` activo por defecto** en desarrollo. **No es ML** (ver abajo). `trained` existe y funciona, pero **sólo con artefactos sintéticos**: los reales llegan después del corte del piloto (18/10) |
 | Resultado | Real en el sentido de guardado y servido; el eneatipo sale del `stub` (o de los modelos sintéticos) y la descripción es provisoria |
 | Comentarios (RF06) | **Real.** Se guardan en la base; no hay pantalla para leerlos |

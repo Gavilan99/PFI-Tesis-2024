@@ -1,0 +1,15 @@
+<section class="refine">
+  <h2>{{ copy.refineTitle }}</h2>
+  <p>{{ copy.refineBody(status.nextCutItems ?? 0) }}</p>
+  @if (canContinue) {
+    <app-brand-button variant="primary" [disabled]="busy" (click)="!busy && continue.emit()">
+      {{ copy.continueFromResult }}
+    </app-brand-button>
+  } @else {
+    <p class="refine__plans">{{ copy.plansIncludedParts(status.currentCut + 1, status.cutCount) }}</p>
+    <span class="refine__premium">
+      <app-brand-button variant="secondary" [disabled]="true">{{ copy.goPremium }}</app-brand-button>
+      <span class="refine__soon">{{ copy.comingSoon }}</span>
+    </span>
+  }
+</section>

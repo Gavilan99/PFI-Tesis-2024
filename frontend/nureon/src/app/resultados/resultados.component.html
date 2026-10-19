@@ -88,6 +88,16 @@
           }
         </div>
       </section>
+
+      <!-- Feature 10: seguir con el corte siguiente sin repetir lo respondido. -->
+      @if (refine) {
+        <app-refine-result
+          [status]="refine.status"
+          [canContinue]="refine.canContinue"
+          [busy]="continuing"
+          (continue)="continueFromResult()"
+        ></app-refine-result>
+      }
     </section>
 
     @if (showFreemiumInfo) {
