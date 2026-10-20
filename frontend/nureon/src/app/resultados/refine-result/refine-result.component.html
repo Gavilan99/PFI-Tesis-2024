@@ -5,6 +5,9 @@
     <app-brand-button variant="primary" [disabled]="busy" (click)="!busy && continue.emit()">
       {{ copy.continueFromResult }}
     </app-brand-button>
+    @if (error) {
+      <p class="refine__error" role="alert">{{ error }}</p>
+    }
   } @else {
     <p class="refine__plans">{{ copy.plansIncludedParts(status.currentCut + 1, status.cutCount) }}</p>
     <span class="refine__premium">

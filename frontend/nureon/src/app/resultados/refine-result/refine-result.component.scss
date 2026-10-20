@@ -36,3 +36,8 @@
   font-size: var(--nureon-text-caption-size);
   font-weight: var(--nureon-text-caption-weight);
 }
+
+.refine__error {
+  color: var(--nureon-color-danger);
+  font-size: var(--nureon-text-body-sm-size);
+}

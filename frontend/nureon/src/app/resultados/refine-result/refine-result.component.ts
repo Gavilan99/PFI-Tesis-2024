@@ -18,6 +18,7 @@ export class RefineResultComponent {
   // True with the paid tier: "Seguir". Otherwise, the plans text.
   @Input() canContinue = false;
   @Input() busy = false;
+  @Input() error: string | null = null;
   @Output() continue = new EventEmitter<void>();
 
   readonly copy = CUT_COPY;

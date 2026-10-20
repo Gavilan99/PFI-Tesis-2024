@@ -95,6 +95,7 @@
           [status]="refine.status"
           [canContinue]="refine.canContinue"
           [busy]="continuing"
+          [error]="refineError"
           (continue)="continueFromResult()"
         ></app-refine-result>
       }

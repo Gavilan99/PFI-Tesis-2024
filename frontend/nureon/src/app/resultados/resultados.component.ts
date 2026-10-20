@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, Subscription, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { API_SERVICE, ApiService } from '../core/services/api.service';
-import { isPaidTierRequired } from '../core/services/api-error';
+import { ApiError, isPaidTierRequired } from '../core/services/api-error';
 import { CutStatus } from '../core/models/cut-status.model';
 import { CUT_COPY } from '../core/cuts/cut-copy';
 import { hasNextCut } from '../core/cuts/cut-plan';
@@ -77,6 +77,8 @@ export class ResultadosComponent implements OnInit {
   // the result and apart from it, so a failure here only hides the block.
   refine: { status: CutStatus; canContinue: boolean } | null = null;
   continuing = false;
+  // A failed "Seguir", shown inside the block: the result stays on screen.
+  refineError: string | null = null;
 
   constructor(
     @Inject(API_SERVICE) private readonly api: ApiService,
@@ -131,6 +133,7 @@ export class ResultadosComponent implements OnInit {
       return;
     }
     this.continuing = true;
+    this.refineError = null;
     this.api
       .continueTestAttempt(attemptId)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -142,8 +145,9 @@ export class ResultadosComponent implements OnInit {
             this.refine = { ...this.refine, canContinue: false };
             return;
           }
-          this.loading = false;
-          this.error = CUT_COPY.continueError;
+          // The backend's own message when there is one (e.g. "Este test ya
+          // se siguió en otro intento." from a second tab).
+          this.refineError = error instanceof ApiError ? error.message : CUT_COPY.continueError;
         },
       });
   }
@@ -167,6 +171,7 @@ export class ResultadosComponent implements OnInit {
     this.showFreemiumInfo = false;
     this.refineSubscription?.unsubscribe();
     this.refine = null;
+    this.refineError = null;
     this.continuing = false;
     this.loadedAttemptId = null;
 
@@ -244,11 +249,14 @@ export class ResultadosComponent implements OnInit {
   }
 }
 
-// Same order as the backend's "latest closed attempt" (completedAt, newest
-// first): the only closed attempt that can be continued.
+// Same order as the backend's "latest closed attempt" (completedAt, then id,
+// newest first): the only closed attempt that can be continued.
 function latestCompletedId(attempts: TestAttempt[]): string | null {
   const completed = attempts
     .filter((a) => a.status === 'completed' && a.completedAt)
-    .sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime());
+    .sort(
+      (a, b) =>
+        new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime() || (b.id > a.id ? 1 : b.id < a.id ? -1 : 0),
+    );
   return completed[0]?.id ?? null;
 }
