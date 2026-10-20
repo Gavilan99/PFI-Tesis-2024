@@ -33,6 +33,29 @@
           }
         </mat-form-field>
 
+        <p class="registro-form__notice">{{ consentSummary }}</p>
+
+        <div class="registro-form__consent">
+          <label class="registro-form__consent-label">
+            <input
+              type="checkbox"
+              formControlName="consentAccepted"
+              [attr.aria-invalid]="consentError ? 'true' : null"
+              aria-describedby="consent-error"
+            />
+            <span>
+              Leí y acepto la
+              <a routerLink="/privacidad" target="_blank" rel="noopener">Política de privacidad</a>
+              y los
+              <a routerLink="/terminos" target="_blank" rel="noopener">Términos y condiciones</a>, y
+              consiento que mis datos se guarden en Estados Unidos.
+            </span>
+          </label>
+          @if (consentError) {
+            <p id="consent-error" class="registro-form__error">{{ consentError }}</p>
+          }
+        </div>
+
         @if (submitError) {
           <p class="registro-form__error" role="alert">{{ submitError }}</p>
         }

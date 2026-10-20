@@ -2,14 +2,22 @@ import { Component } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { RouterLink } from '@angular/router';
 import { PageContainerComponent } from '../shared/layout/page-container/page-container.component';
 import { BrandButtonComponent } from '../shared/components/brand-button/brand-button.component';
 import { AuthService } from '../core/services/auth.service';
 import { User } from '../core/models/user.model';
+import { CONSENT_SUMMARY } from '../legal/legal-content';
 
 // CU001 — Registrarse. One step, three fields (RF01), inline validation,
 // and an on-screen confirmation (flow step 6) instead of a redirect.
 // Errors (e.g. duplicate email) render inline in the form — never alert().
+//
+// Feature 11: informed, express consent (Ley 25.326 arts. 5, 6 and 12)
+// before anything is collected. A short notice above the button, and a
+// required checkbox, unchecked by default, whose links open the full texts
+// in another tab so the form isn't lost. A plain checkbox, like the
+// profile's native fields, rather than mat-checkbox.
 //
 // mat-form-field/mat-error are used directly here, not through a wrapper
 // component: MatFormField's MatFormFieldControl detection doesn't reliably
@@ -22,6 +30,7 @@ import { User } from '../core/models/user.model';
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     MatInputModule,
     MatFormFieldModule,
     PageContainerComponent,
@@ -35,7 +44,10 @@ export class RegistroComponent {
     username: ['', [Validators.required, Validators.minLength(3)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
+    consentAccepted: [false, Validators.requiredTrue],
   });
+
+  readonly consentSummary = CONSENT_SUMMARY;
 
   submitting = false;
   submitError: string | null = null;
@@ -68,6 +80,12 @@ export class RegistroComponent {
     if (control.hasError('required')) return 'Ingresá una contraseña.';
     if (control.hasError('minlength')) return 'Mínimo 8 caracteres.';
     return null;
+  }
+
+  get consentError(): string | null {
+    const control = this.form.controls.consentAccepted;
+    if (!control.touched || !control.invalid) return null;
+    return 'Para crear tu cuenta tenés que aceptar la Política de privacidad y los Términos y condiciones.';
   }
 
   onSubmit(): void {

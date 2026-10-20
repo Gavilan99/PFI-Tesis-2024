@@ -33,6 +33,10 @@ const MOCK_CUT_ACCURACY = [0.62, 0.71, 0.77];
 
 const MOCK_DELAY_MS = 150;
 
+// The backend's message for a registration without the consent.
+const CONSENT_REQUIRED_MESSAGE =
+  'Para crear tu cuenta tenés que aceptar la Política de privacidad y los Términos y condiciones.';
+
 // Built by tools/build_question_fixture.py (--placeholder or --csv once the
 // bank's CSV exists) into src/assets/mock/questions.sample.json. Fetched as
 // a static asset, not imported, so swapping placeholder for real content is
@@ -202,6 +206,10 @@ export class MockApiService implements ApiService {
   }
 
   register(input: RegisterInput): Observable<User> {
+    // Same rule as the backend: no account without the consent.
+    if (input.consentAccepted !== true) {
+      return throwError(() => new ApiError(CONSENT_REQUIRED_MESSAGE, 'CONSENT_REQUIRED', 400));
+    }
     const email = input.email.toLowerCase();
     if (this.state.usersByEmail[email]) {
       return throwError(() => new Error('Ese email ya está registrado.'));
@@ -232,6 +240,22 @@ export class MockApiService implements ApiService {
     record.user = { ...record.user, ...input };
     this.saveState();
     return of(record.user).pipe(delay(MOCK_DELAY_MS));
+  }
+
+  // Like the backend: the account can't log in any more and its email is
+  // free again; its attempts and results stay, no longer reachable by anyone.
+  deleteAccount(userId: string): Observable<void> {
+    const email = Object.keys(this.state.usersByEmail).find(
+      (key) => this.state.usersByEmail[key].user.id === userId,
+    );
+    if (!email) {
+      return throwError(() => new ApiError('No se pudo autenticar la solicitud.', 'UNAUTHORIZED', 401));
+    }
+    delete this.state.usersByEmail[email];
+    delete this.state.latestAttemptIdByUser[userId];
+    this.state.premiumUserIds = this.state.premiumUserIds.filter((id) => id !== userId);
+    this.saveState();
+    return of(undefined).pipe(delay(MOCK_DELAY_MS));
   }
 
   createTestAttempt(userId: string): Observable<TestAttempt> {

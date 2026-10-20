@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of } from 'rxjs';
 import { API_SERVICE, ApiService } from '../core/services/api.service';
 import { AuthService } from '../core/services/auth.service';
@@ -56,6 +56,11 @@ const COUNTRIES = [
 // RF06 (comentarios), RF07 (perfil), RF08 (historial). The old ProfileComponent
 // was an orphan — dialog markup, never routed or opened from anywhere. This
 // is a screen at /perfil, not a dialog.
+//
+// Feature 11 adds "Borrar mi cuenta" (Ley 25.326 right of deletion, PA-7):
+// an inline confirmation that says what is erased and what is kept
+// anonymous, and only goes ahead once the account's email is typed. On
+// success it goes to the landing with a message, then ends the session.
 @Component({
   selector: 'app-profile',
   standalone: true,
@@ -93,6 +98,11 @@ export class ProfileComponent implements OnInit {
   saveError: string | null = null;
   saved = false;
 
+  deleteOpen = false;
+  deleting = false;
+  deleteError: string | null = null;
+  readonly deleteConfirmation = this.fb.control('');
+
   historyLoading = true;
   historyError: string | null = null;
   history: HistoryEntry[] = [];
@@ -101,6 +111,7 @@ export class ProfileComponent implements OnInit {
     private readonly fb: NonNullableFormBuilder,
     @Inject(API_SERVICE) private readonly api: ApiService,
     private readonly auth: AuthService,
+    private readonly router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -145,6 +156,47 @@ export class ProfileComponent implements OnInit {
           this.saveError = 'No pudimos guardar los cambios. Probá de nuevo.';
         },
       });
+  }
+
+  get accountEmail(): string {
+    return this.auth.currentUser?.email ?? '';
+  }
+
+  get deleteConfirmed(): boolean {
+    const typed = this.deleteConfirmation.value.trim().toLowerCase();
+    return typed !== '' && typed === this.accountEmail.toLowerCase();
+  }
+
+  openDelete(): void {
+    this.deleteOpen = true;
+    this.deleteError = null;
+    this.deleteConfirmation.setValue('');
+  }
+
+  cancelDelete(): void {
+    this.deleteOpen = false;
+    this.deleteError = null;
+  }
+
+  onDelete(): void {
+    if (this.deleting || !this.deleteConfirmed) {
+      return;
+    }
+    this.deleting = true;
+    this.deleteError = null;
+    this.auth.deleteAccount().subscribe({
+      next: () => {
+        // Leave /perfil first: ending the session here would send it through
+        // sessionGuard to /ingresar instead of the landing.
+        this.router
+          .navigateByUrl('/', { state: { accountDeleted: true } })
+          .finally(() => this.auth.logout());
+      },
+      error: (err: Error) => {
+        this.deleting = false;
+        this.deleteError = err.message || 'No pudimos borrar tu cuenta. Probá de nuevo.';
+      },
+    });
   }
 
   retryHistory(): void {

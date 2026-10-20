@@ -71,6 +71,17 @@ export class AuthService {
     return this.api.updateProfile(user.id, input).pipe(tap((updated) => this.setUser(updated)));
   }
 
+  // Deletes the account. Ending the session (logout()) is left to the caller:
+  // it navigates away first, so the end of the session doesn't send it
+  // through the guards of the screen it's leaving.
+  deleteAccount(): Observable<void> {
+    const user = this.currentUser;
+    if (!user) {
+      throw new Error('AuthService.deleteAccount() called with no user logged in.');
+    }
+    return this.api.deleteAccount(user.id);
+  }
+
   private readPersisted(): User | null {
     if (!this.isBrowser) {
       return null;

@@ -1,5 +1,13 @@
 @use '../../styles/palette';
 
+.account-deleted {
+  margin-top: var(--nureon-space-lg);
+  padding: var(--nureon-space-sm) var(--nureon-space-md);
+  border-left: 4px solid var(--nureon-green-dark);
+  border-radius: var(--nureon-radius-md);
+  background: map-get(palette.$nureon-primary-palette, 50);
+}
+
 .hero {
   display: flex;
   flex-direction: column;

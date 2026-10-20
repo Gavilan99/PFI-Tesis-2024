@@ -68,3 +68,54 @@
 .profile__history-pending {
   color: rgba(black, 0.6);
 }
+
+.profile__delete-intro {
+  margin-bottom: var(--nureon-space-sm);
+}
+
+.profile__delete-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-xs);
+  max-width: 560px;
+  padding: var(--nureon-space-md);
+  border: 1px solid var(--nureon-color-danger);
+  border-radius: var(--nureon-radius-md);
+
+  // The panel's gap spaces its blocks; default margins would add to it.
+  p,
+  ul {
+    margin: 0;
+  }
+
+  ul {
+    padding-left: var(--nureon-space-md);
+  }
+
+  a {
+    color: var(--nureon-green-dark);
+    font-weight: 600;
+  }
+}
+
+.profile__delete-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--nureon-space-sm);
+}
+
+.profile__delete-confirm {
+  padding: var(--nureon-space-xs) var(--nureon-space-md);
+  border: none;
+  border-radius: var(--nureon-radius-md);
+  background: var(--nureon-color-danger);
+  color: white;
+  font: 600 var(--nureon-text-body-size) var(--nureon-font-body);
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
