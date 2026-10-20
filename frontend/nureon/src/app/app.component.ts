@@ -3,7 +3,6 @@ import { isPlatformBrowser } from '@angular/common';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, map, pairwise, startWith } from 'rxjs';
 import { environment } from '../environments/environment';
-import { installDevTools } from './core/dev-tools';
 import { AuthService } from './core/services/auth.service';
 import { PageTitleService } from './core/services/page-title.service';
 
@@ -35,7 +34,9 @@ export class AppComponent {
   ) {
     pageTitle.init();
     if (!environment.production && isPlatformBrowser(platformId)) {
-      installDevTools(injector);
+      // Dynamic import: its own lazy chunk, so the console helpers stay out
+      // of the initial bundle of every build, production included.
+      import('./core/dev-tools').then(({ installDevTools }) => installDevTools(injector));
     }
 
     // When the session ends (the header's "Cerrar sesión", or a 401 from the

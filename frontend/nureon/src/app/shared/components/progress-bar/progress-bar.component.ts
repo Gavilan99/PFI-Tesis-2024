@@ -11,6 +11,8 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 export class ProgressBarComponent {
   @Input({ required: true }) current!: number;
   @Input({ required: true }) total!: number;
+  // Shown before "current de total", e.g. "Parte 1 de 3 · " in the test.
+  @Input() prefix = '';
 
   get percentage(): number {
     return this.total > 0 ? Math.round((this.current / this.total) * 100) : 0;
