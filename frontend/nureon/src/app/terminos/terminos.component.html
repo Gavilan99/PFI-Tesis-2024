@@ -1,0 +1,99 @@
+<app-page-container>
+  <article class="legal">
+    <header class="legal__intro">
+      <h1 class="nureon-heading">Términos y condiciones</h1>
+      <p class="legal__lead">
+        Las reglas para usar NureonAI. Al crear tu cuenta aceptás estos términos y la
+        <a routerLink="/privacidad">Política de privacidad</a>.
+      </p>
+      <p class="legal__version">Versión {{ version }} · vigente desde el {{ versionDate }}</p>
+    </header>
+
+    <section>
+      <h2>Qué es NureonAI</h2>
+      <p>
+        NureonAI es una herramienta psicométrica que estima tu eneatipo a partir de tus respuestas a
+        un test, con modelos de machine learning enfocados en la motivación. Nació como proyecto final
+        de Ingeniería en Sistemas de Información en UADE y está en etapa de prueba.
+      </p>
+    </section>
+
+    <section>
+      <h2>El resultado es orientativo</h2>
+      <p>
+        <strong>El resultado no es un diagnóstico clínico</strong>, ni psicológico ni psiquiátrico, y
+        no reemplaza la consulta con un profesional de la salud mental. Es una estimación: la
+        coincidencia que mostramos con la tipificación de un especialista es aproximada y puede
+        equivocarse.
+      </p>
+      <p>
+        No lo uses como único criterio para tomar decisiones sobre vos ni sobre otras personas (por
+        ejemplo, en una selección de personal).
+      </p>
+    </section>
+
+    <section>
+      <h2>Tu cuenta y el uso del servicio</h2>
+      <ul>
+        <li>La cuenta es personal. Cuidá tu contraseña: lo que se haga con tu cuenta corre por tu cuenta.</li>
+        <li>Usá datos verdaderos y respondé el test con sinceridad: de eso depende tu resultado.</li>
+        <li>
+          No intentes entrar a cuentas ajenas, alterar el funcionamiento del servicio ni copiar de forma
+          masiva el contenido del test.
+        </li>
+        <li>
+          Las preguntas, los textos de resultado y los modelos son de los autores de NureonAI. Podés usar
+          tu resultado como quieras; el contenido del servicio no se puede reproducir sin autorización.
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Plan gratuito y plan premium</h2>
+      <ul>
+        <li>
+          <strong>Gratuito:</strong> el test de 40 preguntas y tu resultado, con el perfil reducido de tu
+          eneatipo (motivación central, fortalezas, tensiones y alas).
+        </li>
+        <li>
+          <strong>Premium:</strong> con una suscripción activa podés seguir el test con 50 y 55 preguntas
+          más (hasta 145), para una coincidencia estimada más alta, y ver tu perfil completo, que suma tu
+          comportamiento en crecimiento y bajo estrés.
+        </li>
+      </ul>
+      <p>
+        El precio y las condiciones de la suscripción se informan antes de contratarla. Durante esta
+        etapa de prueba el pago en línea todavía no está habilitado: el acceso premium lo otorga el
+        equipo de NureonAI.
+      </p>
+    </section>
+
+    <section>
+      <h2>Disponibilidad</h2>
+      <p>
+        Hacemos lo posible para que el servicio funcione siempre, pero al estar en etapa de prueba puede
+        tener interrupciones o cambios. Las respuestas que ya diste quedan guardadas.
+      </p>
+    </section>
+
+    <section>
+      <h2>Tus datos y la baja</h2>
+      <p>
+        Cómo tratamos tus datos está en la <a routerLink="/privacidad">Política de privacidad</a>.
+        Podés borrar tu cuenta cuando quieras desde <a routerLink="/perfil">tu perfil</a>.
+      </p>
+    </section>
+
+    <section>
+      <h2>Ley aplicable y contacto</h2>
+      <p>
+        Estos términos se rigen por las leyes de la República Argentina. Para cualquier consulta,
+        escribinos a <a [href]="'mailto:' + contactEmail">{{ contactEmail }}</a>.
+      </p>
+      <p>
+        Si estos términos cambian, publicamos la versión nueva en esta página, con su fecha.
+      </p>
+      <p class="legal__version">Versión {{ version }} · vigente desde el {{ versionDate }}</p>
+    </section>
+  </article>
+</app-page-container>

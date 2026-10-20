@@ -1,0 +1,57 @@
+// Shared by /privacidad and /terminos: same layout as the other public
+// pages (/nosotros, /eneagrama), with a narrower measure for long reading.
+.legal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-lg);
+  max-width: 720px;
+  padding: var(--nureon-space-xl) 0;
+}
+
+.legal__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-md);
+}
+
+.legal__lead {
+  font: var(--nureon-text-body-lg-weight) var(--nureon-text-body-lg-size) /
+    var(--nureon-text-body-lg-line-height) var(--nureon-font-body);
+  color: rgba(black, 0.7);
+}
+
+.legal__version {
+  font-size: var(--nureon-text-caption-size);
+  color: rgba(black, 0.6);
+}
+
+section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-sm);
+}
+
+h2 {
+  font: var(--nureon-text-h2-weight) var(--nureon-text-h2-size) / var(--nureon-text-h2-line-height)
+    var(--nureon-text-h2-font);
+}
+
+// Sections and the intro space their blocks with gap; default margins would add to it.
+p,
+ul,
+h1,
+h2 {
+  margin: 0;
+}
+
+ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-2xs);
+  padding-left: var(--nureon-space-md);
+}
+
+a {
+  color: var(--nureon-green-dark);
+  font-weight: 600;
+}

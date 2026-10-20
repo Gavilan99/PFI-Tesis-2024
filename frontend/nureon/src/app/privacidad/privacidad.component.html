@@ -1,0 +1,186 @@
+<app-page-container>
+  <article class="legal">
+    <header class="legal__intro">
+      <h1 class="nureon-heading">Política de privacidad</h1>
+      <p class="legal__lead">
+        Qué datos guarda NureonAI, para qué, dónde y qué podés hacer con ellos. La escribimos para
+        cumplir con la Ley 25.326 de Protección de los Datos Personales y para que sepas todo esto
+        antes de crear tu cuenta.
+      </p>
+      <p class="legal__version">Versión {{ version }} · vigente desde el {{ versionDate }}</p>
+    </header>
+
+    <section>
+      <h2>Quién es responsable de tus datos</h2>
+      <p>
+        Los datos que nos das se guardan en la base de datos de NureonAI. El responsable de esa base
+        es {{ responsible }}.
+      </p>
+      <p>
+        Para cualquier consulta o pedido sobre tus datos escribinos a
+        <a [href]="'mailto:' + contactEmail">{{ contactEmail }}</a>.
+      </p>
+    </section>
+
+    <section>
+      <h2>Qué datos guardamos</h2>
+      <ul>
+        <li>
+          <strong>Tu cuenta:</strong> el nombre de usuario y el email. La contraseña la maneja el
+          servicio de cuentas de Amazon Web Services (Amazon Cognito): NureonAI no la guarda ni la
+          puede leer.
+        </li>
+        <li>
+          <strong>Tu perfil</strong>, si lo completás: tipo de cuenta, rango etario, género, país y
+          contexto profesional.
+        </li>
+        <li><strong>Tus respuestas al test:</strong> qué opción elegiste en cada pregunta y cuándo.</li>
+        <li><strong>Tu resultado:</strong> el eneatipo calculado a partir de tus respuestas.</li>
+        <li>
+          <strong>Tus comentarios</strong>, si los dejás: la puntuación y el texto que escribas sobre
+          tu experiencia.
+        </li>
+        <li>
+          <strong>La constancia de tu consentimiento:</strong> la fecha en que aceptaste esta política
+          y la versión del texto que aceptaste.
+        </li>
+      </ul>
+      <p>
+        <strong>El formulario de contacto no se guarda.</strong> Lo que escribís ahí nos llega por
+        mail y no queda registrado en la base de datos.
+      </p>
+      <p>
+        Mientras tenés la sesión abierta, tu navegador guarda la sesión en su almacenamiento local.
+        Se borra al cerrar sesión.
+      </p>
+    </section>
+
+    <section>
+      <h2>Para qué los usamos</h2>
+      <ul>
+        <li>Para calcular tu resultado y mostrarte tu historial de tests.</li>
+        <li>
+          Para mejorar el instrumento. Las respuestas al test, junto con los datos del perfil, se usan
+          <strong>de forma anónima</strong> (sin tu nombre ni tu email) para entrenar y evaluar el
+          modelo que calcula el eneatipo.
+        </li>
+      </ul>
+      <p>No usamos tus datos para publicidad y no los vendemos.</p>
+    </section>
+
+    <section>
+      <h2>Quién los recibe</h2>
+      <p>
+        Los datos los usa el equipo de NureonAI. Amazon Web Services es el proveedor de la
+        infraestructura: aloja la base de datos y los servidores, maneja las cuentas y envía los
+        mails, y trata los datos sólo para prestarnos ese servicio. No cedemos tus datos a nadie más.
+        Si publicamos resultados del proyecto, es siempre de forma agregada, sin nada que permita
+        reconocer a una persona.
+      </p>
+    </section>
+
+    <section>
+      <h2>Dónde se guardan: transferencia a Estados Unidos</h2>
+      <p>
+        Todos los datos se guardan en servidores de Amazon Web Services en
+        <strong>Estados Unidos</strong> (región de Ohio). Argentina no considera a Estados Unidos un
+        país con un nivel adecuado de protección de datos, así que esa transferencia sólo es posible
+        con tu consentimiento expreso (artículo 12 de la Ley 25.326 y decreto 1558/2001). Por eso te
+        lo pedimos por separado al crear tu cuenta.
+      </p>
+      <p>
+        Los datos viajan cifrados entre tu navegador y nuestros servidores, y la base de datos no es
+        accesible desde Internet.
+      </p>
+    </section>
+
+    <section>
+      <h2>Qué datos son obligatorios y qué pasa si no los das</h2>
+      <ul>
+        <li>
+          <strong>Nombre de usuario, email, contraseña y la aceptación de esta política</strong> son
+          obligatorios para crear la cuenta. Sin ellos no se puede crear.
+        </li>
+        <li>
+          <strong>Las respuestas al test</strong> son necesarias para calcular el resultado. Podés
+          dejar el test cuando quieras, pero sin todas las respuestas no hay resultado.
+        </li>
+        <li>
+          <strong>El perfil y los comentarios son opcionales.</strong> No completarlos no cambia nada
+          del servicio.
+        </li>
+      </ul>
+      <p>
+        Si un dato es inexacto (por ejemplo, si respondés el test sin reflejar lo que de verdad pensás),
+        el resultado puede ser menos preciso. Los datos del perfil los podés corregir cuando quieras.
+      </p>
+    </section>
+
+    <section>
+      <h2>Tus derechos y cómo ejercerlos</h2>
+      <p>
+        Tenés derecho a acceder a tus datos, a pedir que se corrijan o se actualicen, y a pedir que se
+        borren (artículos 14 y 16 de la Ley 25.326).
+      </p>
+      <ul>
+        <li>
+          <strong>Corregir tu perfil:</strong> desde <a routerLink="/perfil">tu perfil</a>, en
+          cualquier momento.
+        </li>
+        <li>
+          <strong>Borrar tu cuenta:</strong> desde <a routerLink="/perfil">tu perfil</a>, con el botón
+          «Borrar mi cuenta».
+        </li>
+        <li>
+          <strong>Cualquier otro pedido</strong> (saber qué datos tuyos tenemos, corregir algo que no
+          podés editar, o borrar algo en particular): escribinos a
+          <a [href]="'mailto:' + contactEmail">{{ contactEmail }}</a> desde el email de tu cuenta.
+        </li>
+      </ul>
+      <p>
+        El acceso es gratuito si lo pedís a intervalos no menores a seis meses, salvo que acredites un
+        interés legítimo para hacerlo antes. Respondemos los pedidos de acceso dentro de los diez días
+        corridos, y los de corrección o borrado dentro de los cinco días hábiles.
+      </p>
+    </section>
+
+    <section>
+      <h2>Qué pasa cuando borrás tu cuenta</h2>
+      <p>
+        <strong>Se borra todo lo que te identifica:</strong> tu email, tu nombre de usuario, tu
+        contexto profesional, el texto de tus comentarios y tu acceso. Con ese email ya no se puede
+        ingresar.
+      </p>
+      <p>
+        <strong>Se conserva, sin nada que te identifique:</strong> tus respuestas al test y tus
+        resultados, el tipo de cuenta, el rango etario, el género y el país, la puntuación de tus
+        comentarios, el registro de suscripciones y pagos, y la constancia de tu consentimiento (la
+        fecha y la versión de esta política que aceptaste), que es lo que acredita que los datos se
+        trataron con tu autorización.
+      </p>
+      <p>
+        Con pocas personas, la combinación de rango etario, género y país podría ayudar a reconocer a
+        alguien. Por eso esos datos nunca se publican de forma individual.
+      </p>
+    </section>
+
+    <section>
+      <h2>Órgano de control</h2>
+      <p>
+        La Agencia de Acceso a la Información Pública, en su carácter de Órgano de Control de la Ley
+        N° 25.326, tiene la atribución de atender las denuncias y reclamos que interpongan quienes
+        resulten afectados en sus derechos por incumplimiento de las normas vigentes en materia de
+        protección de datos personales.
+      </p>
+    </section>
+
+    <section>
+      <h2>Cambios en esta política</h2>
+      <p>
+        Si este texto cambia, publicamos la versión nueva en esta página, con su fecha. Ver también los
+        <a routerLink="/terminos">Términos y condiciones</a>.
+      </p>
+      <p class="legal__version">Versión {{ version }} · vigente desde el {{ versionDate }}</p>
+    </section>
+  </article>
+</app-page-container>
