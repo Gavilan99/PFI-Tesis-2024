@@ -1,8 +1,8 @@
 import { Component, HostListener, Inject, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of, throwError } from 'rxjs';
 import { API_SERVICE, ApiService } from '../core/services/api.service';
-import { isPaidTierRequired } from '../core/services/api-error';
+import { isNotContinuable, isPaidTierRequired } from '../core/services/api-error';
 import { AuthService } from '../core/services/auth.service';
 import { Question } from '../core/models/question.model';
 import { TestAttempt } from '../core/models/test-attempt.model';
@@ -219,7 +219,13 @@ export class TestComponent implements OnInit {
     forkJoin({
       questions: this.api.getQuestions(attempt.id),
       responses: this.api.getResponses(attempt.id),
-      cut: this.api.getCutStatus(attempt.id),
+      // An attempt from before the cuts has no cut status: it goes on as the
+      // whole test did then, counting over everything served and closing at
+      // its last item. Only that error: any other one, even a passing one,
+      // must not turn a cut-2 attempt into one that closes at its end.
+      cut: this.api
+        .getCutStatus(attempt.id)
+        .pipe(catchError((error: unknown) => (isNotContinuable(error) ? of(null) : throwError(() => error)))),
     }).subscribe({
       next: ({ questions, responses, cut }) => {
         this.questions = [...questions].sort((a, b) => a.displayOrder - b.displayOrder);
@@ -234,7 +240,7 @@ export class TestComponent implements OnInit {
         this.paidTierRequired = false;
         const firstUnanswered = this.questions.findIndex((q) => !this.selections.has(q.id));
         this.currentIndex = firstUnanswered === -1 ? this.questions.length - 1 : firstUnanswered;
-        this.betweenCuts = firstUnanswered === -1 && hasNextCut(cut);
+        this.betweenCuts = firstUnanswered === -1 && cut !== null && hasNextCut(cut);
         this.loading = false;
       },
       error: () => this.fail(),
