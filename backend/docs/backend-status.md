@@ -9,6 +9,7 @@ con Postgres y Cognito reales. Lo que sigue es qué de eso es real y qué no, si
 | Área | Estado real |
 |---|---|
 | Cuentas (registro, ingreso, perfil, borrado) | **Real.** Cognito en `us-east-2`, verificado de punta a punta desde el navegador |
+| Consentimiento (Ley 25.326, Feature 11) | **Real.** El registro exige aceptar la Política de privacidad y los Términos, con la transferencia a Estados Unidos; se guardan fecha y versión. Borrar la cuenta tiene pantalla en `/perfil`. **El responsable de la base y el mail de contacto siguen como marcadores** y frenan el despliegue del frontend hasta completarlos |
 | Verificación de email | **No existe.** Las cuentas se auto-confirman: cualquiera registra un email ajeno |
 | Recuperación de contraseña | **No existe.** Ni pantalla ni método en el contrato |
 | Login con Google / Facebook (RNF09) | **No existe.** Los botones del frontend son una ranura inerte |
@@ -112,6 +113,84 @@ se probó en la Feature 5.
   usable. Agregar los máximos en pantalla es una tarea aparte.
 - **Un token vencido con el test abierto** hace fallar el próximo pedido con el error del test; la
   sesión se cierra y hay que volver a ingresar. Sin refresh token no hay renovación silenciosa.
+
+## Feature 11: consentimiento de datos personales
+
+Hecho: el registro pide consentimiento libre, expreso e informado (Ley 25.326, art. 5) después de
+informar lo que pide el art. 6, también para la transferencia a Estados Unidos (art. 12 y decreto
+1558/2001: los datos están en AWS `us-east-2`). Contrato en
+[api-contract.md](./api-contract.md#post-apiauthregister--registerinput).
+
+- **Registro.** `RegisterInput` suma `consentAccepted`. Si falta o es `false`, `400 CONSENT_REQUIRED`
+  («Para crear tu cuenta tenés que aceptar la Política de privacidad y los Términos y condiciones.») y
+  no se crea nada, ni en la base ni en Cognito; si no es un booleano JSON, `VALIDATION_ERROR`. Se evalúa
+  antes que el email repetido.
+- **Lo que se guarda:** `users.consent_accepted_at` (el momento del registro) y
+  `users.consent_version`, la versión vigente según `CONSENT_VERSION`. El cliente no la elige: un
+  `consentVersion` en el cuerpo es un campo de más. Ninguna de las dos sale en `User`.
+- **`CONSENT_VERSION`** sale de configuración, hasta 32 caracteres. **En `production` es obligatoria**,
+  sin valor por defecto, como el clasificador: qué texto aceptan las personas se elige a propósito.
+  `09-service.ps1` la pasa (`-ConsentVersion`, por defecto `2026-10-20`) y el compose de producción
+  también. En `development`, sin valor se guarda `local`; los tests guardan siempre `local`. Un test
+  (`test_the_version_shown_is_the_version_stored`) exige que la versión sea la misma en
+  `legal-content.ts` del frontend, `.env.example`, el compose de producción y `09-service.ps1`.
+- **Borrado de cuenta:** `consent_accepted_at` y `consent_version` **se conservan**. Son la constancia
+  de que el tratamiento fue lícito, y no identifican a nadie. `test_account_deletion.py` lo comprueba
+  junto con el resto de lo que se anula y se conserva.
+- **Frontend.** `/registro` muestra el resumen corto y la casilla obligatoria, desmarcada; sin marcarla
+  el formulario no envía y muestra el error al lado. Los nombres de los textos abren `/privacidad` y
+  `/terminos` en otra pestaña. Las dos páginas son públicas, prerenderizadas y de carga diferida (no
+  suman al bundle inicial); el footer las enlaza. `/perfil` tiene «Borrar mi cuenta»: dice qué se borra
+  y qué se conserva, pide escribir el email de la cuenta, borra, lleva a la landing con un aviso y
+  cierra la sesión. `ApiService.deleteAccount(userId)` en `HttpApiService` (`DELETE /api/users/me`) y
+  en `MockApiService`, que también rechaza el registro sin consentimiento: `build:demo` sigue siendo un
+  recorrido completo.
+- **Marcadores.** El responsable de la base y el mail de contacto no están definidos: viven en un solo
+  archivo, `frontend/nureon/src/app/legal/legal-content.ts`, como `[RESPONSABLE]` y `[CONTACTO]`,
+  visibles en las páginas. `npm run test:legal` construye producción y falla si alguno quedó en la
+  salida (bundles del navegador y del servidor, y HTML prerenderizado). `11-frontend-deploy.ps1` corre
+  el mismo chequeo después de su build: **con los marcadores puestos, el frontend no se despliega.**
+
+- **En producción no hay alta de respaldo.** El pool de Cognito es el mismo que el de desarrollo, así
+  que una cuenta de prueba podía ingresar a producción y quedar creada sin consentimiento. Ahora
+  `PROVISION_MISSING_ACCOUNTS` (no es una variable de entorno: vale `False` en `production` y `True` en
+  `development` y `test`) hace que esa cuenta reciba `401 ACCOUNT_NOT_ENABLED` («Esta cuenta no está
+  habilitada en NureonAI. Registrate con otro email.»), en el login y en cualquier ruta autenticada, sin
+  crear la fila. «Con otro email» porque registrarse de nuevo con el mismo no funciona: Cognito ya lo
+  tiene. La cuenta de Cognito no se borra, para no romper la de desarrollo.
+- **Migraciones antes del código** (`deploy-runbook.md`): `10-task.ps1 -Job migrate -ImageTag <nuevo>`
+  corre las migraciones de la imagen nueva en una task definition de un solo uso, sin tocar el
+  servicio, antes de `09-service.ps1`. Las migraciones leen sólo la URL de la base
+  (`app.config.database_url`), así que corren con la configuración vieja del servicio aunque el código
+  nuevo exija `CONSENT_VERSION`. Sin ventana con el registro o el ingreso caídos.
+
+### Quinta diferencia con el PDR: `users.consent_accepted_at` y `users.consent_version`
+
+Migración 0005. Las dos nullable: las cuentas que ya existían se registraron cuando no había nada que
+aceptar, y quedan en NULL. Toda cuenta creada por el registro tiene las dos. Un CHECK
+(`consent_recorded_whole`) exige que estén las dos o ninguna: una fecha sin versión no es constancia de
+nada.
+
+### Limitaciones declaradas
+
+- **Las cuentas anteriores no tienen consentimiento registrado**, y nada se lo pide. Son todas del
+  equipo, y la base de producción arranca vacía.
+- **Volver a aceptar ante un cambio de versión queda fuera de esta feature.** Si cambian los textos, las
+  cuentas existentes quedan con la versión que aceptaron y nadie les pide la nueva: no hay flujo para
+  volver a aceptar.
+- **Los textos legales no tuvieron revisión de un abogado.** Cubren los puntos del art. 6, la
+  transferencia, los derechos (con los plazos de los arts. 14 y 16) y la leyenda de la AAIP, pero son
+  una redacción del equipo. Para las pruebas de usuario de un proyecto académico alcanza; si el producto
+  sigue, hace falta esa revisión.
+- **Fuera de producción, el alta de respaldo no registra consentimiento.** En desarrollo y tests, una
+  cuenta que existe en Cognito pero no en `users` recibe la fila en su primer pedido, sin fecha ni
+  versión. En producción no (ver abajo).
+- **El art. 6 inc. b pide identidad y domicilio del responsable.** Los dos van dentro de
+  `[RESPONSABLE]`.
+- **Desplegar esta versión del backend necesita `09-service.ps1`** (o cualquier camino que pase
+  `CONSENT_VERSION`): una imagen nueva con la configuración vieja no arranca en producción.
+- **`10-task.ps1 -ImageTag` no se probó contra AWS.** El despliegue está pausado; el script se revisó y
+  parsea, pero la task definition de un solo uso todavía no se registró nunca de verdad.
 
 ## Feature 9: cortes fijos y modelos entrenados
 
