@@ -26,7 +26,15 @@ def live_email_exists(session: Session, email: str) -> bool:
     )
 
 
-def insert_if_absent(session: Session, *, sub: str, email: str, display_name: str | None) -> User | None:
+def insert_if_absent(
+    session: Session,
+    *,
+    sub: str,
+    email: str,
+    display_name: str | None,
+    consent_accepted_at: datetime | None = None,
+    consent_version: str | None = None,
+) -> User | None:
     """Insert the row for `sub` unless one already exists, and return the live row for `sub`.
 
     ON CONFLICT DO NOTHING makes two concurrent first requests of the same new user safe: the second
@@ -35,7 +43,13 @@ def insert_if_absent(session: Session, *, sub: str, email: str, display_name: st
     """
     session.execute(
         insert(User)
-        .values(cognito_sub=sub, email=email, display_name=display_name)
+        .values(
+            cognito_sub=sub,
+            email=email,
+            display_name=display_name,
+            consent_accepted_at=consent_accepted_at,
+            consent_version=consent_version,
+        )
         .on_conflict_do_nothing()
     )
     return get_live_by_sub(session, sub)
@@ -52,7 +66,8 @@ def anonymize(session: Session, user: User, now: datetime) -> None:
     """Apply the "Borrado de cuenta" table of CLAUDE.md. Nothing is deleted physically.
 
     Kept: demographics, attempts, responses, predictions, results, feedback ratings, subscriptions,
-    payments. Nulled: what identifies the person.
+    payments, and the consent (`consent_accepted_at`, `consent_version`): the record that the data was
+    processed lawfully. Nulled: what identifies the person.
     """
     user.email = None
     user.display_name = None

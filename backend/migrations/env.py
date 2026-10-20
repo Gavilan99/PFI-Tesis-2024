@@ -4,7 +4,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from app.config import get_config, load_env_file
+from app.config import database_url, load_env_file
 from app.db.base import Base
 
 # Importing app.db.models registers every ORM model on Base.metadata before
@@ -16,13 +16,13 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name, disable_existing_loggers=False)
 
-# A caller that already set the URL (the test suite, on its own databases) keeps it.
+# A caller that already set the URL (the test suite, on its own databases) keeps it. Otherwise only the
+# database URL is read, not the whole configuration: the migrations run with the new image before the
+# service gets the new code's settings (deploy-runbook.md).
 if not config.get_main_option("sqlalchemy.url"):
     load_env_file()
-    app_config = get_config(os.environ.get("APP_ENV", "development"))
-    config.set_main_option(
-        "sqlalchemy.url", app_config.SQLALCHEMY_DATABASE_URI.replace("%", "%%")
-    )
+    url = database_url(os.environ.get("APP_ENV", "development"))
+    config.set_main_option("sqlalchemy.url", url.replace("%", "%%"))
 
 target_metadata = Base.metadata
 

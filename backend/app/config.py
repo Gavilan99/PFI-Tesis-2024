@@ -35,6 +35,9 @@ def _split_origins(raw: str) -> list[str]:
 IDENTITY_PROVIDERS = ("cognito", "local")
 MAIL_SENDERS = ("ses", "local")
 LOCAL_CONTACT_MAIL_TO = "contacto@nureon.invalid"
+# What development and test record as the accepted version when CONSENT_VERSION is not set.
+LOCAL_CONSENT_VERSION = "local"
+CONSENT_VERSION_MAX_LENGTH = 32
 
 def _positive_int(name: str, default: int) -> int:
     raw = os.environ.get(name, str(default)).strip()
@@ -93,6 +96,48 @@ def _production_database_url() -> str:
     ).render_as_string(hide_password=False)
 
 
+def _development_database_url() -> str:
+    return os.environ.get("DATABASE_URL", "postgresql+psycopg://nureon:nureon@localhost:5433/nureon_dev")
+
+
+def _test_database_url() -> str:
+    # Never falls back to DATABASE_URL: a dev .env must not send the suite to the dev database.
+    return os.environ.get("TEST_DATABASE_URL", "postgresql+psycopg://nureon:nureon@localhost:5433/nureon_test")
+
+
+_DATABASE_URLS = {
+    "development": _development_database_url,
+    "test": _test_database_url,
+    "production": _production_database_url,
+}
+
+
+def database_url(env_name: str) -> str:
+    """Only the database URL of an environment, without the rest of its configuration.
+
+    What the migrations read. A one-off migration task can run the new image with the service's
+    current environment, before the new code is deployed (deploy-runbook.md): it must not fail
+    because a setting the new code requires, and the old environment lacks, is missing.
+    """
+    try:
+        return _DATABASE_URLS[env_name]()
+    except KeyError:
+        valid = ", ".join(_DATABASE_URLS)
+        raise ConfigError(f"Entorno desconocido: '{env_name}'. Opciones válidas: {valid}") from None
+
+
+def _consent_version(default: str | None) -> str:
+    """The version of the privacy policy and terms in force, stored with every new account."""
+    value = os.environ.get("CONSENT_VERSION", "").strip() or default
+    if not value:
+        raise ConfigError("Falta la variable de entorno obligatoria: CONSENT_VERSION")
+    if len(value) > CONSENT_VERSION_MAX_LENGTH:
+        raise ConfigError(
+            f"CONSENT_VERSION puede tener hasta {CONSENT_VERSION_MAX_LENGTH} caracteres; tiene {len(value)}."
+        )
+    return value
+
+
 def _mail_sender(default: str) -> str:
     name = os.environ.get("MAIL_SENDER", default).strip().lower()
     if name not in MAIL_SENDERS:
@@ -145,6 +190,10 @@ class BaseConfig:
         # Proxies in front of the app whose X-Forwarded-For entry is trusted. 0 locally: no proxy,
         # and the header is whatever the client wrote. Production sets its own default.
         self.TRUSTED_PROXY_HOPS = _non_negative_int("TRUSTED_PROXY_HOPS", 0)
+        # An account in the identity provider without its `users` row gets the row on its first
+        # authenticated request. Production sets False: every account there comes from the registration,
+        # with its consent (Feature 11).
+        self.PROVISION_MISSING_ACCOUNTS = True
 
     def _check_aws_profile(self, *, profile_required: bool) -> None:
         # The `default` profile of a developer machine can hold full access to the account: boto3
@@ -178,10 +227,8 @@ class DevelopmentConfig(BaseConfig):
     def __init__(self) -> None:
         super().__init__()
         self.SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
-        self.SQLALCHEMY_DATABASE_URI = os.environ.get(
-            "DATABASE_URL",
-            "postgresql+psycopg://nureon:nureon@localhost:5433/nureon_dev",
-        )
+        self.CONSENT_VERSION = _consent_version(LOCAL_CONSENT_VERSION)
+        self.SQLALCHEMY_DATABASE_URI = _development_database_url()
         if not self.CORS_ALLOWED_ORIGINS:
             self.CORS_ALLOWED_ORIGINS = ["http://localhost:4200"]
         self._set_identity_provider(default="local", profile_required=True)
@@ -194,11 +241,9 @@ class TestConfig(BaseConfig):
     def __init__(self) -> None:
         super().__init__()
         self.SECRET_KEY = os.environ.get("SECRET_KEY", "test-secret-key")
-        # Never falls back to DATABASE_URL: a dev .env must not send the suite to the dev database.
-        self.SQLALCHEMY_DATABASE_URI = os.environ.get(
-            "TEST_DATABASE_URL",
-            "postgresql+psycopg://nureon:nureon@localhost:5433/nureon_test",
-        )
+        # Fixed, whatever a developer's .env says: the suite checks what gets stored.
+        self.CONSENT_VERSION = LOCAL_CONSENT_VERSION
+        self.SQLALCHEMY_DATABASE_URI = _test_database_url()
         if not self.CORS_ALLOWED_ORIGINS:
             self.CORS_ALLOWED_ORIGINS = ["http://localhost:4200"]
         # The suite never talks to AWS, whatever a developer's .env selects.
@@ -213,6 +258,8 @@ class ProductionConfig(BaseConfig):
         super().__init__()
         self.SECRET_KEY = _require("SECRET_KEY")
         self.SQLALCHEMY_DATABASE_URI = _production_database_url()
+        # Not a setting: a row created on login would be an account without consent.
+        self.PROVISION_MISSING_ACCOUNTS = False
         # Exactly one hop: the ALB that Express Mode puts in front of the service, which appends the
         # visitor's address. Anything before it in the header was written by the client.
         self.TRUSTED_PROXY_HOPS = _non_negative_int("TRUSTED_PROXY_HOPS", 1)
@@ -235,6 +282,8 @@ class ProductionConfig(BaseConfig):
                 "MAIL_SENDER=local es un doble para tests y desarrollo: no se puede usar en producción."
             )
         self._set_mail_sender(default="ses", profile_required=False)
+        # Which text the people registering accept is chosen on purpose, like the classifier.
+        self.CONSENT_VERSION = _consent_version(None)
 
 
 _CONFIGS = {

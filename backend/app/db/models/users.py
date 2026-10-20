@@ -31,6 +31,10 @@ class User(Base):
         sa.CheckConstraint(
             "is_deleted = (deleted_at IS NOT NULL)", name="deleted_at_matches_flag"
         ),
+        # The consent is recorded whole or not at all (NULL in both: accounts from before Feature 11).
+        sa.CheckConstraint(
+            "(consent_accepted_at IS NULL) = (consent_version IS NULL)", name="consent_recorded_whole"
+        ),
     )
 
     id: Mapped[uuid.UUID] = uuid_pk()
@@ -44,6 +48,10 @@ class User(Base):
     profession_context: Mapped[str | None] = mapped_column(sa.String(255))
     is_deleted: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.false())
     deleted_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+    # When the person accepted the privacy policy and terms, and which version (Feature 11). Kept on
+    # deletion: it is the record that the data was processed with consent.
+    consent_accepted_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
+    consent_version: Mapped[str | None] = mapped_column(sa.String(32))
     created_at: Mapped[datetime] = created_now()
 
 

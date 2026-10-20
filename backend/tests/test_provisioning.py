@@ -35,7 +35,7 @@ def test_concurrent_first_requests_create_one_row(app, identity, committed):
         with app.app_context():
             try:
                 barrier.wait()
-                results.append(accounts.authenticated_user(identity, account.sub).id)
+                results.append(accounts.authenticated_user(identity, account.sub, provision_missing=True).id)
             except Exception as exc:  # noqa: BLE001  (collected and asserted below)
                 errors.append(exc)
             finally:
@@ -79,4 +79,4 @@ def test_provisioning_refuses_an_email_held_by_another_live_account(api, identit
     from app.exceptions import AccountConflict
 
     with pytest.raises(AccountConflict):
-        accounts.authenticated_user(identity, account.sub)
+        accounts.authenticated_user(identity, account.sub, provision_missing=True)
