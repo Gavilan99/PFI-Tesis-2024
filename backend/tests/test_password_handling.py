@@ -18,7 +18,9 @@ def test_password_never_reaches_the_logs_or_the_responses(api, db_session, captu
     bodies.append(register(api, email=email, password=SECRET))                     # success
     bodies.append(register(api, email=email, password=SECRET))                     # duplicate
     bodies.append(register(api, email=unique_email(), password="corta"))          # rejected by validation
-    bodies.append(api.post("/api/auth/register", json={"username": "ab", "email": "x", "password": SECRET}))
+    bodies.append(api.post(
+        "/api/auth/register", json={"username": "ab", "email": "x", "password": SECRET, "consentAccepted": True}
+    ))
     bodies.append(api.post("/api/auth/login", json={"email": email, "password": SECRET}))            # success
     bodies.append(api.post("/api/auth/login", json={"email": email, "password": SECRET + "x"}))      # wrong
     bodies.append(api.post("/api/auth/login", json={"email": email, "password": SECRET, "extra": 1}))  # invalid

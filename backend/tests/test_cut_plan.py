@@ -130,6 +130,7 @@ def _production_env(monkeypatch, backend: str) -> None:
         "CORS_ALLOWED_ORIGINS": "https://nureon.example", "IDENTITY_PROVIDER": "cognito",
         "COGNITO_USER_POOL_ID": "us-east-2_pool", "COGNITO_APP_CLIENT_ID": "client",
         "MAIL_SENDER": "ses", "CONTACT_MAIL_TO": "contacto@example.invalid", "CLASSIFIER_BACKEND": backend,
+        "CONSENT_VERSION": "2026-10-20",
     }.items():
         monkeypatch.setenv(name, value)
     monkeypatch.delenv("AWS_PROFILE", raising=False)

@@ -75,6 +75,7 @@ def _production_env(monkeypatch, **database):
         "COGNITO_APP_CLIENT_ID": "example",
         "MAIL_SENDER": "ses",
         "CONTACT_MAIL_TO": "contacto@example.test",
+        "CONSENT_VERSION": "2026-10-20",
     }.items():
         monkeypatch.setenv(name, value)
     for name in ("DATABASE_URL", "DB_PORT", "DB_SSLMODE", "TRUSTED_PROXY_HOPS", *DB_PARTS):

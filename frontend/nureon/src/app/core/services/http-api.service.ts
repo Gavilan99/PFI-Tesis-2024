@@ -72,6 +72,13 @@ export class HttpApiService implements ApiService {
     return this.http.patch<User>(this.url('/api/users/me'), input).pipe(catchError(toApiError));
   }
 
+  deleteAccount(_userId: string): Observable<void> {
+    return this.http.delete(this.url('/api/users/me')).pipe(
+      map(() => undefined),
+      catchError(toApiError),
+    );
+  }
+
   createTestAttempt(_userId: string): Observable<TestAttempt> {
     return this.http.post<TestAttempt>(this.url('/api/attempts'), null).pipe(catchError(toApiError));
   }

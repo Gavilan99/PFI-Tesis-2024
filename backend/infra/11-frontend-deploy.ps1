@@ -68,6 +68,9 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'npm ci falló.' }
         & npx ng build --configuration production
         if ($LASTEXITCODE -ne 0) { throw 'ng build falló.' }
+        # The privacy policy and terms must not go out with [RESPONSABLE] / [CONTACTO] still in them.
+        & node tools/check-legal-placeholders.mjs
+        if ($LASTEXITCODE -ne 0) { throw 'El build tiene marcadores legales sin completar: ver src/app/legal/legal-content.ts.' }
     } finally { Pop-Location }
     $dist = Join-Path $app 'dist\nureon'
     $browser = Join-Path $dist 'browser'

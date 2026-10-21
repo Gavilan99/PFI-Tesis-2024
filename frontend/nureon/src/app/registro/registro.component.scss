@@ -15,6 +15,39 @@ form {
   width: 100%;
 }
 
+.registro-form__notice {
+  font-size: var(--nureon-text-body-sm-size);
+  color: rgba(black, 0.7);
+}
+
+.registro-form__consent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-3xs);
+  margin-bottom: var(--nureon-space-xs);
+}
+
+.registro-form__consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--nureon-space-xs);
+  font-size: var(--nureon-text-body-sm-size);
+  cursor: pointer;
+
+  input {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: var(--nureon-green-dark);
+  }
+
+  a {
+    color: var(--nureon-green-dark);
+    font-weight: 600;
+  }
+}
+
 .registro-form__error {
   color: var(--nureon-color-danger);
   font-size: var(--nureon-text-body-sm-size);

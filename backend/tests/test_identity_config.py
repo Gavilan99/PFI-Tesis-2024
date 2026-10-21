@@ -15,6 +15,7 @@ def production_env(monkeypatch):
     monkeypatch.setenv("COGNITO_USER_POOL_ID", "us-east-2_example")
     monkeypatch.setenv("COGNITO_APP_CLIENT_ID", "exampleclientid")
     monkeypatch.setenv("CONTACT_MAIL_TO", "contacto@nureon.example")
+    monkeypatch.setenv("CONSENT_VERSION", "2026-10-20")
     monkeypatch.delenv("IDENTITY_PROVIDER", raising=False)
     monkeypatch.delenv("MAIL_SENDER", raising=False)
     monkeypatch.delenv("AWS_PROFILE", raising=False)

@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from pydantic import Field, SecretStr, StringConstraints
+from pydantic import Field, SecretStr, StrictBool, StringConstraints
 
 from app.blueprints.schemas import ApiModel, ApiOutput
 from app.blueprints.users.schemas import UserOut
@@ -13,11 +13,16 @@ Email = Annotated[
 
 
 class RegisterIn(ApiModel):
-    """`RegisterInput`, exactly. The password is a SecretStr so no repr or error can print it."""
+    """`RegisterInput`, exactly. The password is a SecretStr so no repr or error can print it.
+
+    `consentAccepted` defaults to false so that a body without it gets CONSENT_REQUIRED, the message
+    that says what is missing, rather than the generic validation error. Strict: only a JSON boolean.
+    """
 
     username: Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=255)]
     email: Email
     password: Annotated[SecretStr, Field(min_length=8, max_length=256)]
+    consent_accepted: StrictBool = False
 
 
 class LoginIn(ApiModel):

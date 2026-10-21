@@ -8,6 +8,7 @@
     "build:demo": "ng build --configuration demo",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:legal": "ng build && node tools/check-legal-placeholders.mjs",
     "serve:ssr:nureon": "node dist/nureon/server/server.mjs"
   },
   "private": true,

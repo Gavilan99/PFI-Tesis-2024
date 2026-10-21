@@ -32,10 +32,30 @@ class PasswordRejected(AppError):
     message = "La contraseña no cumple los requisitos de seguridad."
 
 
+class ConsentRequired(AppError):
+    """Registration without accepting the privacy policy and the terms (Ley 25.326, arts. 5 and 12)."""
+
+    status_code = 400
+    code = "CONSENT_REQUIRED"
+    message = "Para crear tu cuenta tenés que aceptar la Política de privacidad y los Términos y condiciones."
+
+
 class Unauthenticated(AppError):
     status_code = 401
     code = "UNAUTHORIZED"
     message = "No se pudo autenticar la solicitud."
+
+
+class AccountNotEnabled(AppError):
+    """In production, an account that exists in the identity provider but was never registered here.
+
+    The Cognito pool is shared with development, so a development account can authenticate against
+    production. Registering again with that email fails (the provider already has it): hence "another email".
+    """
+
+    status_code = 401
+    code = "ACCOUNT_NOT_ENABLED"
+    message = "Esta cuenta no está habilitada en NureonAI. Registrate con otro email."
 
 
 class InvalidCredentials(AppError):

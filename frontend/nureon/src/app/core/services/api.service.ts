@@ -26,6 +26,11 @@ export interface ApiService {
   // RF07 — profile edits. userId is explicit (unlike register/login, there's
   // no session token standing in for it yet).
   updateProfile(userId: string, input: UpdateProfileInput): Observable<User>;
+  // Ley 25.326 right of deletion (PA-7): deletes the account. What
+  // identifies the person is erased; answers, results and demographics stay,
+  // anonymous. userId is explicit for the same reason as updateProfile.
+  // The caller ends the session afterwards.
+  deleteAccount(userId: string): Observable<void>;
 
   // userId is explicit on every attempt-scoping method below (createTestAttempt,
   // getLatestAttempt, getAttemptHistory) for the same reason as updateProfile:

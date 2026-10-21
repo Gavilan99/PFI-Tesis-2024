@@ -76,20 +76,36 @@ script ni siquiera está en la imagen.
 En la primera vuelta (Feature 8) la imagen sale de la rama `feature/be-08-deploy`. Después del release
 `v1.0.0` se vuelve a desplegar desde el tag, con los pasos de la sección siguiente.
 
+**En un entorno nuevo (base vacía) el orden es siempre este**, también para versiones posteriores:
+servicio (paso 9) y después `migrate` sin `-ImageTag`. El orden de la sección siguiente es para
+actualizar un entorno que ya tiene servicio y base.
+
 ## Desplegar una versión nueva
 
 A producción va sólo lo que está en `main`, desde un tag `vX.Y.Z`.
 
 ```powershell
 powershell -File backend\infra\08-image.ps1 -Ref v1.0.1 -Models C:\ruta\a\artifacts   # tag: v1.0.1-models-<hash>
+powershell -File backend\infra\10-task.ps1 -Job migrate -ImageTag v1.0.1-models-<hash>   # sólo si trae migraciones
 powershell -File backend\infra\09-service.ps1 -ImageTag v1.0.1-models-<hash> -Classifier trained   # canario
-powershell -File backend\infra\10-task.ps1 -Job migrate          # sólo si la versión trae migraciones
 powershell -File backend\infra\11-frontend-deploy.ps1 -Ref v1.0.1
 powershell -File backend\infra\logs.ps1 -Minutes 15 -Scan
 ```
 
-Con migraciones: si son compatibles con la versión anterior (columnas nuevas, nada borrado), se migra
-antes del paso 9. Si no lo son, se migra después y hay un rato de errores: mejor evitarlo.
+**Las migraciones van antes del servicio**, con la imagen nueva: `-ImageTag` corre las migraciones de
+esa imagen en una task definition de un solo uso (familia `nureon-api-oneoff`, que se desregistra al
+terminar), sin tocar el servicio, que sigue con el código viejo. Así las columnas ya existen cuando
+el código nuevo empieza a usarlas, y no hay ninguna ventana con el registro o el ingreso caídos.
+
+Eso exige que **toda migración sea compatible con el código que está corriendo**: agregar tablas o
+columnas nullables (o con valor por defecto en la base), nunca borrar ni renombrar en la misma versión.
+El código viejo no lee lo que no conoce. Un cambio que rompe se parte en dos versiones: primero la que
+deja de usar la columna, después la que la borra.
+
+La tarea corre con la imagen nueva pero con la configuración del servicio, que es la del código viejo.
+Por eso las migraciones leen sólo la URL de la base (`migrations/env.py`, `database_url`) y no la
+configuración completa: una variable que el código nuevo exige y el servicio todavía no tiene (como
+`CONSENT_VERSION` en la Feature 11) no las frena. Lo cubre `test_production_migrations_need_only_the_database`.
 
 Qué corre siempre se sabe: el tag de la imagen es el tag de git (o `sha-<commit>`), y la imagen lleva
 `org.opencontainers.image.revision` (el commit), `nureon.ref` y `nureon.models`.
@@ -120,10 +136,12 @@ powershell -File backend\infra\09-service.ps1 -ImageTag v1.1.0-models-<hash> -Cl
 ## Migraciones, carga del banco y altas manuales
 
 Son tareas sueltas (`run-task`) con la imagen y la task definition del servicio, en sus subnets y con
-su security group; nunca corren al arrancar la app. `10-task.ps1` espera a que la tarea termine,
+su security group; nunca corren al arrancar la app. La excepción es `-Job migrate -ImageTag <tag>`,
+que usa la task definition del servicio con otra imagen (ver "Desplegar una versión nueva"). `10-task.ps1` espera a que la tarea termine,
 imprime su log y falla si salió con un código distinto de 0.
 
-- `-Job migrate`: `alembic upgrade head`.
+- `-Job migrate`: `alembic upgrade head`. Con `-ImageTag <tag>`, las migraciones de esa imagen, antes
+  de desplegarla. Sin `-ImageTag`, las de la imagen que corre el servicio (en un entorno nuevo).
 - `-Job bank-dry-run` / `-Job bank-load`: `import_question_bank.py` con el CSV de la imagen
   (`bank/NureonAI Prototype v4.1.2.csv`). Una versión con respuestas no se modifica más: un banco
   cambiado entra como versión nueva, con `-BankVersion 2`, otra imagen que traiga ese CSV, y

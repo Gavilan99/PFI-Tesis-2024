@@ -1,4 +1,10 @@
 <app-page-container>
+  @if (accountDeleted) {
+    <p class="account-deleted" role="status">
+      Tu cuenta se borró. Lo que te identificaba ya no está en NureonAI, y con ese email ya no se
+      puede ingresar.
+    </p>
+  }
   <section class="hero">
     <h1 class="nureon-heading">Descubrí qué te motiva, no solo cómo actuás</h1>
     <p class="hero__lead">

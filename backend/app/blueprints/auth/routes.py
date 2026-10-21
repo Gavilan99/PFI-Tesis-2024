@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, current_app, jsonify, request
 
 from app.blueprints.auth.schemas import AuthOut, LoginIn, RegisterIn
 from app.blueprints.schemas import parse_body
@@ -27,6 +27,8 @@ def register():
         username=data.username,
         email=data.email,
         password=data.password.get_secret_value(),
+        consent_accepted=data.consent_accepted,
+        consent_version=current_app.config["CONSENT_VERSION"],
     )
     return _auth_response(result, 201)
 
@@ -36,6 +38,9 @@ def register():
 def login():
     data = parse_body(LoginIn, request.get_json(silent=True))
     result = accounts.login(
-        identity_provider(), email=data.email, password=data.password.get_secret_value()
+        identity_provider(),
+        email=data.email,
+        password=data.password.get_secret_value(),
+        provision_missing=current_app.config["PROVISION_MISSING_ACCOUNTS"],
     )
     return _auth_response(result, 200)

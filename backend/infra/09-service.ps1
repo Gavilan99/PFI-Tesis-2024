@@ -15,7 +15,10 @@
 
 param(
     [Parameter(Mandatory = $true)][string]$ImageTag,
-    [ValidateSet('stub', 'legacy_tree', 'trained')][string]$Classifier = 'stub'
+    [ValidateSet('stub', 'legacy_tree', 'trained')][string]$Classifier = 'stub',
+    # The version of the privacy policy and terms in force, stored with every new account (Feature 11).
+    # Same value as LEGAL_TEXT_VERSION in frontend/nureon/src/app/legal/legal-content.ts.
+    [string]$ConsentVersion = '2026-10-20'
 )
 
 . "$PSScriptRoot\_common.ps1"
@@ -56,6 +59,7 @@ $environment = [ordered]@{
     MAIL_SENDER           = 'ses'
     SES_REGION            = $Region
     CONTACT_MAIL_TO       = (Get-DotEnv 'CONTACT_MAIL_TO')
+    CONSENT_VERSION       = $ConsentVersion
 }
 $secrets = [ordered]@{
     DB_USER     = "${dbSecretArn}:username::"

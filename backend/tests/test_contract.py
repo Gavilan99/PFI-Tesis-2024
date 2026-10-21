@@ -6,8 +6,8 @@ The expected keys are not written here. They are parsed from the frontend's own 
 field added or removed on either side fails this test. Equality, not containment: a key too many is as
 much a defect as a key too few.
 
-One request per `ApiService` method, with the local identity and the filler bank: fourteen in the first
-test, and the two of the fixed item cuts (Feature 9, methods since Feature 10) in their own test below,
+One request per `ApiService` method, with the local identity and the filler bank: fifteen in the first
+test (`deleteAccount`, Feature 11, last), and the two of the fixed item cuts (Feature 9, methods since Feature 10) in their own test below,
 since they need the paid tier. `continueTestAttempt` answers a `TestAttempt` and `getCutStatus` a
 `CutStatus` (cut-status.model.ts). Between them, the two tests check that every method `ApiService`
 declares is covered.
@@ -19,7 +19,8 @@ from pathlib import Path
 import pytest
 
 from tests.attempt_helpers import answer_body
-from tests.auth_helpers import PASSWORD, bearer, unique_email
+from app.blueprints.auth.schemas import RegisterIn
+from tests.auth_helpers import PASSWORD, bearer, register_body, unique_email
 
 FRONTEND_CORE = Path(__file__).resolve().parents[2] / "frontend" / "nureon" / "src" / "app" / "core"
 MODELS = FRONTEND_CORE / "models"
@@ -101,6 +102,13 @@ def test_the_parser_reads_the_interfaces_it_is_trusted_with(shapes):
     }
 
 
+def test_the_register_body_is_exactly_register_input():
+    # Inputs too: the fields RegisterIn accepts are the keys of RegisterInput in auth.model.ts.
+    accepted = {field.alias for field in RegisterIn.model_fields.values()}
+    assert accepted == ts_keys("auth.model.ts", "RegisterInput")
+    assert "consentAccepted" in accepted
+
+
 def _keys(body) -> set[str]:
     assert isinstance(body, dict), body
     return set(body)
@@ -115,9 +123,7 @@ def test_every_route_answers_exactly_the_shape_of_its_interface(api, question_ba
     email = unique_email("contrato")
 
     # register(input) -> POST /api/auth/register
-    response = api.post(
-        "/api/auth/register", json={"username": "Persona contrato", "email": email, "password": PASSWORD}
-    )
+    response = api.post("/api/auth/register", json=register_body(username="Persona contrato", email=email))
     assert response.status_code == 201, response.get_json()
     body = response.get_json()
     checked["register"] = _keys(body) == shapes["AuthResponse"] and _keys(body["user"]) == shapes["User"]
@@ -216,6 +222,10 @@ def test_every_route_answers_exactly_the_shape_of_its_interface(api, question_ba
     )
     checked["submitContactMessage"] = _empty(response)
 
+    # deleteAccount(userId) -> DELETE /api/users/me: Observable<void>, no body. Last: it ends the account.
+    response = api.delete("/api/users/me", headers=headers)
+    checked["deleteAccount"] = _empty(response)
+
     assert set(checked) == ts_methods("api.service.ts", "ApiService") - CUT_METHODS, (
         "a method of ApiService is not covered"
     )
@@ -226,8 +236,7 @@ def test_the_cut_routes_answer_exactly_their_interfaces(api, question_bank, db_s
     from tests.cut_helpers import give_paid_tier
 
     response = api.post(
-        "/api/auth/register",
-        json={"username": "Persona cortes", "email": unique_email("cortes"), "password": PASSWORD},
+        "/api/auth/register", json=register_body(username="Persona cortes", email=unique_email("cortes"))
     )
     user, headers = response.get_json()["user"], bearer(response.get_json()["accessToken"])
     attempt = api.post("/api/attempts", headers=headers).get_json()

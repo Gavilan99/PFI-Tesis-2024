@@ -1,11 +1,10 @@
 import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
-// Privacidad/Términos are plain text, not links, on purpose: those pages
-// aren't part of the Stage 2 route tree yet, and this stage doesn't add
-// routes on its own initiative. Wire them up once that content exists.
 @Component({
   selector: 'app-footer',
   standalone: true,
+  imports: [RouterLink],
   templateUrl: './footer.component.html',
   styleUrl: './footer.component.scss',
 })

@@ -11,11 +11,13 @@ def unique_email(prefix: str = "persona") -> str:
     return f"{prefix}-{uuid.uuid4().hex[:8]}@example.test"
 
 
+def register_body(*, email: str | None = None, username: str = "Persona de test", password=PASSWORD) -> dict:
+    """A valid `RegisterInput`, consent included (Feature 11)."""
+    return {"username": username, "email": email or unique_email(), "password": password, "consentAccepted": True}
+
+
 def register(client, *, email: str | None = None, username: str = "Persona de test", password: str = PASSWORD):
-    return client.post(
-        "/api/auth/register",
-        json={"username": username, "email": email or unique_email(), "password": password},
-    )
+    return client.post("/api/auth/register", json=register_body(email=email, username=username, password=password))
 
 
 def bearer(token: str) -> dict[str, str]:

@@ -11,21 +11,23 @@ error tiene la misma forma:
 método. Si no llega ese cuerpo (el servidor no responde, o responde otra cosa), el `Error` lleva un
 mensaje genérico en español.
 
-**Verificado automáticamente** (`tests/test_contract.py`): para cada una de las catorce rutas de la
+**Verificado automáticamente** (`tests/test_contract.py`): para cada una de las quince rutas de la
 tabla de abajo, el conjunto de claves de la respuesta es *igual* al de la interfaz TypeScript con la
-que el frontend la lee. Las claves esperadas no están copiadas en el test: se leen de los `.ts` del
+que el frontend la lee. Para el registro también el cuerpo: los campos que acepta el backend son las
+claves de `RegisterInput` (`auth.model.ts`). Las claves esperadas no están copiadas en el test: se leen de los `.ts` del
 frontend, así que un campo agregado o sacado de cualquiera de los dos lados lo rompe. Lo mismo para
 las dos rutas de los cortes (Feature 9), con su método en `ApiService` desde la Feature 10
 (`continueTestAttempt` y `getCutStatus`), en un test aparte porque necesitan el tier pago: ver
 [Feature 9](#feature-9-cortes-fijos).
 
-## Las catorce rutas y `HttpApiService`
+## Las quince rutas y `HttpApiService`
 
 | Método de `ApiService` | Ruta | Respuesta | Qué hace `HttpApiService` además de la llamada |
 |---|---|---|---|
 | `register` | `POST /api/auth/register` | `201` `{user, accessToken, expiresIn}` | Guarda el token; devuelve `user` |
 | `login` | `POST /api/auth/login` | `200` `{user, accessToken, expiresIn}` | Guarda el token; devuelve `user` |
 | `updateProfile` | `PATCH /api/users/me` | `200` `User` | No manda el `userId` |
+| `deleteAccount` | `DELETE /api/users/me` | `204` sin cuerpo | Devuelve `void`; no manda el `userId` |
 | `createTestAttempt` | `POST /api/attempts` | `201` `TestAttempt` | Sin cuerpo; no manda el `userId` |
 | `getQuestions` | `GET /api/attempts/{id}/questions` | `200` `Question[]` | — |
 | `submitResponse` | `POST /api/attempts/{id}/responses` | `200` `TestResponse` | Manda exactamente los cuatro campos |
@@ -63,9 +65,11 @@ Toda ruta autenticada puede responder, además de lo que diga su tabla:
 | Status | `code` | `message` |
 |---|---|---|
 | 401 | `UNAUTHORIZED` | No se pudo autenticar la solicitud. |
+| 401 | `ACCOUNT_NOT_ENABLED` | Esta cuenta no está habilitada en NureonAI. Registrate con otro email. |
 | 503 | `IDENTITY_UNAVAILABLE` | El servicio de cuentas no está disponible. Probá de nuevo en unos minutos. |
 
 El 503 es no poder bajar las claves públicas del user pool para verificar la firma.
+`ACCOUNT_NOT_ENABLED` es sólo de producción: ver el login.
 
 Y cualquier ruta, pública o no:
 
@@ -97,9 +101,19 @@ cuerpo inválido.
 
 ### `POST /api/auth/register` — `register(input)`
 
-Cuerpo: exactamente `RegisterInput`, `{"username", "email", "password"}`. `username` de 3 a 255
-caracteres; `password` de 8 a 256. El email se guarda en minúsculas. La cuenta queda confirmada al
-crearse: no hay verificación de email.
+Cuerpo: exactamente `RegisterInput`, `{"username", "email", "password", "consentAccepted"}`.
+`username` de 3 a 255 caracteres; `password` de 8 a 256. El email se guarda en minúsculas. La cuenta
+queda confirmada al crearse: no hay verificación de email.
+
+`consentAccepted` (Feature 11) es la casilla «Leí y acepto la Política de privacidad y los Términos y
+condiciones, y consiento que mis datos se guarden en Estados Unidos» (Ley 25.326, arts. 5, 6 y 12;
+decreto 1558/2001). Tiene que ser el booleano JSON `true`: si falta o es `false`, `400
+CONSENT_REQUIRED` y no se crea nada, ni en la base ni en el proveedor de identidad; si es otra cosa
+(`"true"`, `1`, `null`), `400 VALIDATION_ERROR`. Un cuerpo inválido por otro motivo también es
+`VALIDATION_ERROR`, venga o no el consentimiento. Al crear la cuenta el servidor guarda
+`users.consent_accepted_at` (el momento del registro) y `users.consent_version`, la versión vigente
+de los textos según `CONSENT_VERSION`. **El cliente no elige la versión:** un `consentVersion` en el
+cuerpo es un campo de más, `400 VALIDATION_ERROR`. Ninguno de los dos sale en `User`.
 
 `201`:
 
@@ -109,12 +123,14 @@ crearse: no hay verificación de email.
 
 | Status | `code` | `message` |
 |---|---|---|
+| 400 | `CONSENT_REQUIRED` | Para crear tu cuenta tenés que aceptar la Política de privacidad y los Términos y condiciones. |
 | 409 | `EMAIL_ALREADY_REGISTERED` | Ese email ya está registrado. |
 | 409 | `ACCOUNT_CONFLICT` | La cuenta no se pudo asociar: ya existe otra con ese email. |
 | 400 | `PASSWORD_REJECTED` | La contraseña no cumple los requisitos de seguridad. |
 | 400 | `VALIDATION_ERROR` | Los datos enviados no son válidos. |
 | 503 | `IDENTITY_UNAVAILABLE` | El servicio de cuentas no está disponible. Probá de nuevo en unos minutos. |
 
+`CONSENT_REQUIRED` se evalúa antes que el email repetido: sin consentimiento no se mira nada más.
 `ACCOUNT_CONFLICT` es la carrera de dos registros simultáneos con el mismo email: la cuenta recién
 creada en el proveedor se borra y no queda nada a medias.
 
@@ -126,12 +142,21 @@ Cuerpo: exactamente `LoginInput`, `{"email", "password"}`. El email no distingue
 | Status | `code` | `message` |
 |---|---|---|
 | 401 | `INVALID_CREDENTIALS` | Email o contraseña incorrectos. |
+| 401 | `ACCOUNT_NOT_ENABLED` | Esta cuenta no está habilitada en NureonAI. Registrate con otro email. |
 | 400 | `VALIDATION_ERROR` | Los datos enviados no son válidos. |
 | 409 | `ACCOUNT_CONFLICT` | La cuenta no se pudo asociar: ya existe otra con ese email. |
 | 503 | `IDENTITY_UNAVAILABLE` | El servicio de cuentas no está disponible. Probá de nuevo en unos minutos. |
 
-Email inexistente y contraseña incorrecta responden igual, a propósito. El login crea la fila de
-`users` si falta; `ACCOUNT_CONFLICT` es el caso en que esa fila choca con el email de otra cuenta viva.
+Email inexistente y contraseña incorrecta responden igual, a propósito. Fuera de producción, el login
+crea la fila de `users` si falta; `ACCOUNT_CONFLICT` es el caso en que esa fila choca con el email de
+otra cuenta viva.
+
+**En producción esa fila no se crea** (Feature 11): una cuenta que existe en Cognito pero no se
+registró por `POST /api/auth/register` no tiene consentimiento, así que el login responde `401
+ACCOUNT_NOT_ENABLED` y no crea nada. Lo mismo cualquier ruta autenticada con un token de esa cuenta. El
+caso real es una cuenta de desarrollo, porque el pool de Cognito es el mismo: registrarse de nuevo con
+ese email no funciona (Cognito ya lo tiene y responde `409 EMAIL_ALREADY_REGISTERED`), de ahí «con otro
+email». La cuenta de Cognito no se toca.
 
 ### `GET /api/users/me`
 
@@ -150,12 +175,14 @@ que pasa el frontend se ignora (si viene en el cuerpo también). `200` con el `U
 | 400 | `EMAIL_NOT_EDITABLE` | El email no se puede modificar. |
 | 400 | `VALIDATION_ERROR` | Los datos enviados no son válidos. |
 
-### `DELETE /api/users/me`
+### `DELETE /api/users/me` — `deleteAccount(userId)`
 
-Sin pantalla en el frontend (PA-7). Borrado blando con anonimización según la tabla "Borrado de
-cuenta" de CLAUDE.md, y borrado del usuario en el proveedor de identidad. `204` sin cuerpo. Después,
-el token viejo responde `401` y el mismo email se puede volver a registrar. Si el proveedor falla,
-`503 IDENTITY_UNAVAILABLE` y no se anonimiza nada.
+Desde la Feature 11 tiene pantalla: «Borrar mi cuenta» en `/perfil` (PA-7). Borrado blando con
+anonimización según la tabla "Borrado de cuenta" de CLAUDE.md, y borrado del usuario en el proveedor de
+identidad. **`consent_accepted_at` y `consent_version` se conservan:** son la constancia de que el
+tratamiento fue lícito. `204` sin cuerpo. Después, el token viejo responde `401` y el mismo email se
+puede volver a registrar. Si el proveedor falla, `503 IDENTITY_UNAVAILABLE` y no se anonimiza nada.
+El `userId` del contrato no se manda.
 
 ## Feature 3: intentos
 
@@ -444,6 +471,7 @@ que existe en la base y no sale:
 | `questions.version`, `is_active`, `created_at` | Metadatos del banco: el servidor ya resuelve la versión activa |
 | `test_attempts.continued_from_attempt_id` | El enlace entre intentos lo expone, al revés, `continuedByAttemptId` de `CutStatus` |
 | `users.cognito_sub`, `deleted_at`, `created_at` | Internos de la cuenta |
+| `users.consent_accepted_at`, `consent_version` | Constancia del consentimiento (Feature 11): se guarda, no se muestra |
 | Los comentarios (`feedback`) | No hay endpoint de lectura: se leen de la base, para el piloto |
 | Los mensajes de contacto | No se guardan en ningún lado |
 
@@ -459,7 +487,6 @@ frontend.
 | `GET /api/health` | Liveness, para el balanceador (Feature 8). No toca la base |
 | `GET /api/health/ready` | Readiness: `503 SERVICE_UNAVAILABLE` si no hay base |
 | `GET /api/users/me` | El `User` del token. El frontend no lo usa |
-| `DELETE /api/users/me` | Borrado con anonimización (Ley 25.326). Sin pantalla todavía (PA-7) |
 
 Al revés no hay huecos: todo método de `ApiService` tiene su ruta. Pagos (Feature 6) no existe todavía,
 ni en el contrato ni en el backend: el tier pago sale de filas de `subscriptions` dadas de alta a mano

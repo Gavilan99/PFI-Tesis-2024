@@ -1,5 +1,9 @@
 """The migrations run cleanly in both directions, and they describe exactly what the models describe."""
 
+import os
+import subprocess
+import sys
+
 import pytest
 from alembic import command
 from alembic.autogenerate import compare_metadata
@@ -9,7 +13,7 @@ from sqlalchemy import create_engine, inspect, text
 import app.db.models  # noqa: F401  (registers every model)
 from app.db.base import Base
 from app.db.models.enums import ALL_ENUM_TYPES
-from tests.migration_helpers import alembic_config, scratch_database
+from tests.migration_helpers import BACKEND_DIR, alembic_config, scratch_database
 
 TABLES = {
     "users", "subjects", "questions", "answer_options", "test_attempts", "responses",
@@ -96,3 +100,27 @@ def test_every_foreign_key_restricts_deletes(migrated_scratch):
         for foreign_key in inspector.get_foreign_keys(table):
             ondelete = (foreign_key.get("options") or {}).get("ondelete")
             assert ondelete == "RESTRICT", f"{table}.{foreign_key['name']}: {ondelete}"
+
+
+# Everything the production configuration requires besides the database. None of it may be needed to
+# migrate: the migration runs with the new image and the service's old environment (deploy-runbook.md).
+_APP_SETTINGS = (
+    "SECRET_KEY", "CORS_ALLOWED_ORIGINS", "CLASSIFIER_BACKEND", "IDENTITY_PROVIDER", "COGNITO_USER_POOL_ID",
+    "COGNITO_APP_CLIENT_ID", "MAIL_SENDER", "CONTACT_MAIL_TO", "CONSENT_VERSION", "AWS_PROFILE",
+)
+
+
+def test_production_migrations_need_only_the_database(app):
+    with scratch_database(app.config["SQLALCHEMY_DATABASE_URI"]) as url:
+        environment = {name: value for name, value in os.environ.items() if name not in _APP_SETTINGS}
+        environment.update(APP_ENV="production", DATABASE_URL=url)
+        result = subprocess.run(
+            [sys.executable, "-m", "alembic", "upgrade", "head"],
+            cwd=BACKEND_DIR, env=environment, capture_output=True, text=True, timeout=120,
+        )
+        assert result.returncode == 0, result.stderr
+
+        engine = create_engine(url)
+        with engine.connect() as connection:
+            assert "users" in inspect(connection).get_table_names()
+        engine.dispose()

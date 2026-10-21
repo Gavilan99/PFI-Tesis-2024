@@ -15,3 +15,11 @@
   font-size: var(--nureon-text-caption-size);
   color: rgba(black, 0.6);
 }
+
+.footer__legal a {
+  color: inherit;
+
+  &:hover {
+    color: var(--nureon-green-dark);
+  }
+}

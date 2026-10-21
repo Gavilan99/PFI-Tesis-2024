@@ -48,5 +48,9 @@ def init_auth(app: Flask) -> None:
         if view is None or getattr(view, _PUBLIC_ATTR, False):
             return None
         provider = identity_provider()
-        g.current_user = accounts.authenticated_user(provider, provider.verify_access_token(_bearer_token()))
+        g.current_user = accounts.authenticated_user(
+            provider,
+            provider.verify_access_token(_bearer_token()),
+            provision_missing=app.config["PROVISION_MISSING_ACCOUNTS"],
+        )
         return None

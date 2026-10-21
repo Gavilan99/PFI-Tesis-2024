@@ -59,6 +59,18 @@ export const routes: Routes = [
   { path: 'eneagrama', component: EneagramaComponent, data: { title: 'Sobre el eneagrama' } },
   { path: 'nosotros', component: NosotrosComponent, data: { title: 'Nosotros' } },
   { path: 'contacto', component: ContactoComponent, data: { title: 'Contacto' } },
+  // Lazy: long text few visitors open, prerendered anyway. Keeps it out of
+  // the initial bundle.
+  {
+    path: 'privacidad',
+    loadComponent: () => import('./privacidad/privacidad.component').then((m) => m.PrivacidadComponent),
+    data: { title: 'Política de privacidad' },
+  },
+  {
+    path: 'terminos',
+    loadComponent: () => import('./terminos/terminos.component').then((m) => m.TerminosComponent),
+    data: { title: 'Términos y condiciones' },
+  },
 ];
 
 // Dev-only: guarded by environment.production (a compile-time constant once

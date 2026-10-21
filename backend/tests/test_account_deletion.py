@@ -29,7 +29,7 @@ from tests.test_schema_constraints import add, make_attempt, make_question
 NOW = datetime(2026, 10, 6, tzinfo=timezone.utc)
 USER_COLUMNS = (
     "email", "display_name", "cognito_sub", "account_type", "age_range", "gender", "country",
-    "profession_context", "is_deleted", "deleted_at",
+    "profession_context", "is_deleted", "deleted_at", "consent_accepted_at", "consent_version",
 )
 
 KEPT_TABLES = (User, TestAttempt, Response, ClassifierPrediction, Result, Feedback, Subject, Subscription, Payment)
@@ -123,8 +123,8 @@ def test_deletion_anonymizes_exactly_what_the_table_says(api, identity, db_sessi
     assert after["display_name"] is None
     assert after["cognito_sub"] is None
     assert after["profession_context"] is None
-    # Kept: demographics and account type.
-    for column in ("account_type", "age_range", "gender", "country"):
+    # Kept: demographics, account type, and the consent: the record that the processing was lawful.
+    for column in ("account_type", "age_range", "gender", "country", "consent_accepted_at", "consent_version"):
         assert after[column] == before[column] is not None, column
     assert after["is_deleted"] is True
     assert after["deleted_at"] is not None
