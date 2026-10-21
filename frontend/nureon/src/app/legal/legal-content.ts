@@ -6,11 +6,11 @@
 
 // Who is responsible for the database (Ley 25.326, art. 6 inc. b asks for
 // the identity and the address of the responsible party): name and address.
-export const LEGAL_RESPONSIBLE = '[RESPONSABLE]';
+export const LEGAL_RESPONSIBLE = 'Juan Manuel Gavilan y Tobías Nahuel Vodopivec';
 
 // Where people write to exercise their rights (access, rectification,
 // deletion) and ask anything about their data.
-export const LEGAL_CONTACT_EMAIL = '[CONTACTO]';
+export const LEGAL_CONTACT_EMAIL = 'eneagramnureon@gmail.com';
 
 // The version of the texts. The backend stores its own CONSENT_VERSION with
 // every new account: when these texts change, both change together.
