@@ -7,6 +7,12 @@ import { CutStatus } from '../models/cut-status.model';
 // cut ("Parte 2 de 3 · 1 de 50"), so the boundaries are needed here too.
 export const CUT_ENDS: readonly number[] = [40, 90, 145];
 
+// Accuracy of picking one of the nine types at random: the reference shown
+// under each cut's accuracy. The training writes it to
+// precision_by_items.json (baseline.chance), but CutStatus doesn't carry it,
+// so it's fixed here.
+export const CHANCE_ACCURACY = 1 / 9;
+
 // Position of the first item of `cut` (1-based cut number) among everything
 // served, 0-based. Cut 1 starts at 0.
 export function cutStart(cut: number): number {

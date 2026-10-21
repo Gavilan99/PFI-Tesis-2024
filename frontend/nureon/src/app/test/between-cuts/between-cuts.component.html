@@ -3,6 +3,7 @@
 
   @if (currentPercent !== null) {
     <p class="between-cuts__accuracy">{{ copy.currentAccuracy(status.answeredItems, currentPercent) }}</p>
+    <p class="between-cuts__reference">{{ copy.chanceReference(chancePercent) }}</p>
   }
 
   @if (canContinue) {
