@@ -1,25 +1,23 @@
-"""PROVISIONAL — `results.description_text` per eneatype. Not the final wording.
+"""`results.description_text` per eneatype: the one-sentence summary of each type.
 
-Copied as is from the one-sentence `summary` of each eneatype in the frontend,
-`frontend/nureon/src/app/resultados/eneatype-content.ts` (branch `redesign/frontend`), which marks
-them as placeholders too. Not rewritten and not improved here: the final text is a separate task,
-and today the frontend does not even read this field.
+A copy of `summary` in `frontend/nureon/src/app/resultados/eneatype-content.ts`, which is where the
+text is written. `tests/test_result_descriptions.py` fails if the two drift apart.
 
 Fixed per type: nothing in it depends on how the type was reached, or on any internal number.
 """
 
-PROVISIONAL_DESCRIPTIONS: dict[int, str] = {
-    1: "Principista, con propósito, autocontrolado y perfeccionista.",
-    2: "Cálido, cercano, generoso y complaciente con los demás.",
-    3: "Seguro de sí mismo, ambicioso, orientado a resultados y consciente de su imagen.",
-    4: "Creativo, expresivo, introspectivo y emocionalmente honesto.",
-    5: "Analítico, independiente, perceptivo y reservado.",
-    6: "Comprometido, responsable, cooperativo y alerta a los riesgos.",
-    7: "Optimista, espontáneo, curioso y siempre buscando la próxima experiencia.",
-    8: "Seguro, decidido, protector y con fuerte liderazgo.",
-    9: "Tranquilo, conciliador, empático y capaz de ver todas las perspectivas.",
+DESCRIPTIONS: dict[int, str] = {
+    1: "Íntegro, exigente, ordenado y comprometido con hacer las cosas bien.",
+    2: "Atento, afectuoso, generoso y pendiente de lo que necesitan los demás.",
+    3: "Enérgico, eficaz, orientado a metas y atento a la impresión que causa.",
+    4: "Sensible, creativo, profundo y fiel a su propia manera de ver las cosas.",
+    5: "Curioso, observador, autónomo y de pocas palabras.",
+    6: "Responsable, previsor, solidario y comprometido con su grupo.",
+    7: "Alegre, inquieto, versátil y con muchas ganas de vivir cosas nuevas.",
+    8: "Fuerte, directo, protector y con iniciativa para tomar el mando.",
+    9: "Sereno, paciente, abierto y con facilidad para acercar a las personas.",
 }
 
 
 def description_for(eneatype: int) -> str:
-    return PROVISIONAL_DESCRIPTIONS[eneatype]
+    return DESCRIPTIONS[eneatype]

@@ -17,7 +17,7 @@ con Postgres y Cognito reales. Lo que sigue es qué de eso es real y qué no, si
 | Banco de preguntas | **Banco real v4.1.2 como versión 1** (145 ítems), cargado en la base local con `scripts/import_question_bank.py`. El relleno sigue siendo la versión 0 (ver abajo, "Banco real") |
 | Cortes fijos (Feature 9) | **Real.** 40 / 90 / 145 ítems, los mismos para todos, desde el manifest de los modelos. Seguir después de un corte, también después de ver el resultado. Pantalla entre cortes y bloque para seguir desde el resultado: Feature 10 |
 | Clasificación | **`stub` activo por defecto** en desarrollo. **No es ML** (ver abajo). `trained` existe y funciona, pero **sólo con artefactos sintéticos**: los reales llegan después del corte del piloto (18/10) |
-| Resultado | Real en el sentido de guardado y servido; el eneatipo sale del `stub` (o de los modelos sintéticos) y la descripción es provisoria |
+| Resultado | Real en el sentido de guardado y servido; el eneatipo sale del `stub` (o de los modelos sintéticos) y la descripción es el texto final de cada eneatipo (Feature 12) |
 | Comentarios (RF06) | **Real.** Se guardan en la base; no hay pantalla para leerlos |
 | Contacto | **Real pero provisorio:** SES en sandbox, casilla de Gmail, sólo a direcciones verificadas |
 | Freemium (RF09/RF10) | El corte 1 es gratis; el 2 y el 3 piden una suscripción activa. Sin Mercado Pago: **las suscripciones se dan de alta a mano** (`scripts/grant_subscription.py`). **El texto premium sigue viajando en el bundle** |
@@ -350,8 +350,9 @@ mediciones en [app/ml/README.md](../app/ml/README.md).
 - **Lo interno no sale.** El guardián de la Feature 3 ahora también rechaza `probabilities`,
   `predicted_group`, `confidence_margin` y `model_version` en cualquier forma, toda clave que
   contenga `confidence`, `margin` o `probabilit`, y todo texto que nombre una versión de modelo.
-- **`description_text`** es provisorio: el resumen de una frase de cada eneatipo, copiado tal cual
-  del frontend a `app/services/result_descriptions.py`. La redacción final es otra tarea.
+- **`description_text`** es el resumen de una frase de cada eneatipo, copiado tal cual del frontend
+  a `app/services/result_descriptions.py`; `tests/test_result_descriptions.py` controla que
+  coincidan. Los resultados guardados antes de la Feature 12 conservan el texto anterior.
 - **Cerrar dos veces** no reclasifica ni pisa. **Si la clasificación falla**, el intento sigue
   `in_progress` sin filas, y responde `500 RESULT_NOT_GENERATED`.
 

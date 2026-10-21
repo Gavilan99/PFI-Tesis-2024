@@ -69,9 +69,9 @@ dataset armado por el equipo (no respuestas reales); coincide con la tabla canó
 combinaciones. Los cuatro Random Forest nuevos todavía no existen. Ninguna probabilidad, grupo ni
 margen llega al navegador.
 
-El contenido de motivación/fortalezas/tensiones/alas es real **pero provisorio**:
-`eneatype-content.ts` está marcado `isPlaceholder: true` en los 9 eneatipos (traducción de las
-fuentes de la tesis, pendiente de redacción final), y la UI lo dice en pantalla.
+El contenido de motivación/fortalezas/tensiones/alas es final (Feature 12): redacción propia en
+`eneatype-content.ts`, con los nombres de tipo de uso corriente. El `summary` de cada eneatipo es
+también el `descriptionText` del backend, y un test del backend controla que coincidan.
 
 **Freemium (RF09/RF10):** el `tier` del intento lo decide el servidor (hoy siempre `free_reduced`; la
 Feature 6 lo resuelve por suscripción). Pero **el texto premium viaja en el bundle**: "En crecimiento
