@@ -1,10 +1,11 @@
 import { AccountType } from '../core/models/user.model';
 
-// PROVISIONAL — adaptado y traducido de src/assets/data/type_*.txt (en
-// inglés, con formato inconsistente entre archivos: type_1/2 usan un
-// esquema, type_3-9 otro). No es la redacción final del contenido de
-// resultados — placeholder hasta que se escriba el texto real en español.
-// isPlaceholder existe para que la UI lo marque explícitamente en pantalla.
+// The result screen's text per eneatype, written for NureonAI: a guide to
+// personality centred on motivation, not a diagnosis. The type names are the
+// usual ones in the eneagrama literature (and the ones /eneagrama shows); the
+// rest is our own wording. `summary` is also the result's descriptionText:
+// the backend keeps a copy in app/services/result_descriptions.py, and
+// backend/tests/test_result_descriptions.py fails if the two drift apart.
 export interface EneatypeContent {
   title: string;
   summary: string;
@@ -13,229 +14,220 @@ export interface EneatypeContent {
   tensions: string[];
   growth: string;
   stress: string;
-  isPlaceholder: boolean;
 }
 
 export const ENEATYPE_CONTENT: Record<number, EneatypeContent> = {
   1: {
     title: 'El Reformador',
-    summary: 'Principista, con propósito, autocontrolado y perfeccionista.',
+    summary: 'Íntegro, exigente, ordenado y comprometido con hacer las cosas bien.',
     coreMotivation:
-      'Buscás tener razón, mejorar todo lo que te rodea y evitar la culpa o el error.',
+      'Te mueve hacer lo correcto: sentir que actuás con integridad y que lo que pasa por tus manos queda mejor de lo que estaba.',
     strengths: [
-      'Busca la mejora constante',
-      'Estándares altos',
-      'Fuerte sentido ético',
-      'Organizado y eficiente',
-      'Consciente y racional',
+      'Tiene claro qué es justo y lo sostiene',
+      'Cuida los detalles y la calidad',
+      'Es coherente entre lo que dice y lo que hace',
+      'Pone orden donde hace falta',
+      'Asume la responsabilidad que le toca',
     ],
     tensions: [
-      'Puede ser crítico consigo mismo y con otros',
-      'Tiende al resentimiento cuando las cosas no cumplen sus expectativas',
-      'Le cuesta relajarse y aceptar la imperfección',
-      'Tendencia a la impaciencia',
+      'Puede ser muy duro consigo mismo y con los demás',
+      'Le cuesta dar algo por terminado si no quedó impecable',
+      'Se guarda el enojo cuando algo le parece injusto',
+      'Puede ver un único modo correcto de hacer las cosas',
     ],
     growth:
-      'En crecimiento, te volvés más aceptador, paciente y espontáneo — abrazás las imperfecciones de la vida con más autocompasión.',
+      'En crecimiento, te das permiso para disfrutar y para equivocarte, y tu exigencia se vuelve más amable con vos y con los demás.',
     stress:
-      'Bajo estrés, podés volverte más controlador y rígido, sintiéndote abrumado por la frustración y excesivamente crítico.',
-    isPlaceholder: true,
+      'Bajo estrés, podés volverte más rígido y crítico, y sentir que todo depende de que vos lo corrijas.',
   },
   2: {
     title: 'El Ayudador',
-    summary: 'Cálido, cercano, generoso y complaciente con los demás.',
+    summary: 'Atento, afectuoso, generoso y pendiente de lo que necesitan los demás.',
     coreMotivation:
-      'Necesitás sentirte querido y necesitado, y por eso das mucho de vos para ayudar a los demás.',
+      'Te mueve sentirte querido e importante para las personas, y lo buscás estando cerca y ofreciendo tu ayuda.',
     strengths: [
-      'Empático y compasivo',
-      'Fuerte deseo de ayudar',
-      'Generoso y protector',
-      'Bueno para construir vínculos',
-      'Intuitivo sobre las necesidades ajenas',
+      'Percibe rápido cómo está el otro',
+      'Se ofrece sin que se lo pidan',
+      'Crea vínculos cálidos y cercanos',
+      'Hace que los demás se sientan acompañados',
+      'Es generoso con su tiempo y su energía',
     ],
     tensions: [
-      'Puede volverse posesivo y dependiente',
-      'Le cuesta reconocer sus propias necesidades',
-      'Tiende a la complacencia y a buscar aprobación',
-      'Puede sentirse no valorado cuando su esfuerzo pasa desapercibido',
+      'Puede dejar sus propias necesidades para después',
+      'Le cuesta pedir ayuda o decir que no',
+      'Puede esperar reconocimiento a cambio de lo que da',
+      'Se siente dolido cuando su esfuerzo no se nota',
     ],
     growth:
-      'En crecimiento, te volvés más autónomo y capaz de cuidarte a vos mismo — aprendés a poner límites y priorizar tus propias necesidades.',
+      'En crecimiento, te cuidás con la misma atención que les das a los demás, y ayudás sin esperar nada a cambio.',
     stress:
-      'Bajo estrés, podés volverte invasivo o manipulador, sintiéndote herido cuando tu ayuda no se ve reciprocada.',
-    isPlaceholder: true,
+      'Bajo estrés, podés insistir con tu ayuda aunque no te la pidan y sentir que nadie valora lo que hacés.',
   },
   3: {
     title: 'El Triunfador',
-    summary: 'Seguro de sí mismo, ambicioso, orientado a resultados y consciente de su imagen.',
+    summary: 'Enérgico, eficaz, orientado a metas y atento a la impresión que causa.',
     coreMotivation:
-      'Necesitás sentirte valioso a través de tus logros y ser admirado por lo que conseguís.',
+      'Te mueve sentir que valés por lo que lográs, y por eso ponés mucha energía en avanzar y en que tus logros se vean.',
     strengths: [
-      'Seguro y carismático',
-      'Ambicioso y competente',
-      'Orientado a metas y al éxito',
-      'Adaptable en distintos entornos',
-      'Eficiente y práctico',
+      'Se fija objetivos y los cumple',
+      'Contagia empuje a su equipo',
+      'Se adapta rápido a lo que pide cada situación',
+      'Sabe presentar bien sus ideas',
+      'Prioriza lo que da resultados',
     ],
     tensions: [
-      'Puede volverse excesivamente competitivo',
-      'Puede descuidar sus emociones por enfocarse en producir',
-      'Tendencia a mostrar una imagen antes que su ser auténtico',
-      'Puede ser impaciente con quienes ve menos motivados',
+      'Puede medir su valor sólo por sus logros',
+      'Deja de lado lo que siente para no frenar',
+      'Tiende a mostrar la versión de sí que más conviene',
+      'Le cuesta bajar el ritmo',
     ],
     growth:
-      'En crecimiento, desarrollás autenticidad y reconocés que tu valor no depende del éxito externo — te permitís conectar con emociones más profundas.',
+      'En crecimiento, te mostrás como sos y no sólo por lo que rendís, y descubrís que tu valor no depende de cada logro.',
     stress:
-      'Bajo estrés, podés sentir que fallaste o que no estás a la altura de una imagen ideal, y descuidar tus necesidades emocionales.',
-    isPlaceholder: true,
+      'Bajo estrés, podés exigirte cada vez más para no sentir que fallaste, aunque eso te aleje de lo que sentís.',
   },
   4: {
     title: 'El Individualista',
-    summary: 'Creativo, expresivo, introspectivo y emocionalmente honesto.',
+    summary: 'Sensible, creativo, profundo y fiel a su propia manera de ver las cosas.',
     coreMotivation:
-      'Buscás encontrar tu identidad única y darle un sentido personal y auténtico a tu vida.',
+      'Te mueve descubrir quién sos de verdad y que tu vida tenga un sentido propio, que te represente.',
     strengths: [
-      'Creativo y expresivo',
-      'Emocionalmente honesto y auténtico',
-      'Introspectivo y con autoconciencia',
-      'Sensible y empático',
-      'Capaz de apreciar la belleza y la profundidad',
+      'Pone en palabras lo que otros no saben decir',
+      'Tiene una mirada original',
+      'Se conoce bien por dentro',
+      'Acompaña bien a otros en momentos difíciles',
+      'Encuentra belleza y sentido en lo cotidiano',
     ],
     tensions: [
-      'Propenso a cambios de humor y melancolía',
-      'Puede volverse retraído y absorto en sí mismo',
-      'Tiende a compararse con otros y sentirse en falta',
-      'Puede quedarse instalado en sus emociones sin resolverlas',
+      'Su estado de ánimo puede cambiar mucho',
+      'Puede sentir que le falta algo que otros tienen',
+      'Tiende a encerrarse en lo que siente',
+      'Le cuesta valorar lo que ya tiene',
     ],
     growth:
-      'En crecimiento, aprendés a aceptarte y valorarte tal cual sos, sin necesidad de ser distinto o especial.',
+      'En crecimiento, dejás de buscar lo que te falta y te sentís a gusto con quien ya sos, y tu creatividad se vuelca hacia afuera.',
     stress:
-      'Bajo estrés, podés sentirte incomprendido o desconectado, con episodios de melancolía o aislamiento.',
-    isPlaceholder: true,
+      'Bajo estrés, podés sentir que nadie te entiende y replegarte en tu mundo interior.',
   },
   5: {
     title: 'El Investigador',
-    summary: 'Analítico, independiente, perceptivo y reservado.',
+    summary: 'Curioso, observador, autónomo y de pocas palabras.',
     coreMotivation:
-      'Necesitás entender el mundo a fondo y conservar tu energía y tu espacio propio.',
+      'Te mueve comprender cómo funcionan las cosas y sentirte capaz, cuidando tu tiempo, tu energía y tu espacio.',
     strengths: [
-      'Analítico y perspicaz',
-      'Independiente y autosuficiente',
-      'Pensador objetivo',
-      'Mantiene la calma en situaciones difíciles',
-      'Buen resolutor de problemas',
+      'Investiga a fondo antes de opinar',
+      'Mantiene la cabeza fría cuando hay tensión',
+      'Se arregla bien por su cuenta',
+      'Aporta ideas que otros no vieron',
+      'Escucha y observa con atención',
     ],
     tensions: [
-      'Puede volverse emocionalmente distante',
-      'Le cuesta expresar sentimientos o necesidades',
-      'Tiende a intelectualizar en vez de sentir',
-      'Puede aislarse de los demás',
-      'Le cuesta confiar cuestiones personales',
+      'Puede tomar distancia de lo que siente',
+      'Le cuesta pedir o mostrar lo que necesita',
+      'Tiende a analizar en lugar de actuar',
+      'Puede alejarse de los demás cuando se siente exigido',
+      'Comparte poco de su vida personal',
     ],
     growth:
-      'En crecimiento, te animás a compartir tus emociones y a confiar más en los demás, balanceando lo intelectual con lo emocional.',
+      'En crecimiento, te animás a actuar con lo que ya sabés y a compartir más de vos con las personas en las que confiás.',
     stress:
-      'Bajo estrés, podés sentirte abrumado por la interacción social y retraerte, intelectualizando los problemas para evitar sentirlos.',
-    isPlaceholder: true,
+      'Bajo estrés, podés replegarte, guardar tu energía y quedarte pensando en lugar de involucrarte.',
   },
   6: {
     title: 'El Leal',
-    summary: 'Comprometido, responsable, cooperativo y alerta a los riesgos.',
-    coreMotivation: 'Buscás seguridad y apoyo, y anticipás problemas para sentirte preparado.',
+    summary: 'Responsable, previsor, solidario y comprometido con su grupo.',
+    coreMotivation:
+      'Te mueve sentirte seguro y respaldado, y por eso te preparás para lo que pueda salir mal y cuidás tus vínculos.',
     strengths: [
-      'Leal y comprometido',
-      'Responsable y confiable',
-      'Buen resolutor práctico de problemas',
-      'Valiente frente a los desafíos',
-      'Muy cooperativo',
+      'Cumple con lo que se compromete',
+      'Anticipa los problemas antes de que pasen',
+      'Defiende a los suyos cuando hace falta',
+      'Trabaja bien en equipo',
+      'Es alguien con quien se puede contar',
     ],
     tensions: [
-      'Propenso a la ansiedad',
-      'Puede volverse suspicaz',
-      'Le cuesta decidir y confiar en sí mismo',
-      'Puede depender de otros para sentirse seguro',
-      'Tiende a anticipar el peor escenario',
+      'Puede preocuparse de más',
+      'Duda de sus propias decisiones',
+      'Tiende a desconfiar de lo que no conoce',
+      'Busca la aprobación de otros antes de avanzar',
+      'Puede imaginar el peor resultado posible',
     ],
     growth:
-      'En crecimiento, aprendés a confiar en vos mismo y en tu intuición, decidiendo sin necesitar tanta validación externa.',
+      'En crecimiento, confiás en tu propio criterio, y la seguridad que buscabas afuera la encontrás en vos.',
     stress:
-      'Bajo estrés, podés sentirte abrumado por la ansiedad y paralizado por la indecisión.',
-    isPlaceholder: true,
+      'Bajo estrés, podés llenarte de dudas y dar muchas vueltas antes de decidir.',
   },
   7: {
     title: 'El Entusiasta',
-    summary: 'Optimista, espontáneo, curioso y siempre buscando la próxima experiencia.',
+    summary: 'Alegre, inquieto, versátil y con muchas ganas de vivir cosas nuevas.',
     coreMotivation:
-      'Buscás evitar el dolor y el aburrimiento persiguiendo posibilidades y experiencias nuevas.',
+      'Te mueve sentirte libre y con opciones abiertas, y buscás lo que te entusiasma para no quedar atrapado en lo que duele o aburre.',
     strengths: [
-      'Entusiasta y optimista',
-      'Espontáneo y aventurero',
-      'Rápido para encontrar soluciones',
-      'Muy curioso',
-      'Adaptable en situaciones diversas',
+      'Contagia buen humor',
+      'Ve oportunidades donde otros ven problemas',
+      'Se interesa por muchos temas',
+      'Arranca proyectos con mucha energía',
+      'Se acomoda rápido a los cambios',
     ],
     tensions: [
-      'Le cuesta mantener el foco y el compromiso',
-      'Puede evitar emociones o situaciones difíciles',
-      'Propenso a la impulsividad',
-      'Inquieto, siempre busca lo nuevo',
-      'Puede dispersarse',
+      'Le cuesta terminar lo que empieza',
+      'Puede esquivar las conversaciones incómodas',
+      'A veces decide sin medir las consecuencias',
+      'Se aburre rápido de la rutina',
+      'Puede abarcar más de lo que puede sostener',
     ],
     growth:
-      'En crecimiento, aprendés a quedarte con las emociones difíciles en vez de evitarlas, y a sostener el compromiso en el tiempo.',
+      'En crecimiento, te quedás con lo que elegiste aunque deje de ser novedad, y encontrás satisfacción en profundizar.',
     stress:
-      'Bajo estrés, podés sentirte atrapado por los compromisos y frustrado cuando la realidad no coincide con lo idealizado.',
-    isPlaceholder: true,
+      'Bajo estrés, podés sentirte encerrado por tus compromisos y perder la paciencia cuando las cosas no salen como las imaginabas.',
   },
   8: {
     title: 'El Desafiador',
-    summary: 'Seguro, decidido, protector y con fuerte liderazgo.',
+    summary: 'Fuerte, directo, protector y con iniciativa para tomar el mando.',
     coreMotivation:
-      'Necesitás protegerte a vos mismo y a los tuyos, evitando quedar en una posición vulnerable.',
+      'Te mueve sentir que llevás las riendas de tu vida y que nadie puede pasarles por encima ni a vos ni a los tuyos.',
     strengths: [
-      'Seguro y decidido',
-      'Protector y con recursos',
-      'Fuertes cualidades de liderazgo',
-      'Asertivo y orientado a la acción',
-      'Capaz de defenderse y defender a otros',
+      'Toma decisiones y se hace cargo',
+      'Protege a la gente que quiere',
+      'Dice lo que piensa sin vueltas',
+      'Pone en marcha lo que otros dudan en empezar',
+      'Defiende lo que considera justo',
     ],
     tensions: [
-      'Puede volverse confrontativo o dominante',
-      'Le cuesta mostrar vulnerabilidad',
-      'Puede resistirse a depender de otros',
-      'Propenso a la intensidad excesiva',
-      'Impaciente con la debilidad ajena',
+      'Puede imponerse sin darse cuenta',
+      'Le cuesta mostrarse frágil',
+      'Prefiere no depender de nadie',
+      'Puede reaccionar con demasiada intensidad',
+      'Tiene poca paciencia con la indecisión',
     ],
     growth:
-      'En crecimiento, te abrís a la vulnerabilidad y a la sensibilidad emocional, soltando la necesidad de controlar todo.',
+      'En crecimiento, usás tu fuerza para cuidar más que para controlar, y te permitís mostrar tu lado más sensible.',
     stress:
-      'Bajo estrés, podés reaccionar con enojo o confrontación al sentirte amenazado o fuera de control.',
-    isPlaceholder: true,
+      'Bajo estrés, podés ponerte a la defensiva y endurecerte cuando sentís que las cosas se te van de las manos.',
   },
   9: {
     title: 'El Pacificador',
-    summary: 'Tranquilo, conciliador, empático y capaz de ver todas las perspectivas.',
+    summary: 'Sereno, paciente, abierto y con facilidad para acercar a las personas.',
     coreMotivation:
-      'Buscás mantener la paz interior y evitar el conflicto para sostener la armonía.',
+      'Te mueve sentirte en paz, por dentro y con los demás, y por eso evitás lo que pueda generar tensiones.',
     strengths: [
-      'Calmo y en paz',
-      'No juzga y acepta a los demás',
-      'Apoyador y empático',
-      'Ve múltiples perspectivas',
-      'Armonioso y paciente',
+      'Escucha sin juzgar',
+      'Entiende puntos de vista muy distintos',
+      'Calma los ánimos en un conflicto',
+      'Hace que los demás se sientan cómodos',
+      'Es constante y paciente',
     ],
     tensions: [
-      'Tiende a evitar el conflicto a toda costa',
-      'Le cuesta afirmarse o expresar sus necesidades',
-      'Puede volverse pasivo o desconectado',
-      'Propenso a la procrastinación',
-      'Le cuesta decidir o priorizarse',
+      'Puede postergar lo que le importa',
+      'Le cuesta decir lo que quiere',
+      'Cede para no generar conflictos',
+      'Se deja llevar por la rutina o por lo que deciden otros',
+      'Le cuesta poner prioridades',
     ],
     growth:
-      'En crecimiento, aprendés a afirmarte y a expresar tus opiniones, abrazando el conflicto como una oportunidad.',
+      'En crecimiento, te hacés lugar a vos mismo: decís lo que pensás y avanzás con lo que querés, sin perder la calma.',
     stress:
-      'Bajo estrés, podés sentirte abrumado por la confrontación y desconectarte de vos mismo y de tus metas.',
-    isPlaceholder: true,
+      'Bajo estrés, podés desconectarte y dejar pasar las cosas en lugar de enfrentarlas.',
   },
 };
 

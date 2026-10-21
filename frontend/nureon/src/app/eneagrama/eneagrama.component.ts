@@ -9,9 +9,8 @@ interface EneatypeSummary {
 
 // Public, prerendered educational content — no ApiService call, same as
 // LandingComponent. Names only, not the descriptive copy from
-// resultados/eneatype-content.ts: that file is explicitly provisional
-// (see its own header comment) and scoped to the results screen, and this
-// page shouldn't silently change if that copy gets rewritten for accuracy.
+// resultados/eneatype-content.ts: that copy is scoped to the results
+// screen, and this page shouldn't silently change if it gets rewritten.
 //
 // Deliberately doesn't say which triad group any item or option belongs
 // to — that's the instrument's scoring key, not marketing content.

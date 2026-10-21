@@ -18,7 +18,7 @@ from app.ml.config import TAXONOMIES, TYPE_TABLE
 from app.ml.legacy.tree import LEGACY_MODEL_VERSION
 from app.ml.stub import STUB_MODEL_VERSION, StubClassifier
 from app.repositories import result_repository
-from app.services.result_descriptions import PROVISIONAL_DESCRIPTIONS
+from app.services.result_descriptions import DESCRIPTIONS
 from tests.attempt_helpers import answer_all, questions, start
 from tests.auth_helpers import assert_error, registered
 from tests.classifier_helpers import app_with_backend, complete_as_type
@@ -73,7 +73,7 @@ def test_closing_stores_four_predictions_and_one_result(api, person, db_session)
     [result] = results
     assert 1 <= result.eneatype <= 9
     assert result.confidence_margin is not None and result.confidence_margin >= 0
-    assert result.description_text == PROVISIONAL_DESCRIPTIONS[result.eneatype]
+    assert result.description_text == DESCRIPTIONS[result.eneatype]
     # Dated at its insert, inside the close: never before the attempt's completed_at.
     assert result.generated_at >= db_session.get(TestAttempt, uuid.UUID(attempt["id"])).completed_at
 
@@ -99,7 +99,7 @@ def test_every_eneatype_is_reachable_with_answers_chosen_for_it(api, person, db_
     attempt = complete_as_type(api, headers, db_session, eneatype)
     result = _result(api, headers, attempt["id"])
     assert result["eneatype"] == eneatype
-    assert result["descriptionText"] == PROVISIONAL_DESCRIPTIONS[eneatype]
+    assert result["descriptionText"] == DESCRIPTIONS[eneatype]
 
 
 # --- GET /api/attempts/{id}/result --------------------------------------------------------------
@@ -127,7 +127,7 @@ def test_nothing_about_the_margin_reaches_the_client(api, person, db_session):
     db_session.execute(
         Result.__table__.update()
         .where(Result.test_attempt_id == uuid.UUID(second["id"]))
-        .values(eneatype=7, description_text=PROVISIONAL_DESCRIPTIONS[7], confidence_margin=0)
+        .values(eneatype=7, description_text=DESCRIPTIONS[7], confidence_margin=0)
     )
     db_session.commit()
     a, b = _result(api, headers, first["id"]), _result(api, headers, second["id"])

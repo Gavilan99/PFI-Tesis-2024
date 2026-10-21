@@ -8,6 +8,8 @@ export const CUT_COPY = {
   finishedPart: (cut: number, cutCount: number) => `Terminaste la parte ${cut} de ${cutCount}.`,
   currentAccuracy: (answered: number, percent: number) =>
     `Con las ${answered} preguntas que respondiste, el resultado coincide con la tipificación de un especialista en aproximadamente ${percent}\u00a0% de los casos.`,
+  chanceReference: (percent: number) =>
+    `Como referencia, elegir un tipo al azar acertaría en el ${percent} % de los casos.`,
   nextAccuracy: (more: number, percent: number) =>
     `Si respondés ${more} preguntas más, esa coincidencia estimada pasa a ser de ${percent}\u00a0%.`,
   seeResult: 'Ver mi resultado',

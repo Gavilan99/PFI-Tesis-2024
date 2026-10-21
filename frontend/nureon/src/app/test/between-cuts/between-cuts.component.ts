@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CutStatus } from '../../core/models/cut-status.model';
 import { CUT_COPY } from '../../core/cuts/cut-copy';
-import { asPercent, hasNextCut } from '../../core/cuts/cut-plan';
+import { CHANCE_ACCURACY, asPercent, hasNextCut } from '../../core/cuts/cut-plan';
 import { BrandButtonComponent } from '../../shared/components/brand-button/brand-button.component';
 import { FeedbackFormComponent } from '../../shared/components/feedback-form/feedback-form.component';
 
@@ -28,6 +28,7 @@ export class BetweenCutsComponent {
   @Output() continue = new EventEmitter<void>();
 
   readonly copy = CUT_COPY;
+  readonly chancePercent = asPercent(CHANCE_ACCURACY)!;
 
   get canContinue(): boolean {
     return hasNextCut(this.status) && this.status.canContinue && !this.paidTierRequired;

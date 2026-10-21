@@ -1,9 +1,8 @@
 import { Component } from '@angular/core';
 import { PageContainerComponent } from '../shared/layout/page-container/page-container.component';
 
-// Public, prerendered content. The author bios are a placeholder draft on
-// purpose — see the DRAFT notice in the template — no biographical data was
-// invented for this component; it's marked for confirmation instead.
+// Public, prerendered content. One line per person with their role in the
+// project: no photos and no personal contact details.
 @Component({
   selector: 'app-nosotros',
   standalone: true,

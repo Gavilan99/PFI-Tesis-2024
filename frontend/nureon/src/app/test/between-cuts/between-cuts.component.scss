@@ -15,6 +15,14 @@
   max-width: 40rem;
 }
 
+// The reference reads as a footnote to the accuracy right above it.
+.between-cuts__reference {
+  font-size: var(--nureon-text-body-sm-size);
+  color: rgba(black, 0.6);
+  max-width: 40rem;
+  margin-top: calc(-1 * var(--nureon-space-2xs));
+}
+
 .between-cuts__actions {
   display: flex;
   flex-direction: column;

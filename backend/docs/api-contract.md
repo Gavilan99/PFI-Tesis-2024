@@ -334,7 +334,7 @@ y error terminan en el mismo estado de error, así que la pantalla no cambia.
 
 Nada más. Las predicciones de los cuatro clasificadores (grupo, probabilidades, versión de modelo) y
 el margen de confianza se guardan y no salen nunca: ni como número, ni derivados, ni en palabras.
-`descriptionText` es por ahora un texto provisorio fijo por eneatipo.
+`descriptionText` es un texto fijo por eneatipo: el resumen de una frase del frontend.
 
 ### `GET /api/attempts/{id}/result` — `getResult(attemptId)`
 
