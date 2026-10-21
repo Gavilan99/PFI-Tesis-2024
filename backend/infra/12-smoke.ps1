@@ -36,9 +36,13 @@ function Call([string]$Method, [string]$Path, $Body, [string]$Token, [int]$Expec
     catch [Net.WebException] {
         if (-not $_.Exception.Response) { throw }
         $status = [int]$_.Exception.Response.StatusCode
-        $content = (New-Object IO.StreamReader($_.Exception.Response.GetResponseStream())).ReadToEnd()
+        # 5.1 has already read the response stream by now (it comes back empty); the body is here.
+        $content = $_.ErrorDetails.Message
     }
-    if ($status -ne $Expect) { throw "$Method $Path respondió $status (esperaba $Expect): $content" }
+    if ($status -ne $Expect) {
+        if (-not $content) { $content = '(sin cuerpo)' }
+        throw "$Method $Path respondió $status (esperaba $Expect): $content"
+    }
     Done "$Method $Path -> $status"
     # Flask escapes non-ASCII in JSON (é), so the body decodes the same under any charset.
     # Assigned first: in 5.1, ConvertFrom-Json emits a JSON array as one object; `return` then unrolls it.
@@ -74,7 +78,7 @@ $email = "nureon-smoke-$when@smoke.nureon.invalid"
 $bytes = New-Object byte[] 24
 [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
 $password = 'Smoke-' + [Convert]::ToBase64String($bytes)
-$reg = Call POST '/api/auth/register' @{ username = "nureon-smoke-$when"; email = $email; password = $password } $null 201
+$reg = Call POST '/api/auth/register' @{ username = "nureon-smoke-$when"; email = $email; password = $password; consentAccepted = $true } $null 201
 $password = $null
 $token = $reg.accessToken
 $userId = $reg.user.id
