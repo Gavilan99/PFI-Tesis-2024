@@ -345,7 +345,7 @@ def parte_II(bank, X, tipos, Y, fmt):
     fig, axs = plt.subplots(1, 4, figsize=(16, 4))
     ts = sorted(tipos.unique())
     for ax, c in zip(axs, est.columns[:-1]):
-        ax.boxplot([est[est.tipo == t][c] for t in ts], labels=[str(t) for t in ts])
+        ax.boxplot([est[est.tipo == t][c] for t in ts], tick_labels=[str(t) for t in ts])
         for i, t in enumerate(ts, 1):
             v = est[est.tipo == t][c]
             ax.scatter(np.full(len(v), i) + rng.uniform(-.12, .12, len(v)), v, s=12, c=COLOR_T[t], zorder=3)

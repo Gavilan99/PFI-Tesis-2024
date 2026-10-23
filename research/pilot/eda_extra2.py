@@ -154,14 +154,14 @@ def main():
               f"exceso {exc:+.3f} (p≈{(nul >= real.mean()).mean():.2f})")
     print("  Proyección (Spearman-Brown sobre el exceso): confiabilidad del ranking con n personas")
     for nom, (_, _, exc) in rel.items():
-        r = max(exc, 1e-3); rho44 = 2 * r / (1 + r)
-        proj = {m: (m / 44 * rho44) / (1 + (m / 44 - 1) * rho44) for m in (100, 200, 400, 1000)}
-        need = next((m for m in range(50, 20001, 50) if (m / 44 * rho44) / (1 + (m / 44 - 1) * rho44) >= .7), None)
-        print(f"    {nom:11} hoy {rho44:.2f} · " + " · ".join(f"n={m}: {v:.2f}" for m, v in proj.items()) +
+        r = max(exc, 1e-3); rho_n = 2 * r / (1 + r)   # confiabilidad del ranking con las n personas de hoy
+        proj = {m: (m / n * rho_n) / (1 + (m / n - 1) * rho_n) for m in (100, 200, 400, 1000)}
+        need = next((m for m in range(50, 20001, 50) if (m / n * rho_n) / (1 + (m / n - 1) * rho_n) >= .7), None)
+        print(f"    {nom:11} hoy (n={n}) {rho_n:.2f} · " + " · ".join(f"n={m}: {v:.2f}" for m, v in proj.items()) +
               f" · n para 0,70: {need if need else '>20000'}")
 
     # ── G4
-    print("\n== G4 · Opciones elegidas por la mayoría (≥60% de las 44 personas)")
+    print(f"\n== G4 · Opciones elegidas por la mayoría (≥60% de las {n} personas)")
     pt = A["tipo"][1]
     rows = []
     for i, q in enumerate(items):
@@ -246,7 +246,7 @@ def main():
     for c in est:
         sd = est[c].std()
         print(f"  {c:21} mediana {est[c].median():+.2f} · desvío {sd:.3f} → con n=6 por tipo se detecta una diferencia de "
-              f"~{1.23 * sd:.3f}; con n=20, ~{.70 * sd:.3f}")
+              f"~{(za + zb) * np.sqrt(1 / 6 + 1 / (n - 6)) * sd:.3f}; con n=20, ~{(za + zb) * np.sqrt(1 / 20 + 1 / (n - 20)) * sd:.3f}")
     est["tipo"] = tipos; est.to_csv(os.path.join(OUT, "G8_estilo.csv"))
     print("  medianas por tipo:")
     print(est.groupby("tipo").median().round(2).to_string().replace("\n", "\n    "))

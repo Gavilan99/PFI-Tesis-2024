@@ -195,7 +195,7 @@ def main():
     u = mannwhitneyu(A[A.formato == "escenario"].auc, A[A.formato == "Likert"].auc)
     print(f"  diferencia entre formatos: Mann-Whitney p={u.pvalue:.2f}")
     fig, ax = plt.subplots(figsize=(7, 4))
-    ax.boxplot([A[A.formato == f].auc for f in ("escenario", "Likert")], labels=["escenario (96)", "Likert (49)"])
+    ax.boxplot([A[A.formato == f].auc for f in ("escenario", "Likert")], tick_labels=["escenario (96)", "Likert (49)"])
     ax.axhline(.5, c="k", ls="--"); ax.set_ylabel("AUC (0,5 = no distingue nada)")
     ax.set_title("X6 · ¿Qué formato reconoce mejor a los miembros de su grupo?")
     fig.tight_layout(); fig.savefig(os.path.join(OUT, "X6_formatos.png"), dpi=150); plt.close(fig)
