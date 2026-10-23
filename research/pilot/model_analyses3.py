@@ -5,7 +5,7 @@
 
   G   grupo predicho por persona y conjunto (20 repeticiones, fuera del fold): matrices de confusión
       por conjunto (grupo real × grupo predicho) y acierto de cada conjunto según el tipo real
-  S8  ¿qué cambia sin los 8 ítems que el selector nunca eligió con 30 columnas?
+  S8  ¿qué cambia sin los ítems que el selector nunca eligió con 30 columnas (leídos de la última corrida)?
 
 300 árboles, class_weight balanceado, todas las columnas — igual que P en model_analyses2.
 Salidas en analisis_out/.
@@ -21,7 +21,18 @@ from model_analyses import cargar, scores_tipo, OUT
 warnings.filterwarnings("ignore")
 CONJ = list(C.GRUPOS)
 NT, REPS = 300, 20
-NUNCA_30 = ["Q031", "Q044", "Q055", "Q076", "Q080", "Q081", "Q114", "Q132"]
+# Los ítems que el selector nunca eligió con 30 columnas, leídos de la última corrida registrada
+# (train_pilot.py → train_out/estabilidad.csv). Antes era una lista fija de la corrida de n=44.
+def nunca_30():
+    here = os.path.dirname(os.path.abspath(__file__))
+    for base in (getattr(C, "DATA", None), here, getattr(C, "PROJ", None)):
+        p = base and os.path.join(base, "train_out", "estabilidad.csv")
+        if p and os.path.exists(p):
+            e = pd.read_csv(p, dtype={"k": str}); s = e[e.k == "30"].groupby("item").veces.max()
+            out = sorted(i for i in set(e.item) if s.get(i, 0) == 0)
+            print(f"  (ítems nunca elegidos con k=30, desde {p}: {len(out)})")
+            return out
+    raise SystemExit("falta train_out/estabilidad.csv: correr antes train_pilot.py")
 
 
 def corrida(X, tipos, guardar=False):
@@ -67,10 +78,11 @@ def main():
     resumen("base", base)
 
 
-    print("\n== S8 · sin los 8 ítems nunca seleccionados (k=30)", flush=True)
+    NUNCA_30 = nunca_30()
+    print(f"\n== S8 · sin los {len(NUNCA_30)} ítems nunca seleccionados (k=30)", flush=True)
     cols = [c for c in X.columns if owner[c] not in NUNCA_30]
     d8, _ = corrida(X[cols], tipos)
-    resumen(f"sin 8 ítems ({len(cols)} col.)", d8, base)
+    resumen(f"sin {len(NUNCA_30)} ítems ({len(cols)} col.)", d8, base)
     pd.concat([base.assign(escenario="base"), d8.assign(escenario="sin 8")]
               ).to_csv(os.path.join(OUT, "escenarios_sin8.csv"), index=False)
 

@@ -14,7 +14,7 @@ import contrast as C
 from eda_pilot import cargar
 from eda_extra2 import v_cramer
 from scipy.stats import spearmanr
-bank, X, tipos, Y, fmt = cargar("responses_wide_n70_analisis.csv")
+bank, X, tipos, Y, fmt = cargar(sys.argv[1] if len(sys.argv) > 1 else "responses_wide_n70_analisis.csv")
 old = set(pd.read_csv("analisis_out_n44/P_resumen_por_persona.csv").codigo)
 new = [c for c in X.index if c not in old]
 print("personas n=44:", len(old & set(X.index)), "· nuevas:", len(new))

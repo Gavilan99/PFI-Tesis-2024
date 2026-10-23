@@ -249,12 +249,13 @@ def analisis_R(dfi, X, owner, Y, tipos, bank):
 
 # ─────────────────────────── A · curva de aprendizaje ───────────────────────────
 def analisis_A(X, Y, tipos):
-    print("\n== A · Curva de aprendizaje (300 árboles; 9 personas de test por sorteo, 40 sorteos)")
-    sizes = [10, 15, 20, 25, 30, 35]
+    n_te = round(len(X) / N_FOLDS)   # el mismo 20 % de test que la validación cruzada (antes, 9 fijo: el fold de n=44)
+    print(f"\n== A · Curva de aprendizaje (300 árboles; {n_te} personas de test por sorteo, 40 sorteos)")
+    sizes = sorted(set(list(range(10, len(X) - n_te, 5)) + [len(X) - n_te]))   # hasta todos menos los de test
     res = []
     for rep in range(40):
         rng = np.random.default_rng(1000 + rep)
-        perm = rng.permutation(len(X)); te, pool = perm[:9], perm[9:]
+        perm = rng.permutation(len(X)); te, pool = perm[:n_te], perm[n_te:]
         for n in sizes:
             tr = pool[:n]
             p = probas_fold(X.iloc[tr], Y.iloc[tr], X.iloc[te], 300, rep * 10 + n)

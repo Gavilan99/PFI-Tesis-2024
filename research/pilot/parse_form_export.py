@@ -222,7 +222,7 @@ def main():
         print(__doc__)
         return 2
     export_path = args[0]
-    out_path = "responses_wide.csv"
+    out_path = os.path.join(HERE, "responses_wide.csv")   # en la carpeta de datos, nunca en el repo
     for a in sys.argv[1:]:
         if a.startswith("--out="):
             out_path = a.split("=", 1)[1]
