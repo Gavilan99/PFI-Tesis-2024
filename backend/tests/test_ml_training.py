@@ -107,5 +107,31 @@ def test_full_run_writes_loadable_artifacts(tmp_path, bank, monkeypatch):
             assert set(model.classes_) <= set(TAXONOMIES[system])
             assert model.n_features_in_ == len(cut["columns"])
     assert all("estimated_type_accuracy" in c for c in report["cuts"])
+    assert report["fold_kind"] == "stratified"
+    assert "type_most_common_in_fold" in report["baseline"]
     text = json.dumps(report) + json.dumps(manifest) + (out / "evaluation.txt").read_text(encoding="utf-8")
     assert "S000" not in text                               # no respondent code leaves the script
+
+
+def test_stratified_folds_keep_every_type_in_training(bank, tmp_path):
+    resp, labels = write_people(tmp_path, bank)
+    sample = load_sample(resp, labels, load_bank(tmp_path / "bank.csv"))
+    types = np.asarray(sample.types)
+    for tr, te in training.splits("stratified", 0, types):
+        assert set(types[tr]) == set(types)                 # no type is left out of a training fold
+
+
+def test_null_permutes_types_and_reports_p(tmp_path, bank, monkeypatch):
+    monkeypatch.setattr(training, "N_TREES", 10)
+    resp, labels = write_people(tmp_path, bank)
+    out = tmp_path / "artifacts"
+    assert training.main(["--bank", str(tmp_path / "bank.csv"), "--responses", str(resp), "--labels", str(labels),
+                          "--out", str(out), "--sizes", f"12,{len(bank)}", "--reps", "1",
+                          "--null-perms", "2", "--null-reps", "1"]) == 0
+    report = json.loads((out / "precision_by_items.json").read_text(encoding="utf-8"))
+    for cut in report["cuts"]:
+        assert cut["null"]["permutations"] == 2
+        assert 0 < cut["null"]["p_type"] <= 1 and 0 < cut["null"]["p_balanced"] <= 1
+    sample = load_sample(resp, labels, load_bank(tmp_path / "bank.csv"))
+    shuffled = training.permuted(sample, np.random.default_rng(0))
+    assert sorted(shuffled.types) == sorted(sample.types) and shuffled.answers is sample.answers
