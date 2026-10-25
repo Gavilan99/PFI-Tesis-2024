@@ -66,8 +66,8 @@ describe('ProfileComponent, deleting the account (Feature 11)', () => {
     const fixture = create(of(undefined));
     open(fixture);
     const text = element(fixture).querySelector('.profile__delete-panel')!.textContent!;
-    expect(text).toContain('Se borra todo lo que te identifica');
-    expect(text).toContain('Se conserva de forma anónima');
+    expect(text).toContain('Se borra:');
+    expect(text).toContain('Se conserva, sin tu nombre ni tu email');
     expect(text).toContain('persona@example.test');
   });
 
