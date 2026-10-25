@@ -6,12 +6,21 @@
     </p>
   }
   <section class="hero">
-    <h1 class="nureon-heading">Descubrí qué te motiva, no solo cómo actuás</h1>
-    <p class="hero__lead">
-      NureonAI identifica tu eneatipo con un test corto basado en machine learning, enfocado
-      en tu motivación central — no en tu comportamiento.
-    </p>
-    <app-brand-button variant="primary" routerLink="/registro">Empezar gratis</app-brand-button>
+    @if (user$ | async; as user) {
+      <h1 class="nureon-heading">Hola, {{ user.displayName }}</h1>
+      <p class="hero__lead">
+        En tu perfil están tus resultados y tu historial de tests, y desde ahí podés editar tus
+        datos.
+      </p>
+      <app-brand-button variant="primary" routerLink="/perfil">Ir a mi perfil</app-brand-button>
+    } @else {
+      <h1 class="nureon-heading">Descubrí qué te motiva, no solo cómo actuás</h1>
+      <p class="hero__lead">
+        NureonAI identifica tu eneatipo con un test corto basado en machine learning, enfocado
+        en tu motivación central — no en tu comportamiento.
+      </p>
+      <app-brand-button variant="primary" routerLink="/registro">Empezar gratis</app-brand-button>
+    }
   </section>
 
   <section class="differentiators">
