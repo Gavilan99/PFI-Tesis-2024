@@ -58,6 +58,6 @@ services:
       MAIL_SENDER: ses
       SES_REGION: us-east-2
       CONTACT_MAIL_TO: contacto@example.invalid
-      CONSENT_VERSION: "2026-10-20"
+      CONSENT_VERSION: "2026-10-25"
       # No balancer in front locally: the connecting address is the visitor's.
       TRUSTED_PROXY_HOPS: "0"
