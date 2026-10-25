@@ -9,11 +9,15 @@
 Two stages (pilot analysis plan, section 6 nonies; PDR "Product Classifier and Fixed Item Cuts"):
 
 1. Evaluation. 5-fold cross-validation repeated 20 times, one row per respondent, so every split is
-   by person. In each fold, items are scored and the cuts selected using the training fold only, the
+   by person. The folds are stratified by type (section 6 terdecies): with types of two or three people,
+   plain folds leave a type concentrated in the test fold and missing from training, which biases every
+   estimate down; predicting the most common type scores 15 % instead of 20 % with plain folds. In each fold, items are scored and the cuts selected using the training fold only, the
    four Random Forests of each cut are trained on it, and the held-out fold is predicted. The same
    folds also train random balanced cuts of the same sizes: the control that shows whether selecting
    by discrimination earns anything. The full-bank cut has no selection and reproduces the
    registered protocol (section 6 ter). Split-half stability of the item ranking is reported too.
+   Optionally (`--null-perms`), the same evaluation with the type permuted across respondents: the
+   accuracy the procedure reaches with no signal at all, against which each cut is read.
 2. Final models. Items scored on every respondent, the cuts selected, and one set of four Random
    Forests trained per cut on all respondents.
 
@@ -37,19 +41,20 @@ import joblib
 import numpy as np
 import sklearn
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, StratifiedKFold
 from sklearn.pipeline import Pipeline
 
-from app.ml.config import TAXONOMIES
+from app.ml.config import TAXONOMIES, TYPE_TABLE
 from app.ml.intersection import predict_eneatype
 from app.ml.training.bank import load_bank
-from app.ml.training.data import load_sample, read_list
+from app.ml.training.data import Sample, load_sample, read_list
 from app.ml.training.encoding import columns, encode
 from app.ml.training.selection import (SYSTEM_ORDER, item_scores, random_cuts, select_cuts,
                                        serve_order, spearman)
 
 N_TREES, N_FOLDS = 500, 5
 FINAL_SEED = 0
+FOLDS = ("stratified", "plain")
 
 
 def forest(seed: int) -> RandomForestClassifier:
@@ -85,18 +90,25 @@ def metrics(pred_types, pred_groups, types, groups):
             **{s: float(np.mean(np.asarray(pred_groups[s]) == np.asarray(groups[s]))) for s in SYSTEM_ORDER}}
 
 
-def evaluate(sample, items, sizes, reps):
+def splits(kind, rep, types):
+    idx = np.arange(len(types))
+    if kind == "stratified":
+        return StratifiedKFold(N_FOLDS, shuffle=True, random_state=rep).split(idx, types)
+    return KFold(N_FOLDS, shuffle=True, random_state=rep).split(idx)
+
+
+def evaluate(sample, items, sizes, reps, folds="stratified", with_random=True):
     n = len(sample.codes)
     groups = {s: np.asarray(v) for s, v in sample.groups.items()}
     types = np.asarray(sample.types)
     runs = {(size, kind): [] for size in sizes for kind in ("discrimination", "random")}
-    baseline = {s: [] for s in SYSTEM_ORDER}
+    baseline = {s: [] for s in (*SYSTEM_ORDER, "type")}
     picked = {size: {} for size in sizes}
     t0 = time.time()
     for rep in range(reps):
         oof = {key: {"t": np.zeros(n, int), "g": {s: np.empty(n, object) for s in SYSTEM_ORDER}} for key in runs}
-        base_ok = {s: np.zeros(n, bool) for s in SYSTEM_ORDER}
-        for f, (tr, te) in enumerate(KFold(N_FOLDS, shuffle=True, random_state=rep).split(np.arange(n))):
+        base_ok = {s: np.zeros(n, bool) for s in (*SYSTEM_ORDER, "type")}
+        for f, (tr, te) in enumerate(splits(folds, rep, types)):
             seed = rep * 100 + f
             scores = item_scores(sample.answers, sample.groups, items, rows=tr)
             disc = select_cuts(scores, items, sizes)
@@ -105,7 +117,7 @@ def evaluate(sample, items, sizes, reps):
                 for code in (it.code for it in cd):
                     picked[size][code] = picked[size].get(code, 0) + 1
                 for kind, cut in (("discrimination", cd), ("random", cr)):
-                    if kind == "random" and size == len(items):
+                    if kind == "random" and (size == len(items) or not with_random):
                         continue                       # the full bank has nothing to draw
                     mi = model_items(cut)
                     X = encode(sample.answers, mi)
@@ -114,17 +126,42 @@ def evaluate(sample, items, sizes, reps):
                     oof[(size, kind)]["t"][te] = pt
                     for s in SYSTEM_ORDER:
                         oof[(size, kind)]["g"][s][te] = pg[s]
-            for s in SYSTEM_ORDER:                        # majority-class baseline, per fold
-                vals, cnt = np.unique(groups[s][tr], return_counts=True)
-                base_ok[s][te] = groups[s][te] == vals[np.argmax(cnt)]
+            for s, y in ((s, groups[s]) for s in SYSTEM_ORDER):   # majority-class baseline, per fold
+                vals, cnt = np.unique(y[tr], return_counts=True)
+                base_ok[s][te] = y[te] == vals[np.argmax(cnt)]
+            vals, cnt = np.unique(types[tr], return_counts=True)       # and the most common type, per fold
+            base_ok["type"][te] = types[te] == vals[np.argmax(cnt)]
         for key, o in oof.items():
-            if key[1] == "random" and key[0] == len(items):
+            if key[1] == "random" and (key[0] == len(items) or not with_random):
                 continue
             runs[key].append(metrics(o["t"], o["g"], types, groups))
-        for s in SYSTEM_ORDER:
+        for s in base_ok:
             baseline[s].append(float(base_ok[s].mean()))
-        print(f"  repetition {rep + 1}/{reps} · {time.time() - t0:.0f} s", flush=True)
+        if with_random:
+            print(f"  repetition {rep + 1}/{reps} · {time.time() - t0:.0f} s", flush=True)
     return runs, baseline, picked
+
+
+def permuted(sample, rng):
+    """The same respondents and answers with the types shuffled across them: no answer relates to its label."""
+    types = list(rng.permutation(sample.types))
+    groups = {s: [TYPE_TABLE[t][s] for t in types] for s in SYSTEM_ORDER}
+    return Sample(codes=sample.codes, answers=sample.answers, types=types, groups=groups)
+
+
+def null_distribution(sample, items, sizes, perms, reps, folds):
+    """Per cut, the median type and balanced accuracy of each permutation (selection included, as in the
+    real run: with permuted labels the cuts are chosen from noise too)."""
+    out = {size: {"type": [], "balanced": []} for size in sizes}
+    t0 = time.time()
+    for p in range(perms):
+        runs, _, _ = evaluate(permuted(sample, np.random.default_rng(4000 + p)), items, sizes, reps, folds, False)
+        for size in sizes:
+            d = runs[(size, "discrimination")]
+            out[size]["type"].append(float(np.median([r["type"] for r in d])))
+            out[size]["balanced"].append(float(np.median([r["balanced"] for r in d])))
+        print(f"  permutation {p + 1}/{perms} · {time.time() - t0:.0f} s", flush=True)
+    return out
 
 
 def stability(sample, items, reps):
@@ -153,6 +190,10 @@ def main(argv=None):
     ap.add_argument("--sizes", default="40,90,145")
     ap.add_argument("--reps", type=int, default=20)
     ap.add_argument("--bank-version", default="v4.1.2")
+    ap.add_argument("--folds", choices=FOLDS, default="stratified",
+                    help="stratified by type (default, section 6 terdecies) or plain, the registered 6 ter")
+    ap.add_argument("--null-perms", type=int, default=0, help="permutations of the type for the null (0: none)")
+    ap.add_argument("--null-reps", type=int, default=5, help="repetitions per permutation")
     args = ap.parse_args(argv)
 
     items = load_bank(args.bank)
@@ -165,16 +206,23 @@ def main(argv=None):
     print(f"bank {args.bank_version}: {len(items)} items · respondents with a type: {n} · "
           f"types " + " · ".join(f"{t}×{c}" for t, c in enumerate(counts, 1) if c), flush=True)
 
-    print(f"\n1 · evaluation ({N_FOLDS} folds × {args.reps} repetitions)", flush=True)
-    runs, baseline, picked = evaluate(sample, items, sizes, args.reps)
+    print(f"\n1 · evaluation ({N_FOLDS} {args.folds} folds × {args.reps} repetitions)", flush=True)
+    runs, baseline, picked = evaluate(sample, items, sizes, args.reps, args.folds)
+    null = None
+    if args.null_perms:
+        print(f"\n1b · null: type permuted across respondents ({args.null_perms} × {args.null_reps} repetitions)", flush=True)
+        null = null_distribution(sample, items, sizes, args.null_perms, args.null_reps, args.folds)
     stab = stability(sample, items, args.reps)
     type_base = float(counts.max() / n)
 
-    report = {"bank_version": args.bank_version, "respondents": n, "folds": N_FOLDS, "repetitions": args.reps,
+    report = {"bank_version": args.bank_version, "respondents": n, "folds": N_FOLDS, "fold_kind": args.folds,
+              "repetitions": args.reps,
               "baseline": {"type_most_common": type_base, "chance": 1 / 9,
+                           "type_most_common_in_fold": summary(baseline.pop("type")),
                            **{s: summary(v) for s, v in baseline.items()}},
               "ranking_split_half_spearman": summary(stab), "cuts": []}
-    lines = [f"bank {args.bank_version} · n={n} · {N_FOLDS}×{args.reps} · type baseline {type_base:.0%} · chance 11%",
+    lines = [f"bank {args.bank_version} · n={n} · {N_FOLDS}×{args.reps} {args.folds} · type baseline {type_base:.0%} "
+             f"(in fold: {report['baseline']['type_most_common_in_fold']['median']:.0%}) · chance 11%",
              f"ranking stability (split-half Spearman): median {np.median(stab):.2f} "
              f"[{np.percentile(stab, 5):.2f}–{np.percentile(stab, 95):.2f}]", ""]
     for size in sizes:
@@ -193,6 +241,16 @@ def main(argv=None):
                                                          "reps_worse": int((diff < 0).sum())}
             line += (f"\n          random {np.median([x['type'] for x in r]):.0%} · paired Δ {np.median(diff):+.1%} "
                      f"(better in {(diff > 0).sum()}/{len(diff)}, worse in {(diff < 0).sum()})")
+        if null:
+            nt, nb = np.asarray(null[size]["type"]), np.asarray(null[size]["balanced"])
+            rt, rb = entry["estimated_type_accuracy"], float(np.median([r["balanced"] for r in d]))
+            entry["null"] = {"permutations": args.null_perms, "repetitions": args.null_reps,
+                             "type": summary(nt), "balanced": summary(nb),
+                             "p_type": float((1 + (nt >= rt).sum()) / (len(nt) + 1)),
+                             "p_balanced": float((1 + (nb >= rb).sum()) / (len(nb) + 1))}
+            line += (f"\n          null (type permuted): type {np.median(nt):.0%} (p95 {np.percentile(nt, 95):.0%}) · "
+                     f"balanced {np.median(nb):.2f} (p95 {np.percentile(nb, 95):.2f}) · "
+                     f"p type {entry['null']['p_type']:.3f} · p balanced {entry['null']['p_balanced']:.3f}")
         freq = sorted(picked[size].values(), reverse=True)
         entry["items_always_selected"] = sum(v == N_FOLDS * args.reps for v in freq)
         report["cuts"].append(entry); lines.append(line)

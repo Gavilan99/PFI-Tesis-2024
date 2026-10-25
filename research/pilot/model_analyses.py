@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 """Análisis del modelo sobre la muestra del piloto — los que necesitan entrenar.
 
-    python model_analyses.py responses_wide.csv [--solo C,A,...]
+    python model_analyses.py responses_wide.csv [--solo C,A,...] [--folds stratified]
+
+`--folds stratified` (plan §6 terdecies, 2026-10-23): folds estratificados por tipo, y en A el test se
+sortea estratificado. Las salidas van a analisis_out_estratificado/. Sin la opción, los folds del §6 ter.
 
 Son exploratorios: NO reemplazan a la corrida registrada (`train_pilot.py`, plan §6 ter), y
 ninguno se usa para elegir la configuración que se reporta como resultado del piloto.
@@ -27,7 +30,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, StratifiedKFold, StratifiedShuffleSplit
 
 import contrast as C
 from pilot_metrics import con_copias
@@ -39,6 +42,17 @@ OUT = os.path.join(HERE, "analisis_out")
 CONJ = list(C.GRUPOS)
 CORTO = [C.CORTO[c] for c in CONJ]
 N_REPS, N_FOLDS = 20, 5
+FOLDS = "stratified" if "--folds" in sys.argv and sys.argv[sys.argv.index("--folds") + 1] == "stratified" else "plain"
+if FOLDS == "stratified":
+    OUT = OUT + "_estratificado"
+
+
+def folds(rep, X, tipos):
+    """Los folds de la repetición: estratificados por tipo con --folds stratified; si no, los del §6 ter."""
+    if FOLDS == "stratified":
+        return StratifiedKFold(N_FOLDS, shuffle=True, random_state=rep).split(X, tipos)
+    plain = KFold(N_FOLDS, shuffle=True, random_state=rep)
+    return plain.split(X)
 
 
 def rf(n, seed):
@@ -91,7 +105,7 @@ def cv_basica(X, Y, tipos, n_trees, reps=N_REPS, cols=None, seed0=0):
     Xc = X if cols is None else X[cols]
     for rep in range(reps):
         allp = {c: [] for c in CONJ}
-        for f, (tr, te) in enumerate(KFold(N_FOLDS, shuffle=True, random_state=rep).split(Xc)):
+        for f, (tr, te) in enumerate(folds(rep, Xc, tipos)):
             p = probas_fold(Xc.iloc[tr], Y.iloc[tr], Xc.iloc[te], n_trees, seed0 + rep * 100 + f)
             for c in CONJ:
                 allp[c].append(p[c])
@@ -112,7 +126,7 @@ def analisis_CET(X, Y, tipos):
     filasT = []
     for rep in range(N_REPS):
         allp = {c: [] for c in CONJ}; directo = []
-        for f, (tr, te) in enumerate(KFold(N_FOLDS, shuffle=True, random_state=rep).split(X)):
+        for f, (tr, te) in enumerate(folds(rep, X, tipos)):
             seed = rep * 100 + f
             p = probas_fold(X.iloc[tr], Y.iloc[tr], X.iloc[te], 500, seed)
             for c in CONJ:
@@ -229,7 +243,7 @@ def analisis_R(dfi, X, owner, Y, tipos, bank):
         filas = []
         for rep in range(N_REPS):
             allp = {c: [] for c in CONJ}
-            for f, (tr, te) in enumerate(KFold(N_FOLDS, shuffle=True, random_state=rep).split(X)):
+            for f, (tr, te) in enumerate(folds(rep, X, tipos)):
                 dsc = disc_items(dfi.iloc[tr], Y.iloc[tr], tipos.iloc[tr], bank)
                 keep = set()
                 for fmt in ("scenario", "likert"):
@@ -255,7 +269,11 @@ def analisis_A(X, Y, tipos):
     res = []
     for rep in range(40):
         rng = np.random.default_rng(1000 + rep)
-        perm = rng.permutation(len(X)); te, pool = perm[:n_te], perm[n_te:]
+        if FOLDS == "stratified":
+            pool, te = next(StratifiedShuffleSplit(1, test_size=n_te, random_state=1000 + rep).split(X, tipos))
+            pool = rng.permutation(pool)
+        else:
+            perm = rng.permutation(len(X)); te, pool = perm[:n_te], perm[n_te:]
         for n in sizes:
             tr = pool[:n]
             p = probas_fold(X.iloc[tr], Y.iloc[tr], X.iloc[te], 300, rep * 10 + n)
@@ -287,7 +305,7 @@ def analisis_D(X, owner, Y, tipos):
             sel = set(rng.choice(items, K, replace=False))
             cols = [c for c in X.columns if owner[c] in sel]
             allp = {c: [] for c in CONJ}
-            for f, (tr, te) in enumerate(KFold(N_FOLDS, shuffle=True, random_state=draw).split(X)):
+            for f, (tr, te) in enumerate(folds(draw, X, tipos)):
                 p = probas_fold(X.iloc[tr][cols], Y.iloc[tr], X.iloc[te][cols], 300, draw * 100 + f)
                 for c in CONJ:
                     allp[c].append(p[c])
