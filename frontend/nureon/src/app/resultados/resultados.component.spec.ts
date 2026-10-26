@@ -41,6 +41,9 @@ describe('ResultadosComponent, continuing from the result', () => {
       getCutStatus: () => of(cut),
       getAttemptHistory: () => of([attempt]),
       continueTestAttempt: () => continueResult,
+      // The plans text carries "Pasar a premium", which shows the plan's price.
+      getSubscription: () =>
+        of({ active: false, currentPeriodEnd: null, planPrice: 4999, planCurrency: 'ARS', planDays: 30 }),
     };
     TestBed.configureTestingModule({
       imports: [ResultadosComponent, NoopAnimationsModule],

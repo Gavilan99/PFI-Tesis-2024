@@ -152,6 +152,11 @@ export class ResultadosComponent implements OnInit {
       });
   }
 
+  // Where "Pasar a premium" comes back to from Mercado Pago: this result.
+  get returnPath(): string {
+    return this.loadedAttemptId ? `/resultados/${this.loadedAttemptId}` : '/resultados';
+  }
+
   openFreemiumInfo(): void {
     this.showFreemiumInfo = true;
   }

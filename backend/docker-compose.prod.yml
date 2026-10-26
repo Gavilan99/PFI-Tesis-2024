@@ -58,6 +58,14 @@ services:
       MAIL_SENDER: ses
       SES_REGION: us-east-2
       CONTACT_MAIL_TO: contacto@example.invalid
-      CONSENT_VERSION: "2026-10-25"
+      CONSENT_VERSION: "2026-10-26"
+      # Feature 6. Placeholders: the app starts, a checkout fails at Mercado Pago. To pay for real,
+      # export the test credentials in the shell first (never written here).
+      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-local-only}
+      MERCADOPAGO_WEBHOOK_SECRET: ${MERCADOPAGO_WEBHOOK_SECRET:-local-only}
+      FRONTEND_BASE_URL: http://localhost:4200
+      PUBLIC_API_BASE_URL: ${PUBLIC_API_BASE_URL:-https://example.invalid}
+      PLAN_INDIVIDUAL_PRICE: "4999.00"
+      PLAN_INDIVIDUAL_DAYS: "30"
       # No balancer in front locally: the connecting address is the visitor's.
       TRUSTED_PROXY_HOPS: "0"

@@ -8,7 +8,8 @@
 # service's (the container port only from the ALB's). No security group of ours is passed: one would
 # be an extra way in. Tasks run in the default public subnets with a public IP: no NAT gateway.
 # Configuration: plain values as environment variables; the database user and password (the RDS
-# secret) and SECRET_KEY from Secrets Manager. No AWS_PROFILE: credentials come from the task role.
+# secret), SECRET_KEY and the two Mercado Pago credentials from Secrets Manager. The plan's price and
+# days come from backend/.env (PLAN_INDIVIDUAL_PRICE, PLAN_INDIVIDUAL_DAYS): production has no default. No AWS_PROFILE: credentials come from the task role.
 # After the service is stable, the database security group gets its only rule: 5432 from the
 # service's security group.
 # Cost: Fargate ~US$18/month per task (0.5 vCPU, 1 GB), ALB ~US$17, public IPv4 ~US$11 (2 ALB + 1 task).
@@ -18,7 +19,7 @@ param(
     [ValidateSet('stub', 'legacy_tree', 'trained')][string]$Classifier = 'stub',
     # The version of the privacy policy and terms in force, stored with every new account (Feature 11).
     # Same value as LEGAL_TEXT_VERSION in frontend/nureon/src/app/legal/legal-content.ts.
-    [string]$ConsentVersion = '2026-10-25'
+    [string]$ConsentVersion = '2026-10-26'
 )
 
 . "$PSScriptRoot\_common.ps1"
@@ -60,11 +61,18 @@ $environment = [ordered]@{
     SES_REGION            = $Region
     CONTACT_MAIL_TO       = (Get-DotEnv 'CONTACT_MAIL_TO')
     CONSENT_VERSION       = $ConsentVersion
+    # Feature 6. The buyer comes back straight to the frontend (HTTPS): no PUBLIC_API_BASE_URL here.
+    PAYMENT_PROVIDER      = 'mercadopago'
+    FRONTEND_BASE_URL     = "https://$($dist.Domain)"
+    PLAN_INDIVIDUAL_PRICE = (Get-DotEnv 'PLAN_INDIVIDUAL_PRICE')
+    PLAN_INDIVIDUAL_DAYS  = (Get-DotEnv 'PLAN_INDIVIDUAL_DAYS')
 }
 $secrets = [ordered]@{
-    DB_USER     = "${dbSecretArn}:username::"
-    DB_PASSWORD = "${dbSecretArn}:password::"
-    SECRET_KEY  = "${appSecretArn}:SECRET_KEY::"
+    DB_USER                    = "${dbSecretArn}:username::"
+    DB_PASSWORD                = "${dbSecretArn}:password::"
+    SECRET_KEY                 = "${appSecretArn}:SECRET_KEY::"
+    MERCADOPAGO_ACCESS_TOKEN   = "${appSecretArn}:MERCADOPAGO_ACCESS_TOKEN::"
+    MERCADOPAGO_WEBHOOK_SECRET = "${appSecretArn}:MERCADOPAGO_WEBHOOK_SECRET::"
 }
 $container = @{
     image                = "$Registry/${Repository}:$ImageTag"

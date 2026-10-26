@@ -27,9 +27,7 @@ export const CUT_COPY = {
       ? `La parte ${parts[0]} está incluida en el plan premium.`
       : `Las partes ${parts.slice(0, -1).join(', ')} y ${parts[parts.length - 1]} están incluidas en el plan premium.`;
   },
-  goPremium: 'Pasar a premium',
-  // No plans page yet: payment arrives with Feature 6.
-  comingSoon: 'Muy pronto',
+  // "Pasar a premium" and the price: core/payments/checkout-copy.ts (Feature 6).
 
   // /resultados.
   refineTitle: '¿Querés afinar tu resultado?',

@@ -47,3 +47,43 @@ describe('MockApiService, consent and deletion (Feature 11)', () => {
     expect((await firstValueFrom(api.register(input))).email).toBe(input.email);
   });
 });
+
+// build:demo walks the payment on this mock too: approved on the spot, like
+// the backend's local gateway, and only for the account that started it.
+describe('MockApiService, payments (Feature 6)', () => {
+  let api: MockApiService;
+
+  beforeEach(() => {
+    localStorage.removeItem(STATE_KEY);
+    TestBed.configureTestingModule({ providers: [MockApiService, provideHttpClient()] });
+    api = TestBed.inject(MockApiService);
+  });
+
+  afterEach(() => localStorage.removeItem(STATE_KEY));
+
+  function paymentIdOf(checkoutUrl: string): string {
+    return new URL(checkoutUrl, 'http://localhost').searchParams.get('payment_id')!;
+  }
+
+  it('starts without the plan, pays, and then has it', async () => {
+    await firstValueFrom(api.register(input));
+    expect((await firstValueFrom(api.getSubscription())).active).toBeFalse();
+
+    const { checkoutUrl } = await firstValueFrom(api.startCheckout());
+    const confirmation = await firstValueFrom(api.confirmPayment(paymentIdOf(checkoutUrl)));
+
+    expect(confirmation.paymentStatus).toBe('approved');
+    expect((await firstValueFrom(api.getSubscription())).active).toBeTrue();
+    const again = await firstValueFrom(api.startCheckout()).catch((e) => e);
+    expect((again as ApiError).code).toBe('ALREADY_SUBSCRIBED');
+  });
+
+  it("answers someone else's payment like one that does not exist", async () => {
+    await firstValueFrom(api.register(input));
+    const { checkoutUrl } = await firstValueFrom(api.startCheckout());
+    await firstValueFrom(api.register({ ...input, email: 'otra@example.test' }));
+
+    const error = await firstValueFrom(api.confirmPayment(paymentIdOf(checkoutUrl))).catch((e) => e);
+    expect((error as ApiError).code).toBe('PAYMENT_NOT_FOUND');
+  });
+});

@@ -1,0 +1,16 @@
+.premium-button {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-3xs);
+}
+
+.premium-button__price {
+  font-size: var(--nureon-text-caption-size);
+  color: rgba(black, 0.6);
+  max-width: 24rem;
+}
+
+.premium-button__error {
+  color: var(--nureon-color-danger);
+  font-size: var(--nureon-text-body-sm-size);
+}

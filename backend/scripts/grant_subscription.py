@@ -5,10 +5,10 @@ Give an account the paid tier for N days by hand: a subscription row with NO pay
     python scripts/grant_subscription.py --email persona@ejemplo.com --days 30
     python scripts/grant_subscription.py --email persona@ejemplo.com --days 30 --dry-run
 
-For development and for the accounts of the user tests, until checkout and the Mercado Pago webhook
-exist (Feature 6). Writes one `subscriptions` row: tier `individual`, status `active`, period from now
-to now + N days, `mercadopago_subscription_id` NULL, and no `payments` row. That NULL is how a manual
-grant is told apart from a paid one forever.
+For development, for the accounts of the user tests, and to settle by hand a payment that could not be
+recorded (Feature 6: app.services.billing). Writes one `subscriptions` row: tier `individual`, status
+`active`, period from now to now + N days, `mercadopago_subscription_id` NULL, and no `payments` row.
+That NULL is how a manual grant is told apart from a paid one forever (a paid row holds the payment id).
 
 In production it runs as a one-off task: `backend/infra/10-task.ps1 -Job grant-subscription`. The
 output names the account by its id, never by its email, because it ends up in CloudWatch.

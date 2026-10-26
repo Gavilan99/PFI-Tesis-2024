@@ -1,5 +1,7 @@
 import os
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from dotenv import load_dotenv
 from sqlalchemy.engine import URL
@@ -34,6 +36,18 @@ def _split_origins(raw: str) -> list[str]:
 
 IDENTITY_PROVIDERS = ("cognito", "local")
 MAIL_SENDERS = ("ses", "local")
+PAYMENT_PROVIDERS = ("mercadopago", "local")
+# The individual plan outside production when nothing is set. EXAMPLE VALUES: the real price and period
+# come from the business model, which is not closed yet. Production has no default (`_set_plan`).
+EXAMPLE_PLAN_PRICE = "4999.00"
+EXAMPLE_PLAN_DAYS = 30
+PLAN_CURRENCIES = ("ARS",)
+LOCAL_FRONTEND_BASE_URL = "http://localhost:4200"
+# The two return URLs Mercado Pago can send the buyer back to: the frontend's screen, or the backend's
+# redirect to it (for when the frontend is on localhost, which Mercado Pago does not accept).
+FRONTEND_RETURN_PATH = "/pago"
+API_RETURN_PATH = "/api/payments/return"
+_LOCAL_HOSTS = ("localhost", "127.0.0.1", "::1")
 LOCAL_CONTACT_MAIL_TO = "contacto@nureon.invalid"
 # What development and test record as the accepted version when CONSENT_VERSION is not set.
 LOCAL_CONSENT_VERSION = "local"
@@ -146,6 +160,42 @@ def _mail_sender(default: str) -> str:
     return name
 
 
+def _payment_provider(default: str) -> str:
+    name = os.environ.get("PAYMENT_PROVIDER", default).strip().lower()
+    if name not in PAYMENT_PROVIDERS:
+        valid = ", ".join(PAYMENT_PROVIDERS)
+        raise ConfigError(f"PAYMENT_PROVIDER desconocido: '{name}'. Opciones válidas: {valid}")
+    return name
+
+
+def _plan_price(default: str | None) -> Decimal:
+    raw = os.environ.get("PLAN_INDIVIDUAL_PRICE", "").strip() or default
+    if not raw:
+        raise ConfigError("Falta la variable de entorno obligatoria: PLAN_INDIVIDUAL_PRICE")
+    try:
+        price = Decimal(raw)
+    except InvalidOperation:
+        raise ConfigError(f"PLAN_INDIVIDUAL_PRICE tiene que ser un número (p. ej. 4999.00); vale '{raw}'.") from None
+    if not price.is_finite() or price <= 0 or price != price.quantize(Decimal("0.01")):
+        raise ConfigError(
+            f"PLAN_INDIVIDUAL_PRICE tiene que ser mayor que cero y con hasta dos decimales; vale '{raw}'."
+        )
+    return price.quantize(Decimal("0.01"))
+
+
+def _base_url(name: str, default: str | None) -> str:
+    value = (os.environ.get(name, "").strip() or default or "").rstrip("/")
+    if not value:
+        raise ConfigError(f"Falta la variable de entorno obligatoria: {name}")
+    if not value.startswith(("https://", "http://")):
+        raise ConfigError(f"{name} tiene que empezar con https:// o http://; vale '{value}'.")
+    return value
+
+
+def _is_local(url: str) -> bool:
+    return (urlsplit(url).hostname or "") in _LOCAL_HOSTS
+
+
 def _identity_provider(default: str) -> str:
     name = os.environ.get("IDENTITY_PROVIDER", default).strip().lower()
     if name not in IDENTITY_PROVIDERS:
@@ -195,6 +245,54 @@ class BaseConfig:
         # with its consent (Feature 11).
         self.PROVISION_MISSING_ACCOUNTS = True
 
+        # Payments (Feature 6): one payment through Mercado Pago Checkout Pro buys the individual plan
+        # for PLAN_INDIVIDUAL_DAYS. The provider is chosen per environment (`_set_payment_provider`), the
+        # plan too (`_set_plan`). The access token and the webhook secret never leave the backend.
+        self.PAYMENT_PROVIDER = "local"
+        self.MERCADOPAGO_ACCESS_TOKEN = ""
+        self.MERCADOPAGO_WEBHOOK_SECRET = ""
+        # Where Mercado Pago sends the buyer back: the frontend's /pago. Mercado Pago does not accept
+        # localhost there, so with the frontend on localhost PUBLIC_API_BASE_URL (a tunnel to this
+        # backend) is set, and the return goes through the backend's redirect (/api/payments/return).
+        self.FRONTEND_BASE_URL = LOCAL_FRONTEND_BASE_URL
+        self.PUBLIC_API_BASE_URL = None
+        self.PAYMENT_RETURN_URL = LOCAL_FRONTEND_BASE_URL + FRONTEND_RETURN_PATH
+
+    def _set_plan(self, *, price_default: str | None, days_default: int | None) -> None:
+        self.PLAN_INDIVIDUAL_PRICE = _plan_price(price_default)
+        if days_default is None and not os.environ.get("PLAN_INDIVIDUAL_DAYS", "").strip():
+            raise ConfigError("Falta la variable de entorno obligatoria: PLAN_INDIVIDUAL_DAYS")
+        self.PLAN_INDIVIDUAL_DAYS = _positive_int("PLAN_INDIVIDUAL_DAYS", days_default or 0)
+        self.PLAN_INDIVIDUAL_CURRENCY = os.environ.get("PLAN_INDIVIDUAL_CURRENCY", "ARS").strip().upper()
+        if self.PLAN_INDIVIDUAL_CURRENCY not in PLAN_CURRENCIES:
+            valid = ", ".join(PLAN_CURRENCIES)
+            raise ConfigError(
+                f"PLAN_INDIVIDUAL_CURRENCY desconocida: '{self.PLAN_INDIVIDUAL_CURRENCY}'. Opciones válidas: {valid}"
+            )
+
+    def _set_payment_provider(self, default: str, *, frontend_required: bool) -> None:
+        self.PAYMENT_PROVIDER = _payment_provider(default)
+        self.FRONTEND_BASE_URL = _base_url(
+            "FRONTEND_BASE_URL", None if frontend_required else LOCAL_FRONTEND_BASE_URL
+        )
+        self.PUBLIC_API_BASE_URL = (
+            _base_url("PUBLIC_API_BASE_URL", None) if os.environ.get("PUBLIC_API_BASE_URL", "").strip() else None
+        )
+        self.PAYMENT_RETURN_URL = (
+            self.PUBLIC_API_BASE_URL + API_RETURN_PATH
+            if self.PUBLIC_API_BASE_URL
+            else self.FRONTEND_BASE_URL + FRONTEND_RETURN_PATH
+        )
+        if self.PAYMENT_PROVIDER != "mercadopago":
+            return
+        self.MERCADOPAGO_ACCESS_TOKEN = _require("MERCADOPAGO_ACCESS_TOKEN").strip()
+        self.MERCADOPAGO_WEBHOOK_SECRET = _require("MERCADOPAGO_WEBHOOK_SECRET").strip()
+        if _is_local(self.PAYMENT_RETURN_URL):
+            raise ConfigError(
+                "Mercado Pago no acepta localhost como URL de retorno: con FRONTEND_BASE_URL en localhost, "
+                "PUBLIC_API_BASE_URL tiene que ser la URL pública de este backend (p. ej. un túnel)."
+            )
+
     def _check_aws_profile(self, *, profile_required: bool) -> None:
         # The `default` profile of a developer machine can hold full access to the account: boto3
         # gets the profile from here, explicitly, and never falls back to it.
@@ -233,6 +331,8 @@ class DevelopmentConfig(BaseConfig):
             self.CORS_ALLOWED_ORIGINS = ["http://localhost:4200"]
         self._set_identity_provider(default="local", profile_required=True)
         self._set_mail_sender(default="local", profile_required=True)
+        self._set_plan(price_default=EXAMPLE_PLAN_PRICE, days_default=EXAMPLE_PLAN_DAYS)
+        self._set_payment_provider(default="local", frontend_required=False)
 
 
 class TestConfig(BaseConfig):
@@ -251,6 +351,11 @@ class TestConfig(BaseConfig):
         self.MAIL_SENDER = "local"
         # Nor sees a real inbox: a developer's .env may hold one.
         self.CONTACT_MAIL_TO = self.CONTACT_MAIL_FROM = LOCAL_CONTACT_MAIL_TO
+        # Nor Mercado Pago, nor a developer's plan or tunnel: the example plan and the local URLs, fixed.
+        self.PAYMENT_PROVIDER = "local"
+        self.PLAN_INDIVIDUAL_PRICE = Decimal(EXAMPLE_PLAN_PRICE)
+        self.PLAN_INDIVIDUAL_DAYS = EXAMPLE_PLAN_DAYS
+        self.PLAN_INDIVIDUAL_CURRENCY = "ARS"
 
 
 class ProductionConfig(BaseConfig):
@@ -284,6 +389,13 @@ class ProductionConfig(BaseConfig):
         self._set_mail_sender(default="ses", profile_required=False)
         # Which text the people registering accept is chosen on purpose, like the classifier.
         self.CONSENT_VERSION = _consent_version(None)
+        # And what the plan costs and lasts: no example value can reach a real payment.
+        self._set_plan(price_default=None, days_default=None)
+        if _payment_provider(default="mercadopago") == "local":
+            raise ConfigError(
+                "PAYMENT_PROVIDER=local es un doble para tests y desarrollo: no se puede usar en producción."
+            )
+        self._set_payment_provider(default="mercadopago", frontend_required=True)
 
 
 _CONFIGS = {

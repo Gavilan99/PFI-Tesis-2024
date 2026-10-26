@@ -1,0 +1,9 @@
+<div class="premium-button">
+  <app-brand-button [variant]="variant" [disabled]="busy" (click)="start()">{{ copy.goPremium }}</app-brand-button>
+  @if (priceText) {
+    <p class="premium-button__price">{{ priceText }}</p>
+  }
+  @if (error) {
+    <p class="premium-button__error" role="alert">{{ error }}</p>
+  }
+</div>

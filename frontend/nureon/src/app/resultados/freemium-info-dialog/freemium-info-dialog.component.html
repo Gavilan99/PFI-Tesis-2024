@@ -19,10 +19,9 @@
         <p>Todo lo del perfil reducido, más tu comportamiento en crecimiento y bajo estrés.</p>
       </article>
     </div>
-    <p class="freemium-dialog__note">
-      El flujo de pago todavía está en desarrollo — esto es una vista previa de los niveles, no
-      podés comprar el perfil completo todavía.
-    </p>
-    <app-brand-button variant="secondary" (click)="close()">Cerrar</app-brand-button>
+    <div class="freemium-dialog__actions">
+      <app-premium-button variant="primary" [returnTo]="returnTo"></app-premium-button>
+      <app-brand-button variant="secondary" (click)="close()">Cerrar</app-brand-button>
+    </div>
   </div>
 </div>

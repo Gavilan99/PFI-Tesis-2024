@@ -73,11 +73,19 @@ El contenido de motivación/fortalezas/tensiones/alas es final (Feature 12): red
 `eneatype-content.ts`, con los nombres de tipo de uso corriente. El `summary` de cada eneatipo es
 también el `descriptionText` del backend, y un test del backend controla que coincidan.
 
-**Freemium (RF09/RF10):** el `tier` del intento lo decide el servidor (hoy siempre `free_reduced`; la
-Feature 6 lo resuelve por suscripción). Pero **el texto premium viaja en el bundle**: "En crecimiento
-y bajo estrés" está en `eneatype-content.ts` y se difumina con CSS, así que quien abra devtools lo
-lee. El botón "Desbloquear mi perfil completo" abre `FreemiumInfoDialogComponent`, que dice que el
-pago está en desarrollo. **Mercado Pago: 0% conectado.**
+**Freemium (RF09/RF10):** el `tier` del intento lo decide el servidor, por suscripción. Pero **el
+texto premium viaja en el bundle**: "En crecimiento y bajo estrés" está en `eneatype-content.ts` y se
+difumina con CSS, así que quien abra devtools lo lee. El botón "Desbloquear mi perfil completo" abre
+`FreemiumInfoDialogComponent`, con los dos niveles y «Pasar a premium».
+
+**Pagos (Feature 6, Mercado Pago Checkout Pro):** «Pasar a premium» (`PremiumButtonComponent`, entre
+cortes, en el resultado y en el diálogo de niveles) muestra el precio que da el backend, pide el
+checkout y redirige a Mercado Pago. Al volver, `/pago` le pregunta al backend por el pago (nunca lee
+el estado de la URL) y muestra aprobado, pendiente o rechazado. Aprobado, «Seguir con el test» lleva a
+`/test`, que retoma **el mismo intento** (RF17); desde un resultado vuelve a ese resultado, donde
+«Seguir» crea el intento enlazado (RF16). Un pago por un período, sin renovación automática: la
+suscripción recurrente queda para después del MVP (limitación de alcance de la tesis).
+`MockApiService` aprueba el pago en el acto, así que `build:demo` recorre el flujo sin Mercado Pago.
 
 ### Perfil (`/perfil`) — RF06, RF07, RF08
 `updateProfile` / `getAttemptHistory` / `getResult` / `submitFeedback` → backend. Edición de datos,
@@ -139,7 +147,7 @@ Recontado en la Feature 7, contra el backend real (no empeoró ninguno):
 | Banco de preguntas real | 0% — se sirve el relleno, versión 0 |
 | Contenido descriptivo de eneatipos | Traducido de las fuentes de la tesis, pendiente de redacción final |
 | Freemium | Tier del lado del servidor; el texto premium igual viaja en el bundle |
-| Pagos reales (Mercado Pago, RF09/10) | 0% — Feature 6 postergada |
+| Pagos reales (Mercado Pago, RF09/10) | Checkout Pro en sandbox (Feature 6): un pago por período, sin renovación. Producción en el despliegue |
 | Despliegue (S3/CloudFront, ECS, RDS) | 0% — Feature 8 postergada; todo corre local |
 | Build desplegable sin backend (`build:demo`) | Completo, sin cambios: el respaldo de la defensa |
 | Bios de autores en `/nosotros` | Pendiente de que las confirmes — marcado en pantalla |

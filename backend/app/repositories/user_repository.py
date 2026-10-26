@@ -14,6 +14,10 @@ def get_live_by_sub(session: Session, sub: str, *, for_update: bool = False) -> 
     return session.scalar(query)
 
 
+def get_live(session: Session, user_id) -> User | None:
+    return session.scalar(select(User).where(User.id == user_id, User.is_deleted.is_(False)))
+
+
 def get_live_by_email(session: Session, email: str) -> User | None:
     """`email` must already be normalized, as in `live_email_exists`."""
     return session.scalar(select(User).where(User.email == email, User.is_deleted.is_(False)))

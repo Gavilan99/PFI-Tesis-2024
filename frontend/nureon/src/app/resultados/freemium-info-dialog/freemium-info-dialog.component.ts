@@ -1,18 +1,21 @@
-import { Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { BrandButtonComponent } from '../../shared/components/brand-button/brand-button.component';
+import { PremiumButtonComponent } from '../../shared/components/premium-button/premium-button.component';
 
-// What "Desbloquear mi perfil completo" (RF09/RF10) opens instead of doing
-// nothing — an honest preview of the tiers, since Mercado Pago isn't wired
-// up yet (see mvp-status.md). Self-contained modal: captures focus on
-// init and restores it on destroy, closes on Escape or a backdrop click.
+// What "Desbloquear mi perfil completo" (RF09/RF10) opens: the two tiers and
+// "Pasar a premium", which pays through Mercado Pago (Feature 6). Self-
+// contained modal: captures focus on init and restores it on destroy, closes
+// on Escape or a backdrop click.
 @Component({
   selector: 'app-freemium-info-dialog',
   standalone: true,
-  imports: [BrandButtonComponent],
+  imports: [BrandButtonComponent, PremiumButtonComponent],
   templateUrl: './freemium-info-dialog.component.html',
   styleUrl: './freemium-info-dialog.component.scss',
 })
 export class FreemiumInfoDialogComponent implements OnInit, OnDestroy {
+  // Where to come back to from Mercado Pago.
+  @Input() returnTo = '/resultados';
   @Output() closed = new EventEmitter<void>();
   @ViewChild('dialog') private dialogRef?: ElementRef<HTMLElement>;
   private focusedElementBeforeOpen: HTMLElement | null = null;

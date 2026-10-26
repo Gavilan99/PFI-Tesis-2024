@@ -3,6 +3,7 @@ from sqlalchemy.engine import make_url
 
 from app import create_app
 from app.config import ConfigError, get_config
+from tests.production_env import set_payment_env
 
 
 def test_production_requires_secret_key(monkeypatch):
@@ -82,6 +83,7 @@ def _production_env(monkeypatch, **database):
         monkeypatch.delenv(name, raising=False)
     for name, value in database.items():
         monkeypatch.setenv(name, value)
+    set_payment_env(monkeypatch)
 
 
 def test_production_builds_the_database_url_from_its_parts_escaping_the_password(monkeypatch):

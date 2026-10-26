@@ -14,6 +14,7 @@ import { LoginInput, RegisterInput } from '../models/auth.model';
 import { SubmitFeedbackInput } from '../models/feedback.model';
 import { SubmitContactMessageInput } from '../models/contact-message.model';
 import { CutStatus } from '../models/cut-status.model';
+import { CheckoutSession, PaymentConfirmation, Subscription } from '../models/subscription.model';
 
 // Moved to api-error.ts so MockApiService can reject with it too; re-exported
 // so existing imports keep working.
@@ -166,6 +167,20 @@ export class HttpApiService implements ApiService {
       map(() => undefined),
       catchError(toApiError),
     );
+  }
+
+  getSubscription(): Observable<Subscription> {
+    return this.http.get<Subscription>(this.url('/api/subscription')).pipe(catchError(toApiError));
+  }
+
+  startCheckout(): Observable<CheckoutSession> {
+    return this.http.post<CheckoutSession>(this.url('/api/checkout'), null).pipe(catchError(toApiError));
+  }
+
+  confirmPayment(paymentId: string): Observable<PaymentConfirmation> {
+    return this.http
+      .post<PaymentConfirmation>(this.url('/api/checkout/confirm'), { paymentId })
+      .pipe(catchError(toApiError));
   }
 
   private url(path: string): string {

@@ -18,7 +18,9 @@ claves de `RegisterInput` (`auth.model.ts`). Las claves esperadas no están copi
 frontend, así que un campo agregado o sacado de cualquiera de los dos lados lo rompe. Lo mismo para
 las dos rutas de los cortes (Feature 9), con su método en `ApiService` desde la Feature 10
 (`continueTestAttempt` y `getCutStatus`), en un test aparte porque necesitan el tier pago: ver
-[Feature 9](#feature-9-cortes-fijos).
+[Feature 9](#feature-9-cortes-fijos). Y para las tres rutas de pagos (Feature 6: `getSubscription`,
+`startCheckout`, `confirmPayment`, en `subscription.model.ts`), en otro test aparte con la pasarela
+local: ver [Feature 6](#feature-6-pagos-con-mercado-pago).
 
 ## Las quince rutas y `HttpApiService`
 
@@ -458,6 +460,112 @@ Límite: `CONTACT_RATE_LIMIT` mensajes (5) por dirección de origen cada
 El 503 es una falla de SES: queda en el log con el código de error y nada del mensaje. No se encola
 ni se reintenta: la persona lo vuelve a mandar.
 
+## Feature 6: pagos con Mercado Pago
+
+**Checkout Pro, un pago por un período, sin renovación automática.** Un pago aprobado da el plan
+individual por `PLAN_INDIVIDUAL_DAYS` días: una fila de `subscriptions` (`individual`, `active`, con
+el período) y una de `payments`. Al vencer, la cuenta vuelve al nivel gratuito. La suscripción
+recurrente (preapproval) queda para después del MVP: es una limitación de alcance de la tesis.
+
+**El servidor es la única fuente del nivel.** El navegador nunca manda precio, nivel ni resultado de
+un pago: inicia el checkout y, al volver, dice qué pago mirar. El backend lo consulta a Mercado Pago
+(`GET /v1/payments/{id}`) y decide. Precio, moneda y días son configuración del backend
+(`PLAN_INDIVIDUAL_*`), no código. Ninguna respuesta lleva ids de Mercado Pago.
+
+Documentación de Mercado Pago en la que se apoya cada decisión:
+[crear preferencia](https://www.mercadopago.com.ar/developers/es/reference/online-payments/checkout-pro-preferences/create-preference/post),
+[URLs de retorno](https://www.mercadopago.com.ar/developers/es/docs/checkout-pro-preferences/configure-back-urls),
+[obtener pago](https://www.mercadopago.com.ar/developers/es/reference/online-payments/checkout-pro-preferences/get-payment/get),
+[estados de pago](https://www.mercadopago.com.ar/developers/es/docs/checkout-api-payments/response-handling/query-results),
+[webhooks y firma](https://www.mercadopago.com.ar/developers/es/docs/your-integrations/notifications/webhooks).
+
+| Método de `ApiService` | Ruta | Respuesta | Qué hace `HttpApiService` además de la llamada |
+|---|---|---|---|
+| `getSubscription` | `GET /api/subscription` | `200` `Subscription` | — |
+| `startCheckout` | `POST /api/checkout` | `200` `CheckoutSession` | Sin cuerpo |
+| `confirmPayment` | `POST /api/checkout/confirm` | `200` `PaymentConfirmation` | Manda `{paymentId}` |
+
+### `GET /api/subscription` — `getSubscription()`
+
+```json
+{"active": false, "currentPeriodEnd": null, "planPrice": 4999.0, "planCurrency": "ARS", "planDays": 30}
+```
+
+`active`: la misma regla que el tier (una suscripción `active` con `current_period_end` vacío o
+futuro, paga o dada a mano). `currentPeriodEnd`: el fin más lejano entre los períodos activos con fin.
+El plan es el de la configuración; los valores del ejemplo son **de ejemplo**.
+
+### `POST /api/checkout` — `startCheckout()`
+
+Sin cuerpo (lo que venga se ignora: el precio no se recibe nunca). Crea una preferencia de Checkout Pro
+con un ítem al precio configurado, `external_reference` = el `users.id` (lo único que Mercado Pago
+recibe de la persona), `back_urls` success/pending/failure = `PAYMENT_RETURN_URL`, `auto_return:
+approved` y vencimiento a los 30 minutos. Responde `{"checkoutUrl": "<init_point>"}` y el frontend
+redirige ahí.
+
+| Status | `code` | `message` |
+|---|---|---|
+| 409 | `ALREADY_SUBSCRIBED` | Ya tenés el plan completo activo. |
+| 502 | `PAYMENT_PROVIDER_UNAVAILABLE` | No pudimos comunicarnos con Mercado Pago. Probá de nuevo en unos minutos. |
+
+**Adónde vuelve quien pagó** (`PAYMENT_RETURN_URL`): `FRONTEND_BASE_URL/pago`. Mercado Pago no acepta
+`localhost` como retorno, así que con el frontend en localhost (desarrollo con Mercado Pago) se pone
+`PUBLIC_API_BASE_URL` (un túnel a este backend) y el retorno pasa por `GET /api/payments/return`, que
+redirige al frontend. Con `PAYMENT_PROVIDER=mercadopago` y un retorno en localhost la app no arranca.
+
+### `POST /api/checkout/confirm` — `confirmPayment(paymentId)`
+
+Cuerpo `{"paymentId": "123456789"}` (sólo dígitos, hasta 20). Al volver de Mercado Pago: el backend lee
+el pago de Mercado Pago y, si está aprobado y es de esta cuenta, lo registra. Responde:
+
+```json
+{"paymentStatus": "approved", "currentPeriodEnd": "2026-11-24T23:39:25+00:00"}
+```
+
+`paymentStatus`: `approved`; `pending` (`pending`, `in_process`, `authorized`, `in_mediation`: no se
+registra nada todavía; se registra cuando se apruebe, por la notificación o por otra consulta);
+`rejected` (`rejected`, `cancelled`, y `refunded` / `charged_back`, que no cambian nada: reembolsos
+fuera de alcance). `currentPeriodEnd`, sólo con `approved`.
+
+| Status | `code` | `message` |
+|---|---|---|
+| 404 | `PAYMENT_NOT_FOUND` | No encontramos ese pago. (Inexistente, o de otra cuenta: misma respuesta.) |
+| 400 | `VALIDATION_ERROR` | Los datos enviados no son válidos. |
+| 502 | `PAYMENT_PROVIDER_UNAVAILABLE` | No pudimos comunicarnos con Mercado Pago. Probá de nuevo en unos minutos. |
+
+### La notificación: `POST /api/payments/webhook` (sin sesión)
+
+La configurada en Tus integraciones → Webhooks, evento **Pagos**. La preferencia no lleva
+`notification_url`.
+
+1. **Firma** (`app/services/payments/signature.py`): del header `x-signature` (`ts=…,v1=…`) salen `ts`
+   y `v1`; el manifest es `id:{data.id en minúsculas};request-id:{x-request-id};ts:{ts};` (sin la parte
+   que no llegó); HMAC-SHA256 en hexadecimal con `MERCADOPAGO_WEBHOOK_SECRET`, comparado en tiempo
+   constante con `v1`. Si no coincide: `401 INVALID_SIGNATURE`. No se rechaza por antigüedad de `ts`.
+2. Si `type` no es `payment`: `200` sin hacer nada.
+3. Se lee el pago de Mercado Pago, **nunca se confía en el cuerpo**. Si no existe (404) o no es de esta
+   cuenta (403): `200` y se ignora. Si Mercado Pago no responde: `502`, y Mercado Pago reintenta.
+4. Mismo registro que `confirm`. **Idempotente:** el UNIQUE de `payments.mercadopago_payment_id`
+   garantiza una sola fila, llegue primero la notificación o la persona, y aunque lleguen juntas.
+5. Un pago aprobado que no coincide con el plan (moneda o monto: el precio cambió con un checkout
+   abierto) no se registra: queda un error en el log con el id del pago, y se resuelve a mano
+   (`scripts/grant_subscription.py`).
+
+### `GET /api/payments/return` (sin sesión)
+
+Sólo con `PUBLIC_API_BASE_URL` (ver arriba). `302` a `FRONTEND_BASE_URL/pago?payment_id=…`: reenvía
+**sólo** `payment_id`, y sólo si son dígitos. El `status` que agrega Mercado Pago se descarta a
+propósito.
+
+### Qué guarda
+
+| Tabla | Qué |
+|---|---|
+| `subscriptions` | `tier` `individual`, `status` `active`, el período, y en `mercadopago_subscription_id` **el id del pago que lo compró** (Checkout Pro no tiene id de suscripción). NULL sólo en las altas manuales |
+| `payments` | `mercadopago_payment_id` (UNIQUE), monto, moneda, `status` `approved`, `paid_at` |
+
+Sin migración: el esquema de la Feature 3 alcanza. Pagos pendientes y rechazados no se guardan.
+
 ## Qué queda fuera de las respuestas, a propósito
 
 Toda respuesta sale de un esquema con lista explícita de campos; ningún modelo se serializa entero. Lo
@@ -474,6 +582,7 @@ que existe en la base y no sale:
 | `users.consent_accepted_at`, `consent_version` | Constancia del consentimiento (Feature 11): se guarda, no se muestra |
 | Los comentarios (`feedback`) | No hay endpoint de lectura: se leen de la base, para el piloto |
 | Los mensajes de contacto | No se guardan en ningún lado |
+| `subscriptions.mercadopago_subscription_id`, `payments.*` | Ids y registros de Mercado Pago: internos. El estado del plan sale por `GET /api/subscription` |
 
 `tests/leak_guard.py` revisa toda respuesta JSON de la suite y falla si aparece una clave o un valor de
 la clave de corrección o de la salida interna de los clasificadores. `tests/test_contract.py` exige
@@ -487,7 +596,7 @@ frontend.
 | `GET /api/health` | Liveness, para el balanceador (Feature 8). No toca la base |
 | `GET /api/health/ready` | Readiness: `503 SERVICE_UNAVAILABLE` si no hay base |
 | `GET /api/users/me` | El `User` del token. El frontend no lo usa |
+| `POST /api/payments/webhook` | La notificación de Mercado Pago (Feature 6). Sin sesión: se prueba con su firma |
+| `GET /api/payments/return` | El retorno de Mercado Pago cuando el frontend está en localhost (Feature 6) |
 
-Al revés no hay huecos: todo método de `ApiService` tiene su ruta. Pagos (Feature 6) no existe todavía,
-ni en el contrato ni en el backend: el tier pago sale de filas de `subscriptions` dadas de alta a mano
-(`scripts/grant_subscription.py`).
+Al revés no hay huecos: todo método de `ApiService` tiene su ruta.

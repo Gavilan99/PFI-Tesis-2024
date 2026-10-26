@@ -5,6 +5,7 @@ import pytest
 from app import create_app
 from app.config import LOCAL_CONTACT_MAIL_TO, ConfigError, get_config
 from app.services.mail import LocalMailSender, SesMailSender, build_mail_sender
+from tests.production_env import set_payment_env
 
 
 @pytest.fixture()
@@ -21,6 +22,7 @@ def production_env(monkeypatch):
     monkeypatch.delenv("IDENTITY_PROVIDER", raising=False)
     monkeypatch.delenv("MAIL_SENDER", raising=False)
     monkeypatch.delenv("AWS_PROFILE", raising=False)
+    set_payment_env(monkeypatch)
 
 
 def test_production_defaults_to_ses_and_sends_from_the_inbox_itself(production_env):

@@ -91,13 +91,14 @@
           [canContinue]="refine.canContinue"
           [busy]="continuing"
           [error]="refineError"
+          [returnTo]="returnPath"
           (continue)="continueFromResult()"
         ></app-refine-result>
       }
     </section>
 
     @if (showFreemiumInfo) {
-      <app-freemium-info-dialog (closed)="closeFreemiumInfo()"></app-freemium-info-dialog>
+      <app-freemium-info-dialog [returnTo]="returnPath" (closed)="closeFreemiumInfo()"></app-freemium-info-dialog>
     }
   }
 </app-page-container>

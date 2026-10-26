@@ -9,6 +9,7 @@ import { LoginInput, RegisterInput } from '../models/auth.model';
 import { SubmitFeedbackInput } from '../models/feedback.model';
 import { SubmitContactMessageInput } from '../models/contact-message.model';
 import { CutStatus } from '../models/cut-status.model';
+import { CheckoutSession, PaymentConfirmation, Subscription } from '../models/subscription.model';
 
 // Frontend-facing contract only — see PDR — NureonAI Data Model for the full
 // DB schema. Components depend on this interface and the API_SERVICE token,
@@ -74,6 +75,18 @@ export interface ApiService {
 
   // /contacto (Stage 10) — same fire-and-forget shape as submitFeedback.
   submitContactMessage(input: SubmitContactMessageInput): Observable<void>;
+
+  // Feature 6 — the full plan through Mercado Pago. The account comes from
+  // the session; nothing here carries a price or a tier.
+  // The plan's state and the price to show before paying.
+  getSubscription(): Observable<Subscription>;
+  // Where to send the buyer. Rejects with ALREADY_SUBSCRIBED (409) while the
+  // plan is active.
+  startCheckout(): Observable<CheckoutSession>;
+  // Back from Mercado Pago with ?payment_id=…: the backend reads the payment
+  // from Mercado Pago and, approved, records it. Rejects with
+  // PAYMENT_NOT_FOUND (404) for a payment that isn't this account's.
+  confirmPayment(paymentId: string): Observable<PaymentConfirmation>;
 }
 
 export const API_SERVICE = new InjectionToken<ApiService>('API_SERVICE');

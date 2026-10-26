@@ -5,6 +5,7 @@ import pytest
 from app import create_app
 from app.config import ConfigError, get_config
 from app.services.identity import CognitoIdentityProvider, LocalIdentityProvider, build_identity_provider
+from tests.production_env import set_payment_env
 
 
 @pytest.fixture()
@@ -19,6 +20,7 @@ def production_env(monkeypatch):
     monkeypatch.delenv("IDENTITY_PROVIDER", raising=False)
     monkeypatch.delenv("MAIL_SENDER", raising=False)
     monkeypatch.delenv("AWS_PROFILE", raising=False)
+    set_payment_env(monkeypatch)
 
 
 @pytest.fixture()

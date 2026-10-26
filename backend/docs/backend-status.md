@@ -20,8 +20,8 @@ con Postgres y Cognito reales. Lo que sigue es qué de eso es real y qué no, si
 | Resultado | Real en el sentido de guardado y servido; el eneatipo sale del `stub` (o de los modelos sintéticos) y la descripción es el texto final de cada eneatipo (Feature 12) |
 | Comentarios (RF06) | **Real.** Se guardan en la base; no hay pantalla para leerlos |
 | Contacto | **Real pero provisorio:** SES en sandbox, casilla de Gmail, sólo a direcciones verificadas |
-| Freemium (RF09/RF10) | El corte 1 es gratis; el 2 y el 3 piden una suscripción activa. Sin Mercado Pago: **las suscripciones se dan de alta a mano** (`scripts/grant_subscription.py`). **El texto premium sigue viajando en el bundle** |
-| Pagos (Mercado Pago, Feature 6) | **0%.** Postergada: no hay endpoint, ni SDK, ni flujo |
+| Freemium (RF09/RF10) | El corte 1 es gratis; el 2 y el 3 piden una suscripción activa: pagada con Mercado Pago o dada de alta a mano (`scripts/grant_subscription.py`, para las cuentas de prueba). **El texto premium sigue viajando en el bundle** |
+| Pagos (Mercado Pago, Feature 6) | **Real en sandbox.** Checkout Pro, un pago por un período sin renovación automática, webhook firmado e idempotente. Precio y período de ejemplo hasta que se cierre el modelo de negocio. Credenciales de producción: en el despliegue (ver abajo, "Feature 6") |
 | Despliegue (Feature 8) | **Preparado, sin ejecutar.** Imagen, compose de producción y scripts de AWS CLI en `backend/infra/` ([runbook](./deploy-runbook.md)). En AWS no hay nada creado: se despliega en diciembre, para no gastar los créditos del plan gratuito antes de la demo. Todo corre local |
 
 ### Clasificación: qué es cada implementación
@@ -77,7 +77,8 @@ del CSV es el orden de la **opción** dentro del ítem. `format`, `type_coverage
   nueve eneatipos viaja en el bundle del frontend (`eneatype-content.ts`), y en `/resultados` además
   se renderiza en el DOM y se difumina con CSS cuando el intento es `free_reduced`. El tier lo decide
   el servidor, pero quien abra devtools lee el texto.
-  Mover ese contenido al backend y servirlo según el tier es trabajo de la Feature 6.
+  Mover ese contenido al backend y servirlo según el tier sigue pendiente: la Feature 6 se limitó al
+  pago.
 
 ### Contacto
 
@@ -114,6 +115,86 @@ se probó en la Feature 5.
 - **Un token vencido con el test abierto** hace fallar el próximo pedido con el error del test; la
   sesión se cierra y hay que volver a ingresar. Sin refresh token no hay renovación silenciosa.
 
+## Feature 6: pagos con Mercado Pago
+
+**Checkout Pro, un pago por un período.** Un pago aprobado da el plan individual por
+`PLAN_INDIVIDUAL_DAYS` días; al vencer, la cuenta vuelve al nivel gratuito. Contrato y detalle del
+webhook en [api-contract.md](./api-contract.md#feature-6-pagos-con-mercado-pago).
+
+- **Por qué no suscripción recurrente (preapproval).** Un solo plan, precios sin cerrar y la demo en
+  diciembre: el pago único no necesita baja, ni renovaciones, ni llevar cada cobro a
+  `current_period_end`, y su notificación se configura en el panel (la de Suscripciones no). La
+  suscripción recurrente queda **para después del MVP: limitación de alcance de la tesis**. La firma,
+  la consulta del pago y las pantallas se reutilizan.
+- **La interfaz** (`app/services/payments/`), como identidad y mail: `MercadoPagoGateway` (dos
+  llamadas con `urllib`, sin SDK: crear la preferencia y leer un pago) y `LocalPaymentGateway` (en
+  memoria, aprueba en el acto; la usan las pruebas y el desarrollo sin Mercado Pago). Con
+  `APP_ENV=production` la local no arranca. `PAYMENT_PROVIDER` elige.
+- **El servicio** (`app/services/billing.py`): `start_checkout`, `confirm_payment` (la persona al
+  volver) y `handle_notification` (el webhook) comparten un único `_record` idempotente. Un pago
+  aprobado escribe `subscriptions` + `payments` en un savepoint; el UNIQUE de
+  `payments.mercadopago_payment_id` resuelve la carrera entre webhook y retorno.
+- **El plan es configuración:** `PLAN_INDIVIDUAL_PRICE`, `PLAN_INDIVIDUAL_CURRENCY` (ARS),
+  `PLAN_INDIVIDUAL_DAYS`. En development, 4999.00 ARS por 30 días: **valores de ejemplo**. En
+  production son obligatorios.
+- **Mismo intento (RF17):** no cambió `attempts.py`. Con el pago registrado, `may_take_cut` da `True` y
+  `continue` sobre el intento en curso responde `200` con el mismo id, que pasa a `paid_full`. Desde un
+  resultado, `continue` sigue creando el intento enlazado (RF16).
+- **Sin migración.** En las filas pagas `mercadopago_subscription_id` guarda el id del pago que las
+  compró (Checkout Pro no tiene id de suscripción): nunca es NULL, y NULL sigue siendo un alta manual.
+
+### Configuración
+
+| Variable | Development | Production |
+|---|---|---|
+| `PAYMENT_PROVIDER` | `local` por defecto | `mercadopago` (con `local` no arranca) |
+| `MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET` | Las de **prueba**, en `backend/.env`, sólo con `mercadopago` | Las de producción, en Secrets Manager (`03-app-secret.ps1`) |
+| `FRONTEND_BASE_URL` | `http://localhost:4200` por defecto | El dominio de CloudFront (`09-service.ps1`) |
+| `PUBLIC_API_BASE_URL` | Con `mercadopago`: la URL del túnel (Mercado Pago no acepta localhost como retorno) | No se usa: el retorno va directo al frontend |
+| `PLAN_INDIVIDUAL_*` | Ejemplo: 4999.00 ARS, 30 días | Obligatorias, desde `backend/.env` (`09-service.ps1`) |
+
+### Probar en local con Mercado Pago (sandbox)
+
+1. `backend/.env`: `PAYMENT_PROVIDER=mercadopago`, las dos credenciales de prueba y
+   `PUBLIC_API_BASE_URL=https://<túnel>.trycloudflare.com`.
+2. `cloudflared tunnel --url http://localhost:5000` y, en Tus integraciones → Webhooks → modo de prueba,
+   la URL `https://<túnel>.trycloudflare.com/api/payments/webhook` con el evento **Pagos**. El quick
+   tunnel cambia de URL cada vez que arranca: hay que actualizarla en el panel y en `.env`.
+3. Backend y frontend levantados. Registrarse, responder el corte 1, «Pasar a premium».
+4. En **una ventana de incógnito**, iniciar sesión en Mercado Pago con la cuenta **compradora de
+   prueba** y pagar con la Visa `4509 9535 6623 3704`, CVV 123, vencimiento 11/30, titular `APRO`,
+   DNI 12345678 (`CONT` deja el pago pendiente, `OTHE` lo rechaza).
+
+Lo que se vio en el recorrido del 26/10 (pago 185086114715, aprobado; el mismo intento siguió al corte
+de 90):
+
+- **`init_point` es el correcto** con estas credenciales. `sandbox_init_point` responde «Oh, no, algo
+  anduvo mal».
+- **La compradora tiene que tener la sesión iniciada.** Pagando sin sesión, el checkout trata el pago
+  como real y lo rechaza («estás queriendo pagar con una tarjeta de prueba»).
+- **Tarjeta nueva, no una guardada:** con la Visa guardada en la compradora, «Pagar» quedaba
+  deshabilitado.
+- **Nunca con la cuenta real:** con ella el checkout ofrece pagar con saldo de verdad.
+- **El webhook no llegó** para el pago de prueba, como advierte la documentación. Lo registró el
+  retorno (`POST /api/checkout/confirm`).
+
+### Limitaciones declaradas
+
+- **Sin renovación automática ni baja:** limitación de alcance de la tesis (arriba).
+- **Reembolsos y contracargos:** fuera de alcance. Un pago `refunded` o `charged_back` se loguea y no
+  quita el plan; se resuelve a mano.
+- **Un pago aprobado que no coincide con el plan** (el precio cambió con un checkout abierto; la
+  preferencia vence a los 30 minutos) no se registra: error en el log con el id del pago y alta manual.
+- **No se rechazan notificaciones por antigüedad de `ts`:** la documentación lo deja opcional y no
+  dice si los reintentos traen uno nuevo. Repetirlas no hace daño (se relee el pago; registro
+  idempotente).
+- **Pagos de prueba y notificaciones:** la documentación dice que los pagos creados con credenciales
+  de prueba no envían notificaciones, y a la vez indica probarlas con la URL de prueba del panel. Por
+  eso la persona que vuelve también registra el pago (`confirm`): el recorrido no depende de que la
+  notificación llegue.
+- **Planes profesionales** (Básico, Intermedio, Pro, Ilimitado): fuera de alcance; el enum
+  `subscription_tier` los tiene, nada los vende.
+
 ## Feature 11: consentimiento de datos personales
 
 Hecho: el registro pide consentimiento libre, expreso e informado (Ley 25.326, art. 5) después de
@@ -130,7 +211,7 @@ informar lo que pide el art. 6, también para la transferencia a Estados Unidos 
   `consentVersion` en el cuerpo es un campo de más. Ninguna de las dos sale en `User`.
 - **`CONSENT_VERSION`** sale de configuración, hasta 32 caracteres. **En `production` es obligatoria**,
   sin valor por defecto, como el clasificador: qué texto aceptan las personas se elige a propósito.
-  `09-service.ps1` la pasa (`-ConsentVersion`, por defecto `2026-10-20`) y el compose de producción
+  `09-service.ps1` la pasa (`-ConsentVersion`, por defecto `2026-10-26`) y el compose de producción
   también. En `development`, sin valor se guarda `local`; los tests guardan siempre `local`. Un test
   (`test_the_version_shown_is_the_version_stored`) exige que la versión sea la misma en
   `legal-content.ts` del frontend, `.env.example`, el compose de producción y `09-service.ps1`.
@@ -215,8 +296,7 @@ con sus cuatro Random Forest, y se puede seguir de un corte al siguiente. Contra
   `PAID_TIER_REQUIRED`). Un intento nuevo es siempre `free_reduced`, también para quien paga.
 - **Alta manual de suscripciones:** `scripts/grant_subscription.py --email … --days N` (y el job
   `grant-subscription` de `infra/10-task.ps1`). Fila con `mercadopago_subscription_id` en NULL y sin
-  `payments`: así se distingue para siempre de una paga. El checkout y el webhook siguen siendo la
-  Feature 6.
+  `payments`: así se distingue para siempre de una paga (Feature 6: ahí guarda el id del pago).
 - **`trained`** (`app/ml/trained.py`) sigue el README de `app/ml/training/`: arma
   `{código: option_position}`, elige el corte cuyo `model_items` coincide exactamente con lo
   respondido (si no coincide ninguno es un error), codifica con `encoding.encode_one` de Tobi,
