@@ -19,6 +19,7 @@ from app.db.models import User
 from app.exceptions import InvalidCredentials
 from tests.auth_helpers import PASSWORD, assert_error, bearer, register_body
 from tests.migration_helpers import alembic_config, scratch_database
+from tests.production_env import set_payment_env
 
 CONSENT_REQUIRED = "Para crear tu cuenta tenés que aceptar la Política de privacidad y los Términos y condiciones."
 
@@ -115,6 +116,7 @@ def _production_env(monkeypatch):
     }.items():
         monkeypatch.setenv(name, value)
     monkeypatch.delenv("AWS_PROFILE", raising=False)
+    set_payment_env(monkeypatch)
 
 
 def test_production_requires_choosing_the_version(monkeypatch):

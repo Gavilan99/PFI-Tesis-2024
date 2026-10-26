@@ -20,6 +20,7 @@ from app.config import ConfigError
 from app.ml.config import TAXONOMIES
 from app.ml.cut_plan import CUT_SIZES, DEFAULT_ARTIFACTS_DIR, artifacts_dir, load_cut_plan
 from app.ml.trained import TrainedClassifier
+from tests.production_env import set_payment_env
 
 
 @pytest.fixture()
@@ -134,6 +135,7 @@ def _production_env(monkeypatch, backend: str) -> None:
     }.items():
         monkeypatch.setenv(name, value)
     monkeypatch.delenv("AWS_PROFILE", raising=False)
+    set_payment_env(monkeypatch)
 
 
 @pytest.mark.parametrize("backend", ["stub", "trained"])

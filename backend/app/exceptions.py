@@ -188,3 +188,33 @@ class ContactUnavailable(AppError):
     status_code = 503
     code = "CONTACT_UNAVAILABLE"
     message = "No pudimos enviar tu mensaje. Probá de nuevo en unos minutos."
+
+
+class AlreadySubscribed(AppError):
+    """Checkout while the account already has the paid tier (paid or granted by hand)."""
+
+    status_code = 409
+    code = "ALREADY_SUBSCRIBED"
+    message = "Ya tenés el plan completo activo."
+
+
+class PaymentNotFound(AppError):
+    """No such payment in Mercado Pago, or it belongs to another account: both answer the same."""
+
+    status_code = 404
+    code = "PAYMENT_NOT_FOUND"
+    message = "No encontramos ese pago."
+
+
+class PaymentProviderUnavailable(AppError):
+    """Mercado Pago did not answer, or answered with an error. Nothing was recorded: it can be retried."""
+
+    status_code = 502
+    code = "PAYMENT_PROVIDER_UNAVAILABLE"
+    message = "No pudimos comunicarnos con Mercado Pago. Probá de nuevo en unos minutos."
+
+
+class InvalidWebhookSignature(AppError):
+    status_code = 401
+    code = "INVALID_SIGNATURE"
+    message = "La notificación no es válida."
