@@ -130,7 +130,7 @@ informar lo que pide el art. 6, también para la transferencia a Estados Unidos 
   `consentVersion` en el cuerpo es un campo de más. Ninguna de las dos sale en `User`.
 - **`CONSENT_VERSION`** sale de configuración, hasta 32 caracteres. **En `production` es obligatoria**,
   sin valor por defecto, como el clasificador: qué texto aceptan las personas se elige a propósito.
-  `09-service.ps1` la pasa (`-ConsentVersion`, por defecto `2026-10-20`) y el compose de producción
+  `09-service.ps1` la pasa (`-ConsentVersion`, por defecto `2026-10-25`) y el compose de producción
   también. En `development`, sin valor se guarda `local`; los tests guardan siempre `local`. Un test
   (`test_the_version_shown_is_the_version_stored`) exige que la versión sea la misma en
   `legal-content.ts` del frontend, `.env.example`, el compose de producción y `09-service.ps1`.

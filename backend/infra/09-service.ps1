@@ -18,7 +18,7 @@ param(
     [ValidateSet('stub', 'legacy_tree', 'trained')][string]$Classifier = 'stub',
     # The version of the privacy policy and terms in force, stored with every new account (Feature 11).
     # Same value as LEGAL_TEXT_VERSION in frontend/nureon/src/app/legal/legal-content.ts.
-    [string]$ConsentVersion = '2026-10-20'
+    [string]$ConsentVersion = '2026-10-25'
 )
 
 . "$PSScriptRoot\_common.ps1"
