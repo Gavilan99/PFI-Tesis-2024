@@ -9,8 +9,9 @@ much a defect as a key too few.
 One request per `ApiService` method, with the local identity and the filler bank: fifteen in the first
 test (`deleteAccount`, Feature 11, last), and the two of the fixed item cuts (Feature 9, methods since Feature 10) in their own test below,
 since they need the paid tier. `continueTestAttempt` answers a `TestAttempt` and `getCutStatus` a
-`CutStatus` (cut-status.model.ts). Between them, the two tests check that every method `ApiService`
-declares is covered.
+`CutStatus` (cut-status.model.ts). The three of the payments (Feature 6, subscription.model.ts) have
+their own test too, with the local payment gateway. Between them, the three tests check that every
+method `ApiService` declares is covered.
 """
 
 import re
@@ -69,6 +70,8 @@ def ts_methods(file: str, name: str, folder: Path = SERVICES) -> set[str]:
 
 # The methods of the cut routes, covered by their own test.
 CUT_METHODS = {"continueTestAttempt", "getCutStatus"}
+# The methods of the payment routes (Feature 6), covered by their own test.
+PAYMENT_METHODS = {"getSubscription", "startCheckout", "confirmPayment"}
 
 
 @pytest.fixture(scope="module")
@@ -84,6 +87,9 @@ def shapes() -> dict[str, set[str]]:
         "TestResponse": ts_keys("response.model.ts", "TestResponse"),
         "Result": ts_keys("result.model.ts", "Result"),
         "CutStatus": ts_keys("cut-status.model.ts", "CutStatus"),
+        "Subscription": ts_keys("subscription.model.ts", "Subscription"),
+        "CheckoutSession": ts_keys("subscription.model.ts", "CheckoutSession"),
+        "PaymentConfirmation": ts_keys("subscription.model.ts", "PaymentConfirmation"),
     }
 
 
@@ -100,6 +106,8 @@ def test_the_parser_reads_the_interfaces_it_is_trusted_with(shapes):
         "currentCut", "cutCount", "servedItems", "answeredItems", "nextCutItems", "canContinue",
         "currentCutAccuracy", "nextCutAccuracy", "continuedByAttemptId",
     }
+    assert shapes["Subscription"] == {"active", "currentPeriodEnd", "planPrice", "planCurrency", "planDays"}
+    assert shapes["PaymentConfirmation"] == {"paymentStatus", "currentPeriodEnd"}
 
 
 def test_the_register_body_is_exactly_register_input():
@@ -226,7 +234,7 @@ def test_every_route_answers_exactly_the_shape_of_its_interface(api, question_ba
     response = api.delete("/api/users/me", headers=headers)
     checked["deleteAccount"] = _empty(response)
 
-    assert set(checked) == ts_methods("api.service.ts", "ApiService") - CUT_METHODS, (
+    assert set(checked) == ts_methods("api.service.ts", "ApiService") - CUT_METHODS - PAYMENT_METHODS, (
         "a method of ApiService is not covered"
     )
     assert [name for name, ok in checked.items() if not ok] == []
@@ -272,4 +280,37 @@ def test_the_cut_routes_answer_exactly_their_interfaces(api, question_bank, db_s
 
     assert {name.split()[0] for name in checked} == CUT_METHODS
     assert CUT_METHODS <= ts_methods("api.service.ts", "ApiService"), "a cut method is missing from ApiService"
+    assert [name for name, ok in checked.items() if not ok] == []
+
+
+def test_the_payment_routes_answer_exactly_their_interfaces(api, payments, shapes):
+    response = api.post(
+        "/api/auth/register", json=register_body(username="Persona pagos", email=unique_email("pagos"))
+    )
+    headers = bearer(response.get_json()["accessToken"])
+    checked = {}
+
+    # getSubscription() -> GET /api/subscription, without and with the plan.
+    response = api.get("/api/subscription", headers=headers)
+    assert response.status_code == 200, response.get_json()
+    checked["getSubscription without the plan"] = _keys(response.get_json()) == shapes["Subscription"]
+
+    # startCheckout() -> POST /api/checkout. The local gateway approves on the spot.
+    response = api.post("/api/checkout", headers=headers)
+    assert response.status_code == 200, response.get_json()
+    checked["startCheckout"] = _keys(response.get_json()) == shapes["CheckoutSession"]
+    payment_id = response.get_json()["checkoutUrl"].split("payment_id=")[1]
+
+    # confirmPayment(paymentId) -> POST /api/checkout/confirm
+    response = api.post("/api/checkout/confirm", headers=headers, json={"paymentId": payment_id})
+    assert response.status_code == 200, response.get_json()
+    checked["confirmPayment"] = _keys(response.get_json()) == shapes["PaymentConfirmation"]
+
+    response = api.get("/api/subscription", headers=headers)
+    checked["getSubscription with the plan"] = (
+        _keys(response.get_json()) == shapes["Subscription"] and response.get_json()["active"] is True
+    )
+
+    assert {name.split()[0] for name in checked} == PAYMENT_METHODS
+    assert PAYMENT_METHODS <= ts_methods("api.service.ts", "ApiService"), "a payment method is missing from ApiService"
     assert [name for name, ok in checked.items() if not ok] == []

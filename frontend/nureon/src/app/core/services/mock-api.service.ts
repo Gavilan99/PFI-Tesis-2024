@@ -12,6 +12,7 @@ import { LoginInput, RegisterInput } from '../models/auth.model';
 import { SubmitFeedbackInput } from '../models/feedback.model';
 import { SubmitContactMessageInput } from '../models/contact-message.model';
 import { CutStatus } from '../models/cut-status.model';
+import { CheckoutSession, PaymentConfirmation, Subscription } from '../models/subscription.model';
 import { ApiError, PAID_TIER_REQUIRED } from './api-error';
 import { CUT_ENDS, cutOfServed } from '../cuts/cut-plan';
 
@@ -26,6 +27,9 @@ const DEMO_ACCOUNT_PASSWORD = 'Demo1234';
 const PREMIUM_ACCOUNT_EMAIL = 'premium@nureon.ai';
 const PREMIUM_ACCOUNT_PASSWORD = 'Demo1234';
 const PREMIUM_USER_ID = 'user-premium';
+
+// The example plan, as the backend's development defaults: EXAMPLE VALUES.
+const MOCK_PLAN = { planPrice: 4999, planCurrency: 'ARS', planDays: 30 };
 
 // Example accuracies per cut, 0-1: the real ones come from the trained
 // models' precision_by_items.json. Same shape, made-up numbers.
@@ -87,6 +91,12 @@ interface PersistedState {
   servedByAttempt: Record<string, number>;
   continuedFromByAttempt: Record<string, string>;
   premiumUserIds: string[];
+  // Feature 6. The three payment methods take no userId (the backend reads it
+  // from the token): the mock's stand-in for the session is the account that
+  // last registered or logged in. A mock checkout is approved on the spot, as
+  // the backend's local gateway does; paymentsById says whose it was.
+  sessionUserId: string | null;
+  paymentsById: Record<string, string>;
   nextId: number;
 }
 
@@ -137,6 +147,8 @@ function defaultState(): PersistedState {
     servedByAttempt: { [attempt.id]: CUT_ENDS[0] },
     continuedFromByAttempt: {},
     premiumUserIds: [PREMIUM_USER_ID],
+    sessionUserId: null,
+    paymentsById: {},
     nextId: 1,
   };
 }
@@ -220,6 +232,7 @@ export class MockApiService implements ApiService {
       email: input.email,
     });
     this.state.usersByEmail[email] = { password: input.password, user };
+    this.state.sessionUserId = user.id;
     this.saveState();
     return of(user).pipe(delay(MOCK_DELAY_MS));
   }
@@ -229,6 +242,8 @@ export class MockApiService implements ApiService {
     if (!record || record.password !== input.password) {
       return throwError(() => new Error('Email o contraseña incorrectos.'));
     }
+    this.state.sessionUserId = record.user.id;
+    this.saveState();
     return of(record.user).pipe(delay(MOCK_DELAY_MS));
   }
 
@@ -472,6 +487,45 @@ export class MockApiService implements ApiService {
     return of(undefined).pipe(delay(MOCK_DELAY_MS));
   }
 
+  getSubscription(): Observable<Subscription> {
+    const active = this.state.premiumUserIds.includes(this.state.sessionUserId ?? '');
+    return of({ active, currentPeriodEnd: active ? this.periodEnd() : null, ...MOCK_PLAN }).pipe(
+      delay(MOCK_DELAY_MS),
+    );
+  }
+
+  startCheckout(): Observable<CheckoutSession> {
+    const userId = this.state.sessionUserId;
+    if (!userId) {
+      return throwError(() => new ApiError('No se pudo autenticar la solicitud.', 'UNAUTHORIZED', 401));
+    }
+    if (this.state.premiumUserIds.includes(userId)) {
+      return throwError(() => new ApiError('Ya tenés el plan completo activo.', 'ALREADY_SUBSCRIBED', 409));
+    }
+    const paymentId = String(900000000 + this.state.nextId++);
+    this.state.paymentsById[paymentId] = userId;
+    this.saveState();
+    return of({ checkoutUrl: `/pago?payment_id=${paymentId}` }).pipe(delay(MOCK_DELAY_MS));
+  }
+
+  confirmPayment(paymentId: string): Observable<PaymentConfirmation> {
+    const userId = this.state.sessionUserId;
+    if (!userId || this.state.paymentsById[paymentId] !== userId) {
+      return throwError(() => new ApiError('No encontramos ese pago.', 'PAYMENT_NOT_FOUND', 404));
+    }
+    if (!this.state.premiumUserIds.includes(userId)) {
+      this.state.premiumUserIds.push(userId);
+      this.saveState();
+    }
+    return of<PaymentConfirmation>({ paymentStatus: 'approved', currentPeriodEnd: this.periodEnd() }).pipe(
+      delay(MOCK_DELAY_MS),
+    );
+  }
+
+  private periodEnd(): string {
+    return new Date(Date.now() + MOCK_PLAN.planDays * 24 * 60 * 60 * 1000).toISOString();
+  }
+
   private served(attemptId: string): number {
     return this.state.servedByAttempt[attemptId] ?? CUT_ENDS[0];
   }
@@ -546,7 +600,8 @@ export class MockApiService implements ApiService {
         ...defaults,
         ...persisted,
         usersByEmail: { ...seededAccounts(), ...persisted.usersByEmail },
-        premiumUserIds: defaults.premiumUserIds,
+        // The seeded premium account always, plus whoever paid in the mock.
+        premiumUserIds: [...new Set([...defaults.premiumUserIds, ...(persisted.premiumUserIds ?? [])])],
       };
     } catch {
       return defaultState();
