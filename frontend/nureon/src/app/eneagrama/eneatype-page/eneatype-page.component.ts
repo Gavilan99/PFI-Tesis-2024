@@ -38,6 +38,10 @@ export class EneatypePageComponent implements OnInit {
   readonly user$: Observable<User | null>;
   eneatype = 1;
   private readonly isBrowser: boolean;
+  // Whether the type shown next was reached from inside the app. Read in the
+  // constructor, while the router is still activating this route: by
+  // ngOnInit the navigation has finished and can no longer be inspected.
+  private reachedInApp: boolean;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -49,6 +53,8 @@ export class EneatypePageComponent implements OnInit {
   ) {
     this.user$ = auth.currentUserChanges;
     this.isBrowser = isPlatformBrowser(platformId);
+    const navigation = router.getCurrentNavigation();
+    this.reachedInApp = navigation ? navigation.previousNavigation !== null : router.navigated;
   }
 
   ngOnInit(): void {
@@ -101,14 +107,20 @@ export class EneatypePageComponent implements OnInit {
   // each type at the top. When the visitor got here from inside the app, the
   // link they used is gone or now says something else, so focus moves to the
   // new heading for keyboard and screen reader users. Not on a fresh load:
-  // there the browser's own starting point is the right one.
+  // there the browser's own starting point is the right one. A fresh load is
+  // the app's first navigation, the one with no previous navigation. Checking
+  // router.navigated alone wasn't enough: it is already true by the time the
+  // page renders, so the heading took focus, with its focus ring, whenever
+  // the page was opened from a shared link.
   private onTypeShown(): void {
     if (!this.isBrowser) {
       return;
     }
     this.viewportScroller.scrollToPosition([0, 0]);
-    if (this.router.navigated) {
+    if (this.reachedInApp) {
       setTimeout(() => this.heading?.nativeElement.focus({ preventScroll: true }));
     }
+    // Previous/next reuse this component: every later type is reached in-app.
+    this.reachedInApp = true;
   }
 }

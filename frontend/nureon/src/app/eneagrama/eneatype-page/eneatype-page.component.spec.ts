@@ -65,6 +65,23 @@ describe('EneatypePageComponent', () => {
     ]);
   });
 
+  // Opened from a shared link, the page keeps the browser's starting point;
+  // reached from inside the app, focus moves to the new heading.
+  it('focuses the heading only after an in-app navigation', async () => {
+    TestBed.configureTestingModule({
+      imports: [NoopAnimationsModule],
+      providers: [provideRouter(routes), { provide: AuthService, useValue: { currentUserChanges: of(null) } }],
+    });
+    const harness = await RouterTestingHarness.create('/eneagrama/4');
+    await new Promise((resolve) => setTimeout(resolve));
+    const heading = () => harness.routeNativeElement!.querySelector('h1');
+    expect(document.activeElement).not.toBe(heading());
+
+    await harness.navigateByUrl('/eneagrama/5');
+    await new Promise((resolve) => setTimeout(resolve));
+    expect(document.activeElement).toBe(heading());
+  });
+
   // RouterLink on the <app-brand-button> host too would navigate twice per
   // click and add a Tab stop; only the inner <a> may be a link.
   it('makes only the inner anchors of its buttons focusable links', async () => {
