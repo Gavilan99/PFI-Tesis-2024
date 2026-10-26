@@ -20,11 +20,89 @@ section h2 {
   margin-bottom: var(--nureon-space-md);
 }
 
+// min() so a single column fits a 320px screen inside the section's padding.
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
   gap: var(--nureon-space-md);
   align-items: stretch;
+}
+
+// A link with the look of a button. Hover and active move the shadow, not
+// the background: the background is the type's color, and darkening it
+// would cut the text contrast measured for it.
+.type-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nureon-space-xs);
+  min-height: 72px;
+  padding: var(--nureon-space-sm) var(--nureon-space-md);
+  border: 1px solid rgba(black, 0.12);
+  border-radius: var(--nureon-radius-md);
+  background: var(--eneatype-color);
+  color: var(--nureon-type-on);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: var(--nureon-elevation-1);
+  transition:
+    box-shadow var(--nureon-duration-base) var(--nureon-easing-standard),
+    transform var(--nureon-duration-base) var(--nureon-easing-standard);
+
+  &:hover {
+    box-shadow: var(--nureon-elevation-3);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    box-shadow: var(--nureon-elevation-0);
+    transform: translateY(1px);
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--nureon-green-dark);
+    outline-offset: 3px;
+  }
+}
+
+// Breaks "Eneatipo 1 — El Reformador" after the dash, never inside the name.
+.nowrap {
+  white-space: nowrap;
+}
+
+.type-card__arrow {
+  flex-shrink: 0;
+}
+
+.triad-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--nureon-space-2xs) var(--nureon-space-lg);
+  margin: var(--nureon-space-md) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.triad-legend__item {
+  display: flex;
+  align-items: center;
+  gap: var(--nureon-space-2xs);
+}
+
+.triad-legend__swatches {
+  display: flex;
+}
+
+.triad-legend__swatch {
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(black, 0.2);
+  border-radius: var(--nureon-radius-full);
+
+  & + & {
+    margin-left: -4px;
+  }
 }
 
 .types {

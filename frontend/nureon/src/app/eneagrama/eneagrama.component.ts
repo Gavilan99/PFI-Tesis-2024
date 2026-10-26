@@ -1,38 +1,32 @@
 import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { PageContainerComponent } from '../shared/layout/page-container/page-container.component';
-import { CardComponent } from '../shared/components/card/card.component';
-
-interface EneatypeSummary {
-  number: number;
-  name: string;
-}
+import { ENEATYPE_CONTENT, ENEATYPE_NUMBERS, TRIADS } from '../resultados/eneatype-content';
 
 // Public, prerendered educational content — no ApiService call, same as
-// LandingComponent. Names only, not the descriptive copy from
-// resultados/eneatype-content.ts: that copy is scoped to the results
-// screen, and this page shouldn't silently change if it gets rewritten.
+// LandingComponent. The nine cards link to /eneagrama/:tipo; names, triads
+// and colors come from ENEATYPE_CONTENT, the one source for everything
+// about a type. The legend under the grid names each triad's types in words,
+// so the color is never the only way to tell them apart.
 //
 // Deliberately doesn't say which triad group any item or option belongs
 // to — that's the instrument's scoring key, not marketing content.
-const ENEATYPES: EneatypeSummary[] = [
-  { number: 1, name: 'El Reformador' },
-  { number: 2, name: 'El Ayudador' },
-  { number: 3, name: 'El Triunfador' },
-  { number: 4, name: 'El Individualista' },
-  { number: 5, name: 'El Investigador' },
-  { number: 6, name: 'El Leal' },
-  { number: 7, name: 'El Entusiasta' },
-  { number: 8, name: 'El Desafiador' },
-  { number: 9, name: 'El Pacificador' },
-];
-
 @Component({
   selector: 'app-eneagrama',
   standalone: true,
-  imports: [PageContainerComponent, CardComponent],
+  imports: [PageContainerComponent, RouterLink],
   templateUrl: './eneagrama.component.html',
   styleUrl: './eneagrama.component.scss',
 })
 export class EneagramaComponent {
-  readonly eneatypes = ENEATYPES;
+  readonly eneatypes = ENEATYPE_NUMBERS;
+  readonly triads = TRIADS;
+
+  titleOf(eneatype: number): string {
+    return ENEATYPE_CONTENT[eneatype].title;
+  }
+
+  colorOf(eneatype: number): string {
+    return `var(${ENEATYPE_CONTENT[eneatype].color})`;
+  }
 }
