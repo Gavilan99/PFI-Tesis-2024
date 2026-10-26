@@ -4,16 +4,17 @@ import { CUT_COPY } from '../../core/cuts/cut-copy';
 import { CHANCE_ACCURACY, asPercent, hasNextCut } from '../../core/cuts/cut-plan';
 import { BrandButtonComponent } from '../../shared/components/brand-button/brand-button.component';
 import { FeedbackFormComponent } from '../../shared/components/feedback-form/feedback-form.component';
+import { PremiumButtonComponent } from '../../shared/components/premium-button/premium-button.component';
 
 // Feature 10 — what /test shows after the last item of a cut that isn't the
 // last one: the estimated accuracy of the cut just finished and of the next,
 // and the choice between seeing the result now or going on. Without the
-// paid tier the choice is the plans text instead. Only shows and emits: the
+// paid tier the choice is the plans text and "Pasar a premium" instead. Only shows and emits: the
 // test component closes or continues the attempt.
 @Component({
   selector: 'app-between-cuts',
   standalone: true,
-  imports: [BrandButtonComponent, FeedbackFormComponent],
+  imports: [BrandButtonComponent, FeedbackFormComponent, PremiumButtonComponent],
   templateUrl: './between-cuts.component.html',
   styleUrl: './between-cuts.component.scss',
 })

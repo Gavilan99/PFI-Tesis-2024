@@ -11,6 +11,7 @@ import { ProfileComponent } from './profile/profile.component';
 import { EneagramaComponent } from './eneagrama/eneagrama.component';
 import { NosotrosComponent } from './nosotros/nosotros.component';
 import { ContactoComponent } from './contacto/contacto.component';
+import { PagoComponent } from './pago/pago.component';
 import { sessionGuard } from './core/guards/session.guard';
 import { resultAvailableGuard } from './core/guards/result-available.guard';
 import { environment } from '../environments/environment';
@@ -47,6 +48,15 @@ export const routes: Routes = [
     component: ResultadosComponent,
     data: { title: 'Resultado de intento' },
     canActivate: [resultAvailableGuard],
+    runGuardsAndResolvers: 'always',
+  },
+  // Feature 6: back from Mercado Pago. Behind the session guard: the session
+  // survives the round trip (the token is in localStorage).
+  {
+    path: 'pago',
+    component: PagoComponent,
+    data: { title: 'Pago' },
+    canActivate: [sessionGuard],
     runGuardsAndResolvers: 'always',
   },
   {

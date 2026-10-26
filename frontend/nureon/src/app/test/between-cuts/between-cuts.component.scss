@@ -44,22 +44,7 @@
 }
 
 .between-cuts__premium {
-  display: flex;
-  align-items: center;
-  gap: var(--nureon-space-2xs);
-}
-
-.between-cuts__premium app-brand-button {
   flex: 1;
-}
-
-.between-cuts__soon {
-  flex: none;
-  padding: var(--nureon-space-3xs) var(--nureon-space-2xs);
-  border-radius: var(--nureon-radius-full);
-  background: var(--nureon-amber);
-  font-size: var(--nureon-text-caption-size);
-  font-weight: var(--nureon-text-caption-weight);
 }
 
 .between-cuts__feedback {

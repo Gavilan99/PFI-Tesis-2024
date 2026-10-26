@@ -1,0 +1,48 @@
+<app-page-container>
+  <section class="pago" aria-live="polite">
+    @switch (state) {
+      @case ('checking') {
+        <app-loading-state [message]="copy.checking"></app-loading-state>
+      }
+      @case ('approved') {
+        <h1 class="nureon-heading">{{ copy.approvedTitle }}</h1>
+        @if (until) {
+          <p>{{ copy.approvedBody(until) }}</p>
+        }
+        <div class="pago__actions">
+          <app-brand-button variant="primary" (click)="goBack()">{{ backLabel }}</app-brand-button>
+        </div>
+      }
+      @case ('pending') {
+        <h1 class="nureon-heading">{{ copy.pendingTitle }}</h1>
+        <p>{{ copy.pendingBody }}</p>
+        <div class="pago__actions">
+          <app-brand-button variant="primary" (click)="check()">{{ copy.refresh }}</app-brand-button>
+          <app-brand-button variant="secondary" (click)="goHome()">{{ copy.home }}</app-brand-button>
+        </div>
+      }
+      @case ('rejected') {
+        <h1 class="nureon-heading">{{ copy.rejectedTitle }}</h1>
+        <p>{{ copy.rejectedBody }}</p>
+        <div class="pago__actions">
+          <app-brand-button variant="primary" (click)="goBack()">{{ copy.tryAgain }}</app-brand-button>
+          <app-brand-button variant="secondary" (click)="goHome()">{{ copy.home }}</app-brand-button>
+        </div>
+      }
+      @case ('abandoned') {
+        <h1 class="nureon-heading">{{ copy.abandonedTitle }}</h1>
+        <p>{{ copy.abandonedBody }}</p>
+        <div class="pago__actions">
+          <app-brand-button variant="primary" (click)="goBack()">{{ backLabel }}</app-brand-button>
+        </div>
+      }
+      @case ('error') {
+        <p class="pago__error" role="alert">{{ errorMessage }}</p>
+        <div class="pago__actions">
+          <app-brand-button variant="primary" (click)="check()">{{ copy.refresh }}</app-brand-button>
+          <app-brand-button variant="secondary" (click)="goHome()">{{ copy.home }}</app-brand-button>
+        </div>
+      }
+    }
+  </section>
+</app-page-container>
