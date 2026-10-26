@@ -89,6 +89,27 @@
   // isn't inside a mat-form-field (mat-error handles that case on its own) —
   // e.g. a form-level submit error like "Ese email ya está registrado."
   --nureon-color-danger: #c62828;
+
+  // ---- Eneatype colors ----
+  // One family per triad, three tones apart in lightness within each one, so
+  // a type reads as its triad at a glance and as itself up close. Used for the
+  // /eneagrama cards and as the accent of each /eneagrama/:tipo page — not
+  // the brand amber (premium) or orange (result emphasis), and the mind greens
+  // lean yellow so they never pass for the brand's spring green or mint.
+  // Text on any of them is --nureon-type-on: 4.96:1 at worst (type 4), AA.
+  // Instinct triad (8, 9, 1): yellows.
+  --nureon-type-8: #fff4b8;
+  --nureon-type-9: #ebcd2a;
+  --nureon-type-1: #b0952c;
+  // Emotion triad (2, 3, 4): oranges.
+  --nureon-type-2: #ffd3b4;
+  --nureon-type-3: #ffa06e;
+  --nureon-type-4: #c56a3a;
+  // Mind triad (5, 6, 7): yellow-greens.
+  --nureon-type-5: #c8e89c;
+  --nureon-type-6: #94bf46;
+  --nureon-type-7: #64902c;
+  --nureon-type-on: rgba(0, 0, 0, 0.87);
 }
 
 // ---- Breakpoints ----
