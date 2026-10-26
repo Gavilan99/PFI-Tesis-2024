@@ -7,7 +7,7 @@
 #     powershell -File backend\infra\10-task.ps1 -Job grant-subscription -Email persona@ejemplo.com -Days 30
 #
 # grant-subscription: scripts/grant_subscription.py, a MANUAL paid tier with no payment behind it, for
-# the accounts of the user tests until Feature 6 (Mercado Pago) exists. The email goes in the task's
+# the accounts of the user tests and for a Mercado Pago payment that could not be recorded (Feature 6). The email goes in the task's
 # command override (visible in ECS and CloudTrail); the script's output names only the users.id.
 #
 # -ImageTag (migrate only): runs the migrations of an image the service is not running yet, so they

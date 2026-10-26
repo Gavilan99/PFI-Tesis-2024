@@ -51,7 +51,7 @@ En orden. Antes de cada paso que crea algo, mirar su costo (está en la cabecera
 | 0 | `00-check.ps1` | Sólo lectura: perfil, plan y créditos, cada servicio, Express Mode, `--dry-run` de la red | 1 min |
 | 1 | `01-network.ps1` | Subnets privadas (2a, 2b), tabla de rutas sin internet gateway, DB subnet group, security group de la base sin reglas | 1 min |
 | 2 | `02-database.ps1` | RDS; deja la rotación del secreto maestro en 365 días | ~10 min |
-| 3 | `03-app-secret.ps1` | `SECRET_KEY` generada local, sólo en Secrets Manager | seg. |
+| 3 | `03-app-secret.ps1` | `SECRET_KEY` generada local y las dos credenciales de **producción** de Mercado Pago (las pide sin mostrarlas), sólo en Secrets Manager. Volver a correrlo agrega las que falten | seg. |
 | 4 | `04-registry.ps1` | Repositorio ECR, inmutable, con escaneo y las últimas 10 imágenes | seg. |
 | 5 | `05-roles.ps1` | Roles de ejecución, de tarea y de infraestructura | seg. |
 | 6 | `06-cluster.ps1` | Cluster `nureon` y log group | seg. |
@@ -147,8 +147,8 @@ imprime su log y falla si salió con un código distinto de 0.
   cambiado entra como versión nueva, con `-BankVersion 2`, otra imagen que traiga ese CSV, y
   `--activate` desactiva las demás.
 - `-Job grant-subscription -Email <email> -Days <N>`: `scripts/grant_subscription.py`. **Alta manual de
-  una suscripción, sin pago asociado**, para las cuentas de las pruebas de usuario mientras no exista
-  la Feature 6 (Mercado Pago): da el tier pago (cortes 2 y 3) durante N días (1 a 366). Escribe una fila
+  una suscripción, sin pago asociado**, para las cuentas de las pruebas de usuario y para resolver a
+  mano un pago que no se pudo registrar (Feature 6): da el tier pago (cortes 2 y 3) durante N días (1 a 366). Escribe una fila
   de `subscriptions` `individual`, `active`, con `mercadopago_subscription_id` en NULL y sin fila en
   `payments`. La cuenta tiene que existir (registrada desde el frontend). El log nombra la cuenta por
   su `users.id`, nunca por el email; el email sí queda en el override de la tarea (ECS, CloudTrail).
@@ -156,6 +156,30 @@ imprime su log y falla si salió con un código distinto de 0.
   ```powershell
   powershell -File backend\infra\10-task.ps1 -Job grant-subscription -Email persona@ejemplo.com -Days 30
   ```
+
+## Mercado Pago (Feature 6)
+
+Antes del primer despliegue con pagos:
+
+1. **Credenciales de producción.** Tus integraciones → tu app → Credenciales de producción → «Activar
+   credenciales»: industria y **sitio web obligatorio** (el dominio de CloudFront del paso 7).
+2. **Webhook productivo.** Tus integraciones → tu app → Webhooks → Configurar notificaciones → **modo
+   productivo**: `https://<URL de la API, paso 9>/api/payments/webhook`, evento **Pagos**. Guardar
+   genera la clave secreta del modo productivo.
+3. **`03-app-secret.ps1`** otra vez: pide el Access Token de producción y esa clave secreta (no se ven
+   al escribirlas) y los agrega al secreto de la app sin tocar `SECRET_KEY`.
+4. **`backend/.env`:** `PLAN_INDIVIDUAL_PRICE` y `PLAN_INDIVIDUAL_DAYS` definitivos. `09-service.ps1`
+   los lee de ahí; sin ellos la app no arranca.
+5. **`09-service.ps1`** (paso 9, o un despliegue nuevo): pasa `PAYMENT_PROVIDER=mercadopago`,
+   `FRONTEND_BASE_URL` (CloudFront) y el plan como variables, y las dos credenciales desde Secrets
+   Manager. Quien pagó vuelve directo a `https://<CloudFront>/pago`: no hace falta `PUBLIC_API_BASE_URL`.
+
+**Orden en un entorno nuevo.** La app no arranca en producción sin la clave del webhook, y la URL del
+webhook (2) existe recién después del paso 9. Para cortar el círculo: en el paso 2, guardar el webhook
+productivo con cualquier URL HTTPS provisoria (por ejemplo `https://<CloudFront>/`) sólo para obtener
+la clave; correr el paso 3 antes del 9; y, con la URL de la API ya impresa por el paso 9, cambiar la URL
+del webhook en el panel. Según la documentación la clave no vence y se renueva con «Restablecer»; que
+siga igual al cambiar la URL no lo dice: verificarlo en el panel y, si cambió, repetir el paso 3.
 
 ## Volver atrás
 
