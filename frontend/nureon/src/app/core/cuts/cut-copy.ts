@@ -4,6 +4,11 @@
 export const CUT_COPY = {
   progressPrefix: (cut: number, cutCount: number) => `Parte ${cut} de ${cutCount} · `,
 
+  // Shown on the first question of the test. Added after the pilot, where
+  // participants hesitated between answering as they are or as they would
+  // like to be.
+  instruction: 'Respondé según cómo sos, no según cómo te gustaría ser. No pienses en el test como una evaluación.',
+
   // Screen between cuts.
   finishedPart: (cut: number, cutCount: number) => `Terminaste la parte ${cut} de ${cutCount}.`,
   currentAccuracy: (answered: number, percent: number) =>

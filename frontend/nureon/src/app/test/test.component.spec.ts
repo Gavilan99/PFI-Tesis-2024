@@ -69,6 +69,16 @@ describe('TestComponent', () => {
     expect(test.progressTotal).toBe(20);
   });
 
+  it('shows the instruction on the first question only', () => {
+    const test = create(new ApiError('Este intento ya no se puede seguir.', 'ATTEMPT_NOT_CONTINUABLE', 409));
+
+    expect(test.instruction).toBe(
+      'Respondé según cómo sos, no según cómo te gustaría ser. No pienses en el test como una evaluación.',
+    );
+    test.currentIndex = 1;
+    expect(test.instruction).toBeNull();
+  });
+
   // Any other failure must not fall back to that: an attempt in cut 2 would
   // otherwise close at its last item instead of showing the screen between cuts.
   it('shows the error state when the cut status fails for any other reason', () => {
