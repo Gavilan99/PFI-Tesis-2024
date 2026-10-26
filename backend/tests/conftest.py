@@ -19,6 +19,7 @@ import pytest
 from app import create_app
 from app.services.identity import LocalIdentityProvider
 from app.services.mail import LocalMailSender
+from app.services.payments import LocalPaymentGateway
 from app.services.rate_limit import SlidingWindowLimiter
 from tests import leak_guard
 from tests.db_helpers import bound_session
@@ -89,6 +90,16 @@ def mailbox(app):
 
 
 @pytest.fixture()
+def payments(app):
+    """A fresh local payment gateway per test: payments exist only where a test adds them."""
+    original = app.extensions["payment_gateway"]
+    gateway = LocalPaymentGateway()
+    app.extensions["payment_gateway"] = gateway
+    yield gateway
+    app.extensions["payment_gateway"] = original
+
+
+@pytest.fixture()
 def contact_limiter(app):
     """A fresh contact rate limiter per test, with the configured limit, so counts never carry over."""
     original = app.extensions["contact_rate_limiter"]
@@ -99,9 +110,9 @@ def contact_limiter(app):
 
 
 @pytest.fixture()
-def api(client, db_session, identity, mailbox, contact_limiter):
-    """A test client whose requests hit the rolled-back test transaction, the local identity and the
-    local mail sender."""
+def api(client, db_session, identity, mailbox, contact_limiter, payments):
+    """A test client whose requests hit the rolled-back test transaction, the local identity, the
+    local mail sender and the local payment gateway."""
     return client
 
 

@@ -102,6 +102,8 @@ def test_public_routes_need_no_token(api):
 def test_every_route_except_the_public_ones_requires_a_token(app):
     public = {
         "core.health", "core.health_ready", "auth.register", "auth.login", "feedback.submit_contact_message",
+        # Mercado Pago's: the notification proves itself with its signature, the return carries nothing.
+        "billing.payment_notification", "billing.payment_return",
     }
     for rule in app.url_map.iter_rules():
         view = app.view_functions[rule.endpoint]

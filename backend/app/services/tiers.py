@@ -1,8 +1,8 @@
 """Tiers. The server decides; the client can never send one.
 
 - A person has the paid tier when they have a `subscriptions` row with `status = active` and a
-  `current_period_end` that is empty or in the future. Checkout and the Mercado Pago webhook that
-  create those rows are Feature 6; until then they come from scripts/grant_subscription.py.
+  `current_period_end` that is empty or in the future. Those rows come from a Mercado Pago payment
+  (app.services.billing, Feature 6) or from scripts/grant_subscription.py (manual, for test accounts).
 - The first cut of the test is the free level; the second and third require the paid tier.
 - An attempt starts `free_reduced` and becomes `paid_full` when it continues to a paid cut (decision
   of 17/10: whoever pays after cut 1 goes on with the same attempt).

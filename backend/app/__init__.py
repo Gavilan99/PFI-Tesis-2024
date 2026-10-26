@@ -5,6 +5,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.blueprints.attempts import attempts_bp
 from app.blueprints.auth import auth_bp
+from app.blueprints.billing import billing_bp
 from app.blueprints.core import core_bp
 from app.blueprints.feedback import feedback_bp
 from app.blueprints.results import results_bp
@@ -18,6 +19,7 @@ from app.ml.registry import build_classifier
 from app.security import init_auth
 from app.services.identity import LocalIdentityProvider, build_identity_provider
 from app.services.mail import LocalMailSender, build_mail_sender
+from app.services.payments import LocalPaymentGateway, build_payment_gateway
 from app.services.rate_limit import SlidingWindowLimiter
 
 
@@ -43,6 +45,9 @@ def create_app(config_name: str | None = None) -> Flask:
     mail_sender = build_mail_sender(config)
     if config_name == "production" and isinstance(mail_sender, LocalMailSender):
         raise ConfigError("El envío de mail local no se puede usar en producción.")
+    payment_gateway = build_payment_gateway(config)
+    if config_name == "production" and isinstance(payment_gateway, LocalPaymentGateway):
+        raise ConfigError("La pasarela de pagos local no se puede usar en producción.")
 
     # A JSON API: no static files, so no `/static` route either.
     app = Flask(__name__, static_folder=None)
@@ -57,6 +62,7 @@ def create_app(config_name: str | None = None) -> Flask:
     app.extensions["cut_plan"] = cut_plan
     app.extensions["classifier"] = classifier
     app.extensions["mail_sender"] = mail_sender
+    app.extensions["payment_gateway"] = payment_gateway
     app.extensions["contact_rate_limiter"] = SlidingWindowLimiter(
         config.CONTACT_RATE_LIMIT, config.CONTACT_RATE_WINDOW_SECONDS
     )
@@ -74,5 +80,6 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(attempts_bp)
     app.register_blueprint(results_bp)
     app.register_blueprint(feedback_bp)
+    app.register_blueprint(billing_bp)
 
     return app
