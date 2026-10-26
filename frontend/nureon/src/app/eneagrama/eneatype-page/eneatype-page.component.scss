@@ -1,0 +1,104 @@
+@use '../../../styles/tokens';
+
+// --eneatype-color is set on .eneatype from ENEATYPE_CONTENT[n].color. It's
+// the accent only: the header panel and the top edge of each section. Body
+// text stays on white, and the header's text uses --nureon-type-on, which
+// clears AA on all nine colors.
+.eneatype {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-lg);
+}
+
+.back-link {
+  align-self: flex-start;
+}
+
+.eneatype__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-2xs);
+  padding: var(--nureon-space-md);
+  border-radius: var(--nureon-radius-lg);
+  background: var(--eneatype-color);
+  color: var(--nureon-type-on);
+
+  h1 {
+    margin: 0;
+  }
+}
+
+.eneatype__triad {
+  margin: 0;
+  font: var(--nureon-text-body-sm-weight) var(--nureon-text-body-sm-size) /
+    var(--nureon-text-body-sm-line-height) var(--nureon-font-body);
+  font-weight: 600;
+}
+
+.eneatype__sections {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--nureon-space-md);
+
+  @include tokens.nureon-from-desktop {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+// The thin border keeps the paler tones (8, 2, 5) visible against white.
+.eneatype__section {
+  padding: var(--nureon-space-md);
+  border: 1px solid rgba(black, 0.12);
+  border-top: 6px solid var(--eneatype-color);
+  border-radius: var(--nureon-radius-md);
+
+  h2 {
+    margin: 0 0 var(--nureon-space-xs);
+    font: var(--nureon-text-h3-weight) var(--nureon-text-h3-size) / var(--nureon-text-h3-line-height)
+      var(--nureon-text-h3-font);
+  }
+
+  ul {
+    margin: 0;
+    padding-left: var(--nureon-space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--nureon-space-2xs);
+  }
+}
+
+.eneatype__line {
+  margin: 0 0 var(--nureon-space-xs);
+  color: rgba(black, 0.7);
+}
+
+.eneatype__nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--nureon-space-sm);
+}
+
+// Stays on the right when the two wrap onto separate lines on mobile.
+.eneatype__next {
+  margin-left: auto;
+}
+
+.cta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--nureon-space-sm);
+  padding-top: var(--nureon-space-md);
+  border-top: 1px solid rgba(black, 0.12);
+
+  h2,
+  p {
+    margin: 0;
+  }
+
+  h2 {
+    font: var(--nureon-text-h2-weight) var(--nureon-text-h2-size) / var(--nureon-text-h2-line-height)
+      var(--nureon-text-h2-font);
+  }
+}

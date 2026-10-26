@@ -1,0 +1,75 @@
+<app-page-container>
+  <article class="eneatype" [style.--eneatype-color]="colorVar">
+    <app-brand-button class="back-link" variant="text" routerLink="/eneagrama">← Volver al eneagrama</app-brand-button>
+
+    <header class="eneatype__header">
+      <p class="eneatype__triad">{{ triadName }}</p>
+      <h1 #heading class="nureon-heading" tabindex="-1">{{ label }}</h1>
+    </header>
+
+    <div class="eneatype__sections">
+      <section class="eneatype__section">
+        <h2>Fortalezas</h2>
+        <ul>
+          @for (item of content.page.strengths; track item) {
+            <li>{{ item }}</li>
+          }
+        </ul>
+      </section>
+
+      <section class="eneatype__section">
+        <h2>Debilidades</h2>
+        <ul>
+          @for (item of content.page.weaknesses; track item) {
+            <li>{{ item }}</li>
+          }
+        </ul>
+      </section>
+
+      <section class="eneatype__section">
+        <h2>Crecimiento</h2>
+        <p class="eneatype__line">
+          Cuando crece, toma lo mejor del
+          <strong>{{ labelOf(growthTo) }}</strong>.
+        </p>
+        <ul>
+          @for (item of content.page.growth; track item) {
+            <li>{{ item }}</li>
+          }
+        </ul>
+      </section>
+
+      <section class="eneatype__section">
+        <h2>Tensiones</h2>
+        <p class="eneatype__line">
+          Bajo presión o estrés, se acerca a los aspectos más difíciles del
+          <strong>{{ labelOf(stressTo) }}</strong>.
+        </p>
+        <ul>
+          @for (item of content.page.tensions; track item) {
+            <li>{{ item }}</li>
+          }
+        </ul>
+      </section>
+    </div>
+
+    <nav class="eneatype__nav" aria-label="Otros eneatipos">
+      <app-brand-button class="eneatype__prev" variant="secondary" [routerLink]="['/eneagrama', previous]">
+        ← {{ labelOf(previous) }}
+      </app-brand-button>
+      <app-brand-button class="eneatype__next" variant="secondary" [routerLink]="['/eneagrama', next]">
+        {{ labelOf(next) }} →
+      </app-brand-button>
+    </nav>
+
+    <section class="cta">
+      <h2>¿Cuál es tu eneatipo?</h2>
+      <p>El test de NureonAI lo identifica a partir de lo que te motiva, no sólo de cómo actuás.</p>
+      @if (user$ | async) {
+        <app-brand-button variant="primary" routerLink="/inicio">Ir al test</app-brand-button>
+      } @else {
+        <app-brand-button variant="primary" routerLink="/registro">Empezar gratis</app-brand-button>
+      }
+    </section>
+  </article>
+</app-page-container>
