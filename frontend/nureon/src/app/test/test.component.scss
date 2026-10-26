@@ -10,6 +10,12 @@
   min-height: 60vh;
 }
 
+.test__instruction {
+  margin: 0 0 var(--nureon-space-md);
+  font-size: var(--nureon-text-body-sm-size);
+  color: rgba(black, 0.6);
+}
+
 .test__back {
   align-self: flex-start;
   margin-bottom: var(--nureon-space-sm);

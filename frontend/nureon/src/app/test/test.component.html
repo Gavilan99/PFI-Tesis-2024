@@ -31,6 +31,10 @@
     ></app-progress-bar>
 
     <div class="test__question">
+      @if (instruction) {
+        <p class="test__instruction">{{ instruction }}</p>
+      }
+
       @if (currentIndex > cutStartIndex) {
         <button type="button" class="test__back" (click)="goBack()">← Volver</button>
       }

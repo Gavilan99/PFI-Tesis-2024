@@ -91,6 +91,11 @@ export class TestComponent implements OnInit {
     return this.cut ? CUT_COPY.progressPrefix(this.cut.currentCut, this.cut.cutCount) : '';
   }
 
+  // Only on the test's first question, not at the start of each cut.
+  get instruction(): string | null {
+    return this.currentIndex === 0 ? CUT_COPY.instruction : null;
+  }
+
   get progressCurrent(): number {
     return this.currentIndex - this.cutStartIndex + 1;
   }
