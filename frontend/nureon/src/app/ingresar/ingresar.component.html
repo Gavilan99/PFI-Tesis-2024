@@ -19,9 +19,6 @@
         }
       </mat-form-field>
 
-      <!-- Sin ruta propia todavía (fuera del árbol de la Etapa 2) — se dibuja igual. -->
-      <p class="ingresar-form__forgot">¿Olvidaste tu contraseña?</p>
-
       @if (submitError) {
         <p class="ingresar-form__error" role="alert">{{ submitError }}</p>
       }
@@ -30,12 +27,6 @@
         {{ submitting ? 'Ingresando…' : 'Ingresar' }}
       </app-brand-button>
     </form>
-
-    <!-- Ranura RNF09: dibujados pero inertes hasta que Cognito exista. -->
-    <div class="ingresar-form__social">
-      <button type="button" class="social-button social-button--google">Continuar con Google</button>
-      <button type="button" class="social-button social-button--facebook">Continuar con Facebook</button>
-    </div>
 
     <p class="ingresar-form__signup">
       ¿No tenés cuenta? <a routerLink="/registro">Registrate</a>

@@ -7,9 +7,10 @@ import { PageContainerComponent } from '../shared/layout/page-container/page-con
 import { BrandButtonComponent } from '../shared/components/brand-button/brand-button.component';
 import { AuthService } from '../core/services/auth.service';
 
-// CU002 — Iniciar sesión. Password recovery and the Google/Facebook slots
-// are drawn but inert — RNF09 wires them up once Cognito exists. Errors
-// render inline in the form, never alert().
+// CU002 — Iniciar sesión, with email and password only. There is no social
+// login and no password recovery: the inert placeholders for both were
+// removed so the screen shows only what works. Errors render inline in the
+// form, never alert().
 //
 // mat-form-field/mat-error used directly, not through a wrapper component —
 // see the comment in RegistroComponent for why (MatFormFieldControl
