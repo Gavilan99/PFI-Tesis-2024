@@ -11,10 +11,28 @@
   <section class="types">
     <h2>Los 9 tipos</h2>
     <div class="card-grid">
-      @for (type of eneatypes; track type.number) {
-        <app-card [title]="'Eneatipo ' + type.number + ' — ' + type.name"></app-card>
+      @for (type of eneatypes; track type) {
+        <a class="type-card" [routerLink]="['/eneagrama', type]" [style.--eneatype-color]="colorOf(type)">
+          <span>Eneatipo {{ type }} — <span class="nowrap">{{ titleOf(type) }}</span></span>
+          <span class="type-card__arrow" aria-hidden="true">→</span>
+        </a>
       }
     </div>
+    <ul class="triad-legend" aria-label="Tríadas">
+      @for (triad of triads; track triad.id) {
+        <li class="triad-legend__item">
+          <span class="triad-legend__swatches" aria-hidden="true">
+            @for (type of triad.eneatypes; track type) {
+              <span class="triad-legend__swatch" [style.background]="colorOf(type)"></span>
+            }
+          </span>
+          <span>
+            <strong>{{ triad.label }}</strong>:
+            <span class="nowrap">eneatipos {{ triad.eneatypes[0] }}, {{ triad.eneatypes[1] }} y {{ triad.eneatypes[2] }}</span>
+          </span>
+        </li>
+      }
+    </ul>
   </section>
 
   <section class="difference">

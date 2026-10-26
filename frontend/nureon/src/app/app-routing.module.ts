@@ -14,6 +14,7 @@ import { ContactoComponent } from './contacto/contacto.component';
 import { PagoComponent } from './pago/pago.component';
 import { sessionGuard } from './core/guards/session.guard';
 import { resultAvailableGuard } from './core/guards/result-available.guard';
+import { eneatypeGuard, eneatypeTitleResolver } from './eneagrama/eneatype-route';
 import { environment } from '../environments/environment';
 
 // Guarded routes use runGuardsAndResolvers: 'always' so that AppComponent can
@@ -67,6 +68,15 @@ export const routes: Routes = [
     runGuardsAndResolvers: 'always',
   },
   { path: 'eneagrama', component: EneagramaComponent, data: { title: 'Sobre el eneagrama' } },
+  // Lazy and prerendered (see prerender-routes.txt): one short public page
+  // per type. The title is resolved per type, not fixed in data.
+  {
+    path: 'eneagrama/:tipo',
+    loadComponent: () =>
+      import('./eneagrama/eneatype-page/eneatype-page.component').then((m) => m.EneatypePageComponent),
+    canActivate: [eneatypeGuard],
+    resolve: { title: eneatypeTitleResolver },
+  },
   { path: 'nosotros', component: NosotrosComponent, data: { title: 'Nosotros' } },
   { path: 'contacto', component: ContactoComponent, data: { title: 'Contacto' } },
   // Lazy: long text few visitors open, prerendered anyway. Keeps it out of
