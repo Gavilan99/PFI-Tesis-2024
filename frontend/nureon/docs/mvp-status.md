@@ -33,10 +33,11 @@ esto corre en SSR/prerender.
 en el formulario tal cual llegan. La confirmación manda directo a `/test`. **Real backend: 100%.**
 **El email no se verifica**: la cuenta se auto-confirma (decisión del plan del backend).
 
-### Ingresar (`/ingresar`) — CU002, RF02, RNF09
+### Ingresar (`/ingresar`) — CU002, RF02
 `AuthService.login()` → `POST /api/auth/login`. "Email o contraseña incorrectos." llega del backend y
-se muestra en el formulario. Los botones "Continuar con Google/Facebook" siguen siendo una ranura
-visual inerte. **Real backend: 100% para email y contraseña; 0% para Google/Facebook.**
+se muestra en el formulario. Sólo email y contraseña: los botones inertes "Continuar con
+Google/Facebook" y el texto "¿Olvidaste tu contraseña?" se sacaron, porque no hay inicio de sesión
+con redes sociales ni recuperación de contraseña. **Real backend: 100%.**
 
 ### `/inicio` — RF03
 Lee `getLatestAttempt` y decide la acción primaria según el estado:
@@ -54,6 +55,10 @@ backend. El subset entero (20 ítems en el tier gratuito) llega en un solo pedid
 guarda al elegirla. Recargar a mitad del test retoma en el mismo ítem, leyendo la base. El cliente
 manda sólo el id de la opción: la clave de corrección (`group_label`, `grouping_system`) no llega al
 navegador, y las opciones de escenario vienen mezcladas por intento. **Real backend: 100%.**
+
+La primera pregunta del test muestra la instrucción "Respondé según cómo sos, no según cómo te
+gustaría ser. No pienses en el test como una evaluación." (`CUT_COPY.instruction`), agregada después
+de la prueba piloto.
 
 **Contenido de los ítems: relleno explícito.** El backend sirve la **versión 0** del cuestionario,
 que dice en cada ítem "[RELLENO · versión 0] ... no es un ítem del banco v1 ni de ningún instrumento
