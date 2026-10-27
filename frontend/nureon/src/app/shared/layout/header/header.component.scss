@@ -50,9 +50,12 @@
   }
 }
 
-// Cerrar sesión: cancel/close action, colored with the shared negative
-// token instead of the toolbar's inherited (white) text color. `!important`
-// because Material's mat-mdc-button sets its own color at equal specificity.
+// Cerrar sesión: cancel/close action, filled with the shared negative
+// token instead of the toolbar's inherited (white) text/transparent
+// background — same filled-chip treatment as the other negative buttons
+// (brand-button.component.scss). `!important` because Material's
+// mat-mdc-button sets background/color at equal specificity.
 .header__logout {
-  color: var(--nureon-color-negative) !important;
+  background-color: var(--nureon-color-negative) !important;
+  color: white !important;
 }

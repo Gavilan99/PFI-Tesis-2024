@@ -110,8 +110,9 @@
   border: none;
   border-radius: var(--nureon-radius-md);
   background: var(--nureon-color-negative);
-  // White fails AA on this orange (~2.8:1); dark text clears it (~6.6:1).
-  color: rgba(black, 0.87);
+  // White fails AA on this orange (~2.8:1) — kept anyway, deliberately, for
+  // consistency with the other negative buttons (design call, Etapa 2).
+  color: white;
   font: 600 var(--nureon-text-body-size) var(--nureon-font-body);
   cursor: pointer;
 
