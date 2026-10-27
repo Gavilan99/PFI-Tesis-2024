@@ -61,10 +61,13 @@ $nureon-theme: mat.define-light-theme((
 //                    locked-content indicators, the "upgrade" CTA on the
 //                    paywall (Stage 6). Never a warning, hover, or active
 //                    state color.
-//   --nureon-orange: result emphasis only. The active enneatype's
-//                    wedge/arrow on the enneagram diagram, enneatype badges
-//                    (Stage 3/6). Never a button/link color, and never an
-//                    error or attention-required signal.
+//   --nureon-orange: result emphasis (the active enneatype's wedge/arrow on
+//                    the enneagram diagram, enneatype badges, Stage 3/6) and,
+//                    via --nureon-color-negative (_tokens.scss), the color
+//                    for cancel/close/delete actions — never a plain
+//                    link/CTA color, and never a form validation error
+//                    (that's $nureon-warn / --nureon-color-danger). Text on
+//                    it needs rgba(black, 0.87): white only reaches ~2.8:1.
 :root {
   --nureon-green-dark: #1a7f5b;
   --nureon-green-mint: #5bc795;

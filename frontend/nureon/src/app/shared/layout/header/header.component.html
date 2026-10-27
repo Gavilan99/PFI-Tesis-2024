@@ -20,7 +20,7 @@
         <a mat-raised-button color="accent" routerLink="/registro">Registrarse</a>
       } @else {
         <a mat-button routerLink="/perfil">Mi perfil</a>
-        <button mat-button (click)="logoutRequested.emit()">Cerrar sesión</button>
+        <button mat-button class="header__logout" (click)="logoutRequested.emit()">Cerrar sesión</button>
       }
     </div>
 
@@ -38,7 +38,7 @@
       <a mat-menu-item routerLink="/registro">Registrarse</a>
     } @else {
       <a mat-menu-item routerLink="/perfil">Mi perfil</a>
-      <button mat-menu-item (click)="logoutRequested.emit()">Cerrar sesión</button>
+      <button mat-menu-item class="header__logout" (click)="logoutRequested.emit()">Cerrar sesión</button>
     }
   </mat-menu>
 </mat-toolbar>

@@ -79,7 +79,7 @@
   gap: var(--nureon-space-xs);
   max-width: 560px;
   padding: var(--nureon-space-md);
-  border: 1px solid var(--nureon-color-danger);
+  border: 1px solid var(--nureon-color-negative);
   border-radius: var(--nureon-radius-md);
 
   // The panel's gap spaces its blocks; default margins would add to it.
@@ -109,8 +109,9 @@
   padding: var(--nureon-space-xs) var(--nureon-space-md);
   border: none;
   border-radius: var(--nureon-radius-md);
-  background: var(--nureon-color-danger);
-  color: white;
+  background: var(--nureon-color-negative);
+  // White fails AA on this orange (~2.8:1); dark text clears it (~6.6:1).
+  color: rgba(black, 0.87);
   font: 600 var(--nureon-text-body-size) var(--nureon-font-body);
   cursor: pointer;
 

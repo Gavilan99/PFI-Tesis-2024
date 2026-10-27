@@ -39,13 +39,29 @@
     justify-content: center;
   }
 
-  &:hover {
-    border-color: var(--nureon-green-dark);
+  // Hover and keyboard focus both read as "considering this option" — blue,
+  // distinct from the green "selected" state below so the two never read as
+  // the same thing when hovering an already-selected option.
+  &:hover,
+  &:focus-visible {
+    border-color: var(--nureon-blue);
+    background: map-get(palette.$nureon-accent-palette, 50);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--nureon-blue);
+    outline-offset: 2px;
   }
 
   &--selected {
     border-color: var(--nureon-green-dark);
     background: map-get(palette.$nureon-primary-palette, 50);
+
+    &:hover,
+    &:focus-visible {
+      border-color: var(--nureon-green-dark);
+      background: map-get(palette.$nureon-primary-palette, 50);
+    }
   }
 }
 

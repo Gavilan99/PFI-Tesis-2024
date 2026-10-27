@@ -90,25 +90,33 @@
   // e.g. a form-level submit error like "Ese email ya está registrado."
   --nureon-color-danger: #c62828;
 
+  // Cancel/close/delete actions — not form or submission errors, which stay
+  // on --nureon-color-danger above. Same brand orange as the enneagram
+  // diagram's result-emphasis stroke (custom-theme.scss); text on it needs
+  // dark (rgba(black, 0.87)), not white — see the per-button contrast notes
+  // where this is consumed.
+  --nureon-color-negative: var(--nureon-orange);
+
   // ---- Eneatype colors ----
-  // One family per triad, three tones apart in lightness within each one, so
-  // a type reads as its triad at a glance and as itself up close. Used for the
-  // /eneagrama cards and as the accent of each /eneagrama/:tipo page — not
-  // the brand amber (premium) or orange (result emphasis), and the mind greens
-  // lean yellow so they never pass for the brand's spring green or mint.
-  // Text on any of them is --nureon-type-on: 4.96:1 at worst (type 4), AA.
-  // Instinct triad (8, 9, 1): yellows.
-  --nureon-type-8: #fff4b8;
-  --nureon-type-9: #ebcd2a;
-  --nureon-type-1: #b0952c;
-  // Emotion triad (2, 3, 4): oranges.
-  --nureon-type-2: #ffd3b4;
-  --nureon-type-3: #ffa06e;
-  --nureon-type-4: #c56a3a;
-  // Mind triad (5, 6, 7): yellow-greens.
-  --nureon-type-5: #c8e89c;
-  --nureon-type-6: #94bf46;
-  --nureon-type-7: #64902c;
+  // Each triad is anchored on its own brand color (per the thesis palette),
+  // not an independent family: the wings vary that same hue/saturation in
+  // lightness, lighter for the first type of the triad (8, 2, 5) and darker
+  // for the last (1, 4, 7), same approach as before the palette alignment.
+  // Used for the /eneagrama cards and as the accent of each /eneagrama/:tipo
+  // page. Text on any of them is --nureon-type-on (rgba(black, 0.87)); worst
+  // case is type 4 at 4.69:1, still above the 4.5:1 AA floor.
+  // Instinct triad (8, 9, 1): amber. 9 = --nureon-amber exactly.
+  --nureon-type-8: #ffebb8;
+  --nureon-type-9: #ffbf1f;
+  --nureon-type-1: #b38000;
+  // Emotion triad (2, 3, 4): orange. 3 = --nureon-orange exactly.
+  --nureon-type-2: #ffd3c2;
+  --nureon-type-3: #ff6d33;
+  --nureon-type-4: #e64100;
+  // Mind triad (5, 6, 7): mint. 6 = --nureon-green-mint exactly.
+  --nureon-type-5: #cdeedf;
+  --nureon-type-6: #5bc795;
+  --nureon-type-7: #34986a;
   --nureon-type-on: rgba(0, 0, 0, 0.87);
 }
 

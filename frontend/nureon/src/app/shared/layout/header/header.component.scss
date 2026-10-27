@@ -49,3 +49,10 @@
     display: none;
   }
 }
+
+// Cerrar sesión: cancel/close action, colored with the shared negative
+// token instead of the toolbar's inherited (white) text color. `!important`
+// because Material's mat-mdc-button sets its own color at equal specificity.
+.header__logout {
+  color: var(--nureon-color-negative) !important;
+}

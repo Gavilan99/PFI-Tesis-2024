@@ -1,0 +1,20 @@
+// Recolors whichever Material button variant is in use for cancel/close/
+// delete actions, instead of Material's red `warn` palette. `!important`
+// because Material sets these via its own theme CSS variables on the same
+// elements, at equal selector specificity.
+.brand-button--negative {
+  &.mat-mdc-raised-button:not(:disabled) {
+    background-color: var(--nureon-color-negative) !important;
+    // White fails AA on this orange (~2.8:1); dark text clears it (~6.6:1).
+    color: rgba(black, 0.87) !important;
+  }
+
+  &.mat-mdc-outlined-button:not(:disabled) {
+    color: var(--nureon-color-negative) !important;
+    border-color: var(--nureon-color-negative) !important;
+  }
+
+  &.mat-mdc-button:not(:disabled) {
+    color: var(--nureon-color-negative) !important;
+  }
+}
