@@ -105,29 +105,30 @@
   // and darker for the last (1, 4, 7). Revised post-review (Etapa 2): the
   // light wings' lightness jump from the mid tone is gentler than the first
   // pass (+20 vs +30, with saturation eased back a bit too, so they read as
-  // a tint of the family instead of a near-pastel); the dark wings (Etapa 3)
-  // got the same gentler treatment the other direction — not as dark as the
-  // first pass, so the triad reads as one family instead of a high-contrast
-  // jump at the dark end. Type 1 also shifts hue a few degrees toward
-  // orange at a higher saturation than a plain lightness-drop would give
-  // it — a straight darkened amber reads as muddy/brownish, which is
+  // a tint of the family instead of a near-pastel). The dark wings went
+  // through two more rounds the same direction (Etapas 3-4): each one still
+  // read as too big a contrast jump from the mid tone, so the gap is now
+  // only ~6 lightness points instead of the ~13-18 of the first pass — a
+  // shade, not a different color. Type 1 also shifts hue a few degrees
+  // toward orange at a higher saturation than a plain lightness-drop would
+  // give it — a straight darkened amber reads as muddy/brownish, which is
   // exactly the type 1 color this replaces.
   // Used for the /eneagrama cards and as the accent of each /eneagrama/:tipo
   // page. Text on any of them is --nureon-type-on (rgba(black, 0.87)); worst
-  // case is now type 4 at 5.61:1 — comfortably past the 4.5:1 AA floor,
-  // since the dark wings are no longer as close to it as the first pass.
+  // case is now type 4 at 5.94:1 — still comfortably past the 4.5:1 AA
+  // floor even with the dark wings this close to their mid tone.
   // Instinct triad (8, 9, 1): amber. 9 = --nureon-amber exactly.
   --nureon-type-8: #f9da8b;
   --nureon-type-9: #ffbf1f;
-  --nureon-type-1: #eb860a;
+  --nureon-type-1: #f58b0a;
   // Emotion triad (2, 3, 4): orange. 3 = --nureon-orange exactly.
   --nureon-type-2: #fab89e;
   --nureon-type-3: #ff6d33;
-  --nureon-type-4: #ff4900;
+  --nureon-type-4: #ff5714;
   // Mind triad (5, 6, 7): mint. 6 = --nureon-green-mint exactly.
   --nureon-type-5: #aadec6;
   --nureon-type-6: #5bc795;
-  --nureon-type-7: #3aab77;
+  --nureon-type-7: #45bf87;
   --nureon-type-on: rgba(0, 0, 0, 0.87);
 }
 
