@@ -107,16 +107,17 @@
   // pass (+20 vs +30, with saturation eased back a bit too, so they read as
   // a tint of the family instead of a near-pastel). The dark wings went
   // through three more rounds the same direction (Etapas 3-5), each one
-  // still reading as too big a jump from the mid tone: the gap is now only
-  // ~3 lightness points (first pass was ~13-18) — barely a shade apart, not
-  // a different color. Type 1 also shifts hue a few degrees toward orange
-  // at a higher saturation than a plain lightness-drop would give it — a
-  // straight darkened amber reads as muddy/brownish, which is exactly the
-  // type 1 color this replaces.
+  // still reading as too big a jump from the mid tone, down to a ~3
+  // lightness-point gap for 1 and 4 (first pass was ~13-18) — barely a
+  // shade apart, not a different color. Type 7 went the other way in Etapa
+  // 6: at that same ~3-point gap it read as too close to type 6, so it's
+  // back out to a ~13-point gap, closer to the Etapa 3 value. Type 1 also
+  // shifts hue a few degrees toward orange at a higher saturation than a
+  // plain lightness-drop would give it — a straight darkened amber reads as
+  // muddy/brownish, which is exactly the type 1 color this replaces.
   // Used for the /eneagrama cards and as the accent of each /eneagrama/:tipo
   // page. Text on any of them is --nureon-type-on (rgba(black, 0.87)); worst
-  // case is now type 4 at 6.25:1 — still comfortably past the 4.5:1 AA
-  // floor even with the dark wings this close to their mid tone.
+  // case is now type 4 at 6.25:1 — comfortably past the 4.5:1 AA floor.
   // Instinct triad (8, 9, 1): amber. 9 = --nureon-amber exactly.
   --nureon-type-8: #f9da8b;
   --nureon-type-9: #ffbf1f;
@@ -128,7 +129,7 @@
   // Mind triad (5, 6, 7): mint. 6 = --nureon-green-mint exactly.
   --nureon-type-5: #aadec6;
   --nureon-type-6: #5bc795;
-  --nureon-type-7: #50c38e;
+  --nureon-type-7: #39a774;
   --nureon-type-on: rgba(0, 0, 0, 0.87);
 }
 
