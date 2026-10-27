@@ -55,16 +55,22 @@ $nureon-theme: mat.define-light-theme((
 // the Material theme mixins above.
 //
 // Amber and orange are NOT interchangeable decoration, and neither is a
-// stand-in for warn (errors, above) or accent (default interactive/CTA
-// color — that's --nureon-blue / $nureon-accent). Each has exactly one job:
+// stand-in for accent (default interactive/CTA color — that's --nureon-blue
+// / $nureon-accent). Each has exactly one job:
 //   --nureon-amber:  premium/upsell signal only. Freemium tier badges,
 //                    locked-content indicators, the "upgrade" CTA on the
 //                    paywall (Stage 6). Never a warning, hover, or active
 //                    state color.
-//   --nureon-orange: result emphasis only. The active enneatype's
-//                    wedge/arrow on the enneagram diagram, enneatype badges
-//                    (Stage 3/6). Never a button/link color, and never an
-//                    error or attention-required signal.
+//   --nureon-orange: result emphasis (the active enneatype's wedge/arrow on
+//                    the enneagram diagram, enneatype badges, Stage 3/6)
+//                    and, via --nureon-color-negative / --nureon-color-danger
+//                    (_tokens.scss), both cancel/close/delete actions and
+//                    form-level error text — never a plain link/CTA color.
+//                    $nureon-warn (Material's own red, below) still covers
+//                    field-level mat-error only; it never mixes with orange.
+//                    Design call (Etapa 2 review): white text on this orange
+//                    reads at ~2.8:1, under the 4.5:1 AA floor — kept
+//                    anyway, deliberately.
 :root {
   --nureon-green-dark: #1a7f5b;
   --nureon-green-mint: #5bc795;

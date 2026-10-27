@@ -17,7 +17,7 @@
           <app-progress-bar [current]="answered" [total]="total"></app-progress-bar>
           <div class="inicio__actions">
             <app-brand-button variant="primary" routerLink="/test">Retomar test</app-brand-button>
-            <app-brand-button variant="text" [disabled]="startingOver" (click)="startOver()">
+            <app-brand-button variant="text" [negative]="true" [disabled]="startingOver" (click)="startOver()">
               {{ startingOver ? 'Empezando…' : 'Empezar de nuevo' }}
             </app-brand-button>
           </div>

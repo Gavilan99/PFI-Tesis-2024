@@ -1,0 +1,14 @@
+// Recolors whichever Material button variant is in use for cancel/close/
+// delete actions into the same filled orange chip (design call, Etapa 2
+// review: all four negative buttons read as one consistent style, not
+// raised/stroked/text each shaded differently). `!important` because
+// Material sets background/color/border via its own theme CSS variables on
+// the same elements, at equal selector specificity.
+//
+// White text on this orange reads at ~2.8:1, under the 4.5:1 AA floor —
+// kept anyway, deliberately, over the AA-passing dark-text alternative.
+.brand-button--negative:not(:disabled) {
+  background-color: var(--nureon-color-negative) !important;
+  border-color: var(--nureon-color-negative) !important;
+  color: white !important;
+}

@@ -109,7 +109,9 @@
       <p class="profile__delete-intro">
         Podés borrar tu cuenta cuando quieras. Antes te mostramos qué se borra y qué se conserva.
       </p>
-      <app-brand-button variant="secondary" (click)="openDelete()">Borrar mi cuenta</app-brand-button>
+      <app-brand-button variant="secondary" [negative]="true" (click)="openDelete()">
+        Borrar mi cuenta
+      </app-brand-button>
     } @else {
       <div class="profile__delete-panel">
         <p><strong>Se borra:</strong></p>
@@ -155,7 +157,7 @@
           >
             {{ deleting ? 'Borrando…' : 'Borrar mi cuenta definitivamente' }}
           </button>
-          <app-brand-button variant="text" [disabled]="deleting" (click)="cancelDelete()">
+          <app-brand-button variant="text" [negative]="true" [disabled]="deleting" (click)="cancelDelete()">
             Cancelar
           </app-brand-button>
         </div>

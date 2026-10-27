@@ -85,30 +85,51 @@
   --nureon-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
 
   // ---- Feedback ----
-  // Matches $nureon-warn (mat.$red-palette). For inline error text that
-  // isn't inside a mat-form-field (mat-error handles that case on its own) —
-  // e.g. a form-level submit error like "Ese email ya está registrado."
-  --nureon-color-danger: #c62828;
+  // Design call (post-review, Etapa 2): form-level/submit error text — not
+  // inside a mat-form-field, which keeps Material's own red mat-error — uses
+  // brand orange, like the actions below. As plain text on white this reads
+  // at ~2.8:1, under the 4.5:1 AA floor; kept anyway, deliberately, over the
+  // original red.
+  --nureon-color-danger: var(--nureon-orange);
+
+  // Cancel/close/delete actions. Same brand orange as the enneagram
+  // diagram's result-emphasis stroke (custom-theme.scss). White text on an
+  // orange fill reads at ~2.8:1, under the 4.5:1 AA floor; kept anyway, by
+  // explicit design call over the AA-passing dark-text alternative.
+  --nureon-color-negative: var(--nureon-orange);
 
   // ---- Eneatype colors ----
-  // One family per triad, three tones apart in lightness within each one, so
-  // a type reads as its triad at a glance and as itself up close. Used for the
-  // /eneagrama cards and as the accent of each /eneagrama/:tipo page — not
-  // the brand amber (premium) or orange (result emphasis), and the mind greens
-  // lean yellow so they never pass for the brand's spring green or mint.
-  // Text on any of them is --nureon-type-on: 4.96:1 at worst (type 4), AA.
-  // Instinct triad (8, 9, 1): yellows.
-  --nureon-type-8: #fff4b8;
-  --nureon-type-9: #ebcd2a;
-  --nureon-type-1: #b0952c;
-  // Emotion triad (2, 3, 4): oranges.
-  --nureon-type-2: #ffd3b4;
-  --nureon-type-3: #ffa06e;
-  --nureon-type-4: #c56a3a;
-  // Mind triad (5, 6, 7): yellow-greens.
-  --nureon-type-5: #c8e89c;
-  --nureon-type-6: #94bf46;
-  --nureon-type-7: #64902c;
+  // Each triad is anchored on its own brand color (per the thesis palette):
+  // the mid type (9, 3, 6) is that brand hex exactly; the wings vary the
+  // same hue in lightness, lighter for the first type of the triad (8, 2, 5)
+  // and darker for the last (1, 4, 7). Revised post-review (Etapa 2): the
+  // light wings' lightness jump from the mid tone is gentler than the first
+  // pass (+20 vs +30, with saturation eased back a bit too, so they read as
+  // a tint of the family instead of a near-pastel). The dark wings went
+  // through three more rounds the same direction (Etapas 3-5), each one
+  // still reading as too big a jump from the mid tone, down to a ~3
+  // lightness-point gap for 1 and 4 (first pass was ~13-18) — barely a
+  // shade apart, not a different color. Type 7 went the other way in Etapa
+  // 6: at that same ~3-point gap it read as too close to type 6, so it's
+  // back out to a ~13-point gap, closer to the Etapa 3 value. Type 1 also
+  // shifts hue a few degrees toward orange at a higher saturation than a
+  // plain lightness-drop would give it — a straight darkened amber reads as
+  // muddy/brownish, which is exactly the type 1 color this replaces.
+  // Used for the /eneagrama cards and as the accent of each /eneagrama/:tipo
+  // page. Text on any of them is --nureon-type-on (rgba(black, 0.87)); worst
+  // case is now type 4 at 6.25:1 — comfortably past the 4.5:1 AA floor.
+  // Instinct triad (8, 9, 1): amber. 9 = --nureon-amber exactly.
+  --nureon-type-8: #f9da8b;
+  --nureon-type-9: #ffbf1f;
+  --nureon-type-1: #f59219;
+  // Emotion triad (2, 3, 4): orange. 3 = --nureon-orange exactly.
+  --nureon-type-2: #fab89e;
+  --nureon-type-3: #ff6d33;
+  --nureon-type-4: #ff6224;
+  // Mind triad (5, 6, 7): mint. 6 = --nureon-green-mint exactly.
+  --nureon-type-5: #aadec6;
+  --nureon-type-6: #5bc795;
+  --nureon-type-7: #39a774;
   --nureon-type-on: rgba(0, 0, 0, 0.87);
 }
 
