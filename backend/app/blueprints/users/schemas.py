@@ -1,11 +1,15 @@
 import uuid
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from pydantic import StringConstraints, model_validator
 
 from app.blueprints.schemas import ApiModel, ApiOutput
 from app.db.models.enums import AccountType
 from app.exceptions import EmailNotEditable
+
+# NureonAI no admite menores de 18 (Feature 16): el frontend no ofrece "Menos de 18" y el backend
+# rechaza cualquier valor fuera de esta lista. Única fuente de verdad para age_range.
+AGE_RANGES: tuple[str, ...] = ("18-24", "25-34", "35-44", "45-54", "55-64", "65 o más")
 
 
 class UserOut(ApiOutput):
@@ -30,7 +34,7 @@ class UpdateProfileIn(ApiModel):
 
     display_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)] = None
     account_type: AccountType | None = None
-    age_range: _text(32) | None = None
+    age_range: Literal[*AGE_RANGES] | None = None
     gender: _text(64) | None = None
     country: _text(64) | None = None
     profession_context: _text(255) | None = None

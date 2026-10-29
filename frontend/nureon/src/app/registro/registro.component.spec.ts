@@ -52,6 +52,7 @@ describe('RegistroComponent, consent (Feature 11)', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent!;
     expect(checkbox(fixture).checked).toBeFalse();
     expect(text).toContain('Se guardan en servidores de Amazon Web Services en Estados Unidos.');
+    expect(text).toContain('declaro ser mayor de 18 años');
     expect(text).toContain('consiento que mis datos se guarden en Estados Unidos');
   });
 

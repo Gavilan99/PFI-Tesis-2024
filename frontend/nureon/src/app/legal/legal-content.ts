@@ -14,11 +14,12 @@ export const LEGAL_CONTACT_EMAIL = 'eneagramnureon@gmail.com';
 
 // The version of the texts. The backend stores its own CONSENT_VERSION with
 // every new account: when these texts change, both change together.
-export const LEGAL_TEXT_VERSION = '2026-10-26';
-export const LEGAL_TEXT_DATE = '26 de octubre de 2026';
+export const LEGAL_TEXT_VERSION = '2026-10-29';
+export const LEGAL_TEXT_DATE = '29 de octubre de 2026';
 
 // The short notice above "Crear cuenta" (art. 6: inform before collecting).
 export const CONSENT_SUMMARY =
-  'Tus respuestas al test y los datos de tu perfil se usan para calcular tu resultado y para ' +
-  'mejorar el instrumento. Se guardan en servidores de Amazon Web Services en Estados Unidos. ' +
-  'Podés pedir acceso, corrección o borrado de tus datos, o borrar tu cuenta desde tu perfil.';
+  'Tus respuestas al test y los datos de tu perfil se usan para calcular tu resultado, para ' +
+  'personalizar la descripción del resultado en el plan pago y para mejorar el instrumento. Se ' +
+  'guardan en servidores de Amazon Web Services en Estados Unidos. Podés pedir acceso, corrección ' +
+  'o borrado de tus datos, o borrar tu cuenta desde tu perfil.';
