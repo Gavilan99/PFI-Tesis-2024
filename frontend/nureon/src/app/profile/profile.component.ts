@@ -25,7 +25,7 @@ const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
   rrhh: 'RRHH',
 };
 
-const AGE_RANGES = ['Menos de 18', '18-24', '25-34', '35-44', '45-54', '55-64', '65 o más'];
+const AGE_RANGES = ['18-24', '25-34', '35-44', '45-54', '55-64', '65 o más'];
 
 const GENDERS = ['Femenino', 'Masculino', 'Prefiero no decir'];
 

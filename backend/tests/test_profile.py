@@ -2,6 +2,7 @@
 
 import pytest
 
+from app.blueprints.users.schemas import AGE_RANGES
 from app.db.models import User
 from tests.auth_helpers import USER_FIELDS, assert_error, registered
 
@@ -101,3 +102,27 @@ def test_patch_with_an_empty_body_changes_nothing(api):
     response = api.patch("/api/users/me", headers=headers, json={})
     assert response.status_code == 200
     assert response.get_json() == user
+
+
+@pytest.mark.parametrize("value", ["Menos de 18", "no-es-un-rango"], ids=["under-18", "arbitrary"])
+def test_patch_rejects_an_age_range_outside_the_list(api, value):
+    _, headers = registered(api)
+    assert_error(api.patch("/api/users/me", headers=headers, json={"ageRange": value}), 400, "VALIDATION_ERROR")
+
+
+@pytest.mark.parametrize("value", AGE_RANGES)
+def test_patch_accepts_every_listed_age_range(api, value):
+    _, headers = registered(api)
+    response = api.patch("/api/users/me", headers=headers, json={"ageRange": value})
+    assert response.status_code == 200
+    assert response.get_json()["ageRange"] == value
+
+
+def test_patch_accepts_a_null_age_range(api):
+    _, headers = registered(api)
+    api.patch("/api/users/me", headers=headers, json={"ageRange": "25-34"})
+
+    response = api.patch("/api/users/me", headers=headers, json={"ageRange": None})
+
+    assert response.status_code == 200
+    assert response.get_json()["ageRange"] is None
