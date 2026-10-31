@@ -85,6 +85,23 @@
   color: rgba(black, 0.6);
 }
 
+// The "complete your profile to personalize this" notice: unlike the note
+// above, this one asks for an action on a paid result, so it reads as a
+// warning, not a passing remark — centered, bold, on --nureon-color-warning.
+.resultados__profile-missing-warning {
+  margin: 0;
+  padding: var(--nureon-space-sm) var(--nureon-space-md);
+  border-radius: var(--nureon-radius-md);
+  background: var(--nureon-color-warning);
+  color: var(--nureon-color-warning-on);
+  font-weight: 700;
+  text-align: center;
+
+  a {
+    color: var(--nureon-green-dark);
+  }
+}
+
 // Feature 18 — the aria-live region for the one-time personalization
 // announcement: present at all times so assistive tech picks up the text
 // change, but never visible or part of the layout.
@@ -118,6 +135,48 @@
     flex-direction: column;
     gap: var(--nureon-space-3xs);
   }
+}
+
+// --eneatype-color (set on .resultados from eneatypeColorVar) accents every
+// boxed block below the intro — same border-top-as-accent pattern as
+// EneatypePageComponent's .eneatype__section, so a result and its own
+// /eneagrama/:tipo page read as the same design language. Body text stays
+// on white for contrast; the color only marks the block and its bullets.
+.resultados__card {
+  padding: var(--nureon-space-md);
+  border: 1px solid rgba(black, 0.12);
+  border-top: 6px solid var(--eneatype-color);
+  border-radius: var(--nureon-radius-md);
+
+  ul li::marker {
+    color: var(--eneatype-color);
+  }
+}
+
+.resultados__wings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--nureon-space-xs);
+}
+
+// Each wing in its own type's color, not the result's: "paleta oficial" in
+// the plural, not a repeat of --eneatype-color.
+.resultados__wing-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--nureon-space-3xs);
+  padding: var(--nureon-space-3xs) var(--nureon-space-sm);
+  border-radius: var(--nureon-radius-full);
+  background: rgba(black, 0.04);
+  font-weight: 600;
+}
+
+.resultados__wing-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--wing-color);
+  flex: none;
 }
 
 .resultados__premium-body {

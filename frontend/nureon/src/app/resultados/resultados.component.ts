@@ -65,6 +65,10 @@ export class ResultadosComponent implements OnInit {
     'Este párrafo también es un relleno. En el perfil completo, acá aparece cómo se expresa tu eneatipo en situaciones de presión.',
   ];
 
+  // For the locked block's "Seguir con N preguntas más" (see
+  // showContinueInsteadOfFreemiumInfo below).
+  readonly copy = CUT_COPY;
+
   loading = true;
   error: string | null = null;
   eneatype: number | null = null;
@@ -78,7 +82,8 @@ export class ResultadosComponent implements OnInit {
   private loadedAttemptId: string | null = null;
 
   // See FreemiumInfoDialogComponent for what "Desbloquear mi perfil
-  // completo" (RF09/RF10) actually opens.
+  // completo" (RF09/RF10) actually opens — only when the account doesn't
+  // have the paid plan yet. See canUnlockByContinuing for the other case.
   showFreemiumInfo = false;
 
   // The "afinar tu resultado" block: null when it doesn't show. Loaded after
@@ -120,6 +125,18 @@ export class ResultadosComponent implements OnInit {
     return this.eneatype ? ENEATYPE_CONTENT[this.eneatype] : null;
   }
 
+  // The result's own accent, set as --eneatype-color on the page's root
+  // (template) and read from every card below — same pattern as
+  // EneatypePageComponent.colorVar, applied to a single type there. Each
+  // wing chip instead colors itself, with the wing's own type (colorVar()).
+  get eneatypeColorVar(): string | null {
+    return this.content ? this.colorVar(this.content) : null;
+  }
+
+  colorVar(content: EneatypeContent): string {
+    return `var(${content.color})`;
+  }
+
   // RF09/RF10 encuadre slot: reads the logged-in user's own accountType now
   // that Stage 7 collects it in the profile. Falls back to 'individual' for
   // an account that hasn't set it yet, same as before Stage 7 existed.
@@ -140,6 +157,20 @@ export class ResultadosComponent implements OnInit {
 
   get isPaid(): boolean {
     return this.tier === 'paid_full';
+  }
+
+  // The locked block's CTA (Capa 6): an account whose subscription is
+  // already active just needs to continue this attempt into its next cut —
+  // same "Seguir" the "afinar tu resultado" block below offers — not
+  // another trip through the plans/"Pasar a premium" dialog. That dialog
+  // can't tell the difference and, for an already-subscribed account,
+  // starting a checkout there only fails with the backend's "ya tenés el
+  // plan activo" error. `refine` (loaded apart from the result) is the one
+  // place that already knows: its `canContinue` is the subscription check
+  // (tiers.may_take_cut), true here only because the account is subscribed
+  // (a next cut always exists while the result is locked).
+  get canUnlockByContinuing(): boolean {
+    return !!this.refine?.canContinue;
   }
 
   // Each section falls back to its generic eneatype-content.ts version on
