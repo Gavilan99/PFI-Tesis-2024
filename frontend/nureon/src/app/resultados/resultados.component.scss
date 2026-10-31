@@ -85,6 +85,23 @@
   color: rgba(black, 0.6);
 }
 
+// The "complete your profile to personalize this" notice: unlike the note
+// above, this one asks for an action on a paid result, so it reads as a
+// warning, not a passing remark — centered, bold, on --nureon-color-warning.
+.resultados__profile-missing-warning {
+  margin: 0;
+  padding: var(--nureon-space-sm) var(--nureon-space-md);
+  border-radius: var(--nureon-radius-md);
+  background: var(--nureon-color-warning);
+  color: var(--nureon-color-warning-on);
+  font-weight: 700;
+  text-align: center;
+
+  a {
+    color: var(--nureon-green-dark);
+  }
+}
+
 // Feature 18 — the aria-live region for the one-time personalization
 // announcement: present at all times so assistive tech picks up the text
 // change, but never visible or part of the layout.

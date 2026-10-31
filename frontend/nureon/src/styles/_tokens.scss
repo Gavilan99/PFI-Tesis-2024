@@ -98,6 +98,15 @@
   // explicit design call over the AA-passing dark-text alternative.
   --nureon-color-negative: var(--nureon-orange);
 
+  // An action-required notice inside otherwise normal content — e.g. the
+  // paid result's "complete your profile to personalize this" note — not a
+  // failure (--nureon-color-danger) and, deliberately, not --nureon-amber:
+  // custom-theme.scss documents amber as a premium/upsell signal only,
+  // "never a warning, hover, or active state color". Same value by design
+  // call (post-review), kept as its own token so that rule stays true.
+  --nureon-color-warning: #ffbf1f;
+  --nureon-color-warning-on: rgba(0, 0, 0, 0.87);
+
   // ---- Eneatype colors ----
   // Each triad is anchored on its own brand color (per the thesis palette):
   // the mid type (9, 3, 6) is that brand hex exactly; the wings vary the
