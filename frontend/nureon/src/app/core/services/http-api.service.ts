@@ -8,7 +8,7 @@ import { ApiError } from './api-error';
 import { Question } from '../models/question.model';
 import { TestAttempt } from '../models/test-attempt.model';
 import { NewResponseInput, TestResponse } from '../models/response.model';
-import { Result } from '../models/result.model';
+import { PersonalizedDescription, Result } from '../models/result.model';
 import { User, UpdateProfileInput } from '../models/user.model';
 import { LoginInput, RegisterInput } from '../models/auth.model';
 import { SubmitFeedbackInput } from '../models/feedback.model';
@@ -130,6 +130,14 @@ export class HttpApiService implements ApiService {
   getResult(attemptId: string): Observable<Result> {
     return this.http
       .get<Result>(this.url(`/api/attempts/${encodeURIComponent(attemptId)}/result`))
+      .pipe(catchError(toApiError));
+  }
+
+  getPersonalizedDescription(attemptId: string): Observable<PersonalizedDescription> {
+    return this.http
+      .get<PersonalizedDescription>(
+        this.url(`/api/attempts/${encodeURIComponent(attemptId)}/result/personalized`),
+      )
       .pipe(catchError(toApiError));
   }
 
