@@ -5,10 +5,19 @@ a personalized version of the result screen's four sections — strengths, tensi
 in a fixed, labeled format (see SYSTEM_PROMPT), and this module parses that format with plain string
 handling — no structured output, no four separate calls.
 
-A free attempt, a profile with nothing in it, or a failed generation (the call itself, or an answer
-that doesn't follow the format or passes it but reads too short or too long) all fall back silently:
+A free attempt or a profile with nothing in it falls back silently to "not_in_plan"/"profile_missing":
 this module only ever adds a second, personalized set of sections to a `Result`, never touches
 `description_text` or the generic strengths/tensions the result screen already shows for free.
+
+Feature 19 adds a second source for the same four sections: human-reviewed, pregenerated content per
+eneatype and account type (`app.services.text_generation.pregenerated_content`), already structured
+as lists and paragraphs — it never goes through SYSTEM_PROMPT's marker format or `_parse_sections`.
+With TEXT_GENERATOR=pregenerated there is no generator at all (`generator` is `None`): every paid
+attempt with a profile gets its pregenerated sections straight away, nothing is stored. With a real
+generator (bedrock or, in tests, local), a failed call or an answer that doesn't follow the format or
+reads too short or too long now falls back to the same pregenerated sections, with status
+"personalized" rather than "unavailable" — still without storing anything, so the next visit tries
+the generator again.
 
 Confidentiality (RNF04): the prompt carries only `account_type`, `age_range` and `profession_context`.
 Gender, country, email and display name never reach it, and neither does anything the classifier
@@ -24,12 +33,13 @@ import uuid
 from dataclasses import dataclass
 
 from app.db.models import User
-from app.db.models.enums import AttemptTier
+from app.db.models.enums import AccountType, AttemptTier
 from app.db.session import Session
 from app.exceptions import ResultNotFound
 from app.repositories import result_repository
 from app.services.result_descriptions import description_for
 from app.services.text_generation import TextGenerationFailed, TextGenerator
+from app.services.text_generation.pregenerated_content import PREGENERATED_CONTENT
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +108,17 @@ def _from_row(result) -> PersonalizedSections:
         tensions=result.personalized_tensions,
         growth=result.personalized_growth,
         stress=result.personalized_stress,
+    )
+
+
+def _pregenerated_sections(eneatype: int, account_type: AccountType | None) -> PersonalizedSections:
+    content = PREGENERATED_CONTENT[(eneatype, account_type or AccountType.INDIVIDUAL)]
+    return PersonalizedSections(
+        status="personalized",
+        strengths=content["strengths"],
+        tensions=content["tensions"],
+        growth=content["growth"],
+        stress=content["stress"],
     )
 
 
@@ -183,16 +204,18 @@ def _parsed_and_valid(raw: str) -> tuple[list[str], list[str], str, str] | None:
 
 
 def get_personalized_description(
-    generator: TextGenerator, user: User, attempt_id: uuid.UUID
+    generator: TextGenerator | None, user: User, attempt_id: uuid.UUID
 ) -> PersonalizedSections:
     """GET .../result/personalized. Raises ResultNotFound for anything that isn't the user's own
     closed attempt — same access rule, same 404, as `app.services.results.get_result`.
 
-    Never calls the generator for a free attempt or an empty profile. For a paid attempt with a
-    profile, returns the sections already stored if the profile and the model haven't changed since;
-    otherwise generates, stores and returns them. A failure (the generator's, or an answer that
-    doesn't follow the format or doesn't pass the length checks) returns "unavailable" without
-    storing anything, so the next visit retries.
+    Never calls the generator for a free attempt or an empty profile. With TEXT_GENERATOR=pregenerated
+    `generator` is `None`: a paid attempt with a profile gets the pregenerated sections for its
+    eneatype and account type straight away, nothing stored. With a real generator, a paid attempt
+    with a profile returns the sections already stored if the profile and the model haven't changed
+    since; otherwise generates, stores and returns them. A failure (the generator's, or an answer
+    that doesn't follow the format or doesn't pass the length checks) falls back to the pregenerated
+    sections instead, without storing anything, so the next visit retries the generator.
     """
     session = Session()
     found = result_repository.result_of_owned_completed_with_tier(session, attempt_id, user.id)
@@ -204,6 +227,8 @@ def get_personalized_description(
         return _empty_sections("not_in_plan")
     if _profile_is_empty(user.account_type, user.age_range, user.profession_context):
         return _empty_sections("profile_missing")
+    if generator is None:
+        return _pregenerated_sections(result.eneatype, user.account_type)
 
     fingerprint = _fingerprint(user.account_type, user.age_range, user.profession_context, generator.model_id)
     if result.personalized_strengths and result.personalized_profile_hash == fingerprint:
@@ -230,13 +255,13 @@ def get_personalized_description(
     except TextGenerationFailed:
         logger.error("Personalized description failed for result %s: %s", result.id, "TextGenerationFailed")
         session.rollback()
-        return _empty_sections("unavailable")
+        return _pregenerated_sections(result.eneatype, user.account_type)
 
     parsed = _parsed_and_valid(raw)
     if parsed is None:
         logger.error("Personalized description failed for result %s: %s", result.id, "invalid_output")
         session.rollback()
-        return _empty_sections("unavailable")
+        return _pregenerated_sections(result.eneatype, user.account_type)
 
     strengths, tensions, growth, stress = parsed
     result_repository.save_personalized(
