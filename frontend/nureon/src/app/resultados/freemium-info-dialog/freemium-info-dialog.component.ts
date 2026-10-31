@@ -23,9 +23,12 @@ export class FreemiumInfoDialogComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.focusedElementBeforeOpen = document.activeElement as HTMLElement | null;
     setTimeout(() => this.dialogRef?.nativeElement.focus());
+    // A backdrop alone doesn't stop the page behind it from scrolling.
+    document.body.style.overflow = 'hidden';
   }
 
   ngOnDestroy(): void {
+    document.body.style.overflow = '';
     this.focusedElementBeforeOpen?.focus();
   }
 
