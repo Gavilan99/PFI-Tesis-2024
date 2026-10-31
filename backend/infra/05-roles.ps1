@@ -64,7 +64,9 @@ Set-InlinePolicy $TaskRole 'nureon-app' @(
                   'cognito-idp:AdminGetUser', 'cognito-idp:AdminDeleteUser')
        Resource = "arn:aws:cognito-idp:${Region}:${AccountId}:userpool/$UserPoolId" },
     @{ Sid = 'ContactMailFromThisIdentity'; Effect = 'Allow'; Action = @('ses:SendEmail', 'ses:SendRawEmail')
-       Resource = "arn:aws:ses:${Region}:${AccountId}:identity/$contactInbox" }
+       Resource = "arn:aws:ses:${Region}:${AccountId}:identity/$contactInbox" },
+    @{ Sid = 'GenerateResultDescriptions'; Effect = 'Allow'; Action = 'bedrock:InvokeModel'
+       Resource = "arn:aws:bedrock:${Region}::foundation-model/$BedrockModelId" }
 )
 
 Step "Rol de infraestructura $InfraRole"

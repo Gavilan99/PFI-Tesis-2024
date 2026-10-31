@@ -21,6 +21,7 @@ from app.services.identity import LocalIdentityProvider, build_identity_provider
 from app.services.mail import LocalMailSender, build_mail_sender
 from app.services.payments import LocalPaymentGateway, build_payment_gateway
 from app.services.rate_limit import SlidingWindowLimiter
+from app.services.text_generation import LocalTextGenerator, build_text_generator
 
 
 def create_app(config_name: str | None = None) -> Flask:
@@ -48,6 +49,9 @@ def create_app(config_name: str | None = None) -> Flask:
     payment_gateway = build_payment_gateway(config)
     if config_name == "production" and isinstance(payment_gateway, LocalPaymentGateway):
         raise ConfigError("La pasarela de pagos local no se puede usar en producción.")
+    text_generator = build_text_generator(config)
+    if config_name == "production" and isinstance(text_generator, LocalTextGenerator):
+        raise ConfigError("El generador de texto local no se puede usar en producción.")
 
     # A JSON API: no static files, so no `/static` route either.
     app = Flask(__name__, static_folder=None)
@@ -63,6 +67,7 @@ def create_app(config_name: str | None = None) -> Flask:
     app.extensions["classifier"] = classifier
     app.extensions["mail_sender"] = mail_sender
     app.extensions["payment_gateway"] = payment_gateway
+    app.extensions["text_generator"] = text_generator
     app.extensions["contact_rate_limiter"] = SlidingWindowLimiter(
         config.CONTACT_RATE_LIMIT, config.CONTACT_RATE_WINDOW_SECONDS
     )

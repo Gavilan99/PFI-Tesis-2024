@@ -37,6 +37,8 @@ def _split_origins(raw: str) -> list[str]:
 IDENTITY_PROVIDERS = ("cognito", "local")
 MAIL_SENDERS = ("ses", "local")
 PAYMENT_PROVIDERS = ("mercadopago", "local")
+TEXT_GENERATORS = ("bedrock", "local")
+DEFAULT_BEDROCK_MODEL_ID = "amazon.nova-lite-v1:0"
 # The individual plan outside production when nothing is set. EXAMPLE VALUES: the real price and period
 # come from the business model, which is not closed yet. Production has no default (`_set_plan`).
 EXAMPLE_PLAN_PRICE = "4999.00"
@@ -204,6 +206,14 @@ def _identity_provider(default: str) -> str:
     return name
 
 
+def _text_generator(default: str) -> str:
+    name = os.environ.get("TEXT_GENERATOR", default).strip().lower()
+    if name not in TEXT_GENERATORS:
+        valid = ", ".join(TEXT_GENERATORS)
+        raise ConfigError(f"TEXT_GENERATOR desconocido: '{name}'. Opciones válidas: {valid}")
+    return name
+
+
 class BaseConfig:
     TESTING = False
     DEBUG = False
@@ -217,6 +227,14 @@ class BaseConfig:
         self.COGNITO_REGION = os.environ.get("COGNITO_REGION", "us-east-2")
         self.COGNITO_USER_POOL_ID = os.environ.get("COGNITO_USER_POOL_ID", "")
         self.COGNITO_APP_CLIENT_ID = os.environ.get("COGNITO_APP_CLIENT_ID", "")
+
+        # The personalized description of the paid plan's result (Feature 17): which generator writes
+        # it, the Bedrock model it asks for, and how long it waits for an answer. The provider is
+        # chosen per environment (`_set_text_generator`), like identity, mail and payments.
+        self.TEXT_GENERATOR = "local"
+        self.BEDROCK_REGION = os.environ.get("BEDROCK_REGION", "us-east-2")
+        self.BEDROCK_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "").strip() or DEFAULT_BEDROCK_MODEL_ID
+        self.TEXT_GENERATION_TIMEOUT_SECONDS = _positive_int("TEXT_GENERATION_TIMEOUT_SECONDS", 10)
 
         self.AWS_PROFILE = os.environ.get("AWS_PROFILE") or None
 
@@ -320,6 +338,12 @@ class BaseConfig:
         self.CONTACT_MAIL_FROM = os.environ.get("CONTACT_MAIL_FROM", "").strip() or self.CONTACT_MAIL_TO
         self._check_aws_profile(profile_required=profile_required)
 
+    def _set_text_generator(self, default: str, *, profile_required: bool) -> None:
+        self.TEXT_GENERATOR = _text_generator(default)
+        if self.TEXT_GENERATOR != "bedrock":
+            return
+        self._check_aws_profile(profile_required=profile_required)
+
 
 class DevelopmentConfig(BaseConfig):
     def __init__(self) -> None:
@@ -331,6 +355,7 @@ class DevelopmentConfig(BaseConfig):
             self.CORS_ALLOWED_ORIGINS = ["http://localhost:4200"]
         self._set_identity_provider(default="local", profile_required=True)
         self._set_mail_sender(default="local", profile_required=True)
+        self._set_text_generator(default="local", profile_required=True)
         self._set_plan(price_default=EXAMPLE_PLAN_PRICE, days_default=EXAMPLE_PLAN_DAYS)
         self._set_payment_provider(default="local", frontend_required=False)
 
@@ -349,6 +374,7 @@ class TestConfig(BaseConfig):
         # The suite never talks to AWS, whatever a developer's .env selects.
         self.IDENTITY_PROVIDER = "local"
         self.MAIL_SENDER = "local"
+        self.TEXT_GENERATOR = "local"
         # Nor sees a real inbox: a developer's .env may hold one.
         self.CONTACT_MAIL_TO = self.CONTACT_MAIL_FROM = LOCAL_CONTACT_MAIL_TO
         # Nor Mercado Pago, nor a developer's plan or tunnel: the example plan and the local URLs, fixed.
@@ -387,6 +413,11 @@ class ProductionConfig(BaseConfig):
                 "MAIL_SENDER=local es un doble para tests y desarrollo: no se puede usar en producción."
             )
         self._set_mail_sender(default="ses", profile_required=False)
+        if _text_generator(default="bedrock") == "local":
+            raise ConfigError(
+                "TEXT_GENERATOR=local es un doble para tests y desarrollo: no se puede usar en producción."
+            )
+        self._set_text_generator(default="bedrock", profile_required=False)
         # Which text the people registering accept is chosen on purpose, like the classifier.
         self.CONSENT_VERSION = _consent_version(None)
         # And what the plan costs and lasts: no example value can reach a real payment.

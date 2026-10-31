@@ -21,6 +21,7 @@ from app.services.identity import LocalIdentityProvider
 from app.services.mail import LocalMailSender
 from app.services.payments import LocalPaymentGateway
 from app.services.rate_limit import SlidingWindowLimiter
+from app.services.text_generation import LocalTextGenerator
 from tests import leak_guard
 from tests.db_helpers import bound_session
 from tests.migration_helpers import rebuild_schema
@@ -100,6 +101,16 @@ def payments(app):
 
 
 @pytest.fixture()
+def text_generator(app):
+    """A fresh local text generator per test: `.fail` and `.calls` never carry over between tests."""
+    original = app.extensions["text_generator"]
+    generator = LocalTextGenerator()
+    app.extensions["text_generator"] = generator
+    yield generator
+    app.extensions["text_generator"] = original
+
+
+@pytest.fixture()
 def contact_limiter(app):
     """A fresh contact rate limiter per test, with the configured limit, so counts never carry over."""
     original = app.extensions["contact_rate_limiter"]
@@ -110,9 +121,9 @@ def contact_limiter(app):
 
 
 @pytest.fixture()
-def api(client, db_session, identity, mailbox, contact_limiter, payments):
+def api(client, db_session, identity, mailbox, contact_limiter, payments, text_generator):
     """A test client whose requests hit the rolled-back test transaction, the local identity, the
-    local mail sender and the local payment gateway."""
+    local mail sender, the local payment gateway and the local text generator."""
     return client
 
 

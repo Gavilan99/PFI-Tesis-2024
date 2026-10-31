@@ -61,6 +61,10 @@ $environment = [ordered]@{
     SES_REGION            = $Region
     CONTACT_MAIL_TO       = (Get-DotEnv 'CONTACT_MAIL_TO')
     CONSENT_VERSION       = $ConsentVersion
+    # Feature 17. The personalized description of the paid plan's result.
+    TEXT_GENERATOR        = 'bedrock'
+    BEDROCK_REGION        = $Region
+    BEDROCK_MODEL_ID      = $BedrockModelId
     # Feature 6. The buyer comes back straight to the frontend (HTTPS): no PUBLIC_API_BASE_URL here.
     PAYMENT_PROVIDER      = 'mercadopago'
     FRONTEND_BASE_URL     = "https://$($dist.Domain)"
