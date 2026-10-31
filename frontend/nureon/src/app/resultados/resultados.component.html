@@ -8,6 +8,13 @@
          actually land — never moves focus, just a polite aria-live cue. -->
     <div class="resultados__visually-hidden" aria-live="polite">{{ personalizedAnnouncement }}</div>
 
+    <!-- Feature 18: the discreet "Personalizando…" cue next to a section
+         title while getPersonalizedDescription is in flight — one template,
+         reused at each @if (personalizing) below. -->
+    <ng-template #personalizingCue>
+      <span class="resultados__personalizing" aria-hidden="true">Personalizando según tu perfil…</span>
+    </ng-template>
+
     <section class="resultados">
       <!-- Capas 1-3: eneatipo, resumen y motivación central comparten el
            alto del diagrama en desktop en vez de apilarse una abajo de la
@@ -31,8 +38,9 @@
         </div>
       </div>
 
-      <!-- Feature 18: la nota de personalización o la invitación a completar
-           el perfil, según cómo respondió getPersonalizedDescription. -->
+      <!-- Feature 18: the personalization note, or the invitation to
+           complete the profile, depending on getPersonalizedDescription's
+           status. -->
       @if (showPersonalizedNote) {
         <p class="resultados__personalize-note">
           Las secciones de fortalezas, tensiones, crecimiento y estrés están adaptadas a tu perfil.
@@ -50,9 +58,7 @@
         <div>
           <h2>
             Fortalezas
-            @if (personalizing) {
-              <span class="resultados__personalizing" aria-hidden="true">Personalizando según tu perfil…</span>
-            }
+            <ng-container *ngTemplateOutlet="personalizing ? personalizingCue : null"></ng-container>
           </h2>
           <ul>
             @for (item of strengths; track item) {
@@ -63,9 +69,7 @@
         <div>
           <h2>
             Tensiones
-            @if (personalizing) {
-              <span class="resultados__personalizing" aria-hidden="true">Personalizando según tu perfil…</span>
-            }
+            <ng-container *ngTemplateOutlet="personalizing ? personalizingCue : null"></ng-container>
           </h2>
           <ul>
             @for (item of tensions; track item) {
@@ -90,9 +94,7 @@
       <section class="resultados__section">
         <h2>
           En crecimiento y bajo estrés
-          @if (personalizing) {
-            <span class="resultados__personalizing" aria-hidden="true">Personalizando según tu perfil…</span>
-          }
+          <ng-container *ngTemplateOutlet="personalizing ? personalizingCue : null"></ng-container>
         </h2>
         <div class="resultados__premium-body" [class.resultados__premium-body--locked]="!isPaid">
           @if (isPaid) {

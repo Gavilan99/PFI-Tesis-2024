@@ -1,4 +1,5 @@
 import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable, Subscription, catchError, forkJoin, map, of, switchMap } from 'rxjs';
@@ -42,6 +43,7 @@ const PERSONALIZED_ANNOUNCEMENT = 'Tu resultado se personalizó según tu perfil
   standalone: true,
   imports: [
     RouterLink,
+    NgTemplateOutlet,
     PageContainerComponent,
     ErrorStateComponent,
     LoadingStateComponent,
@@ -87,10 +89,11 @@ export class ResultadosComponent implements OnInit {
   refineError: string | null = null;
 
   // Feature 18 — the paid plan's personalized version of strengths, tensions,
-  // growth and stress, loaded apart from the result and never blocking it:
-  // not_in_plan/unavailable/a network error all leave this null, same as the
-  // free tier, so the screen just keeps the generic content. Reset on every
-  // load() so returning from /perfil asks again.
+  // growth and stress, loaded apart from the result and never blocking it.
+  // Only a network error leaves this null; not_in_plan/unavailable still set
+  // it to the full response (all four fields null), same visible effect
+  // since every getter below falls back to the generic content either way.
+  // Reset on every load() so returning from /perfil asks again.
   private personalizedSubscription: Subscription | null = null;
   personalizing = false;
   private personalized: PersonalizedDescription | null = null;
@@ -273,9 +276,10 @@ export class ResultadosComponent implements OnInit {
       });
   }
 
-  // Feature 18 — only asked for the paid tier, and apart from the result:
-  // not_in_plan, unavailable and a network error all leave `personalized`
-  // null, same as a free attempt, so the screen keeps the generic content.
+  // Feature 18 — only asked for the paid tier, and apart from the result.
+  // A network error leaves `personalized` null; not_in_plan/unavailable
+  // still land here as a full response (all four fields null) — either way
+  // the getters below fall back to the generic content.
   private loadPersonalizedDescription(attempt: TestAttempt): void {
     if (attempt.tier !== 'paid_full') {
       return;
