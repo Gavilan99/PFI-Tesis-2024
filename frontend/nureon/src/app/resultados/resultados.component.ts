@@ -125,6 +125,18 @@ export class ResultadosComponent implements OnInit {
     return this.eneatype ? ENEATYPE_CONTENT[this.eneatype] : null;
   }
 
+  // The result's own accent, set as --eneatype-color on the page's root
+  // (template) and read from every card below — same pattern as
+  // EneatypePageComponent.colorVar, applied to a single type there. Each
+  // wing chip instead colors itself, with the wing's own type (colorVar()).
+  get eneatypeColorVar(): string | null {
+    return this.content ? this.colorVar(this.content) : null;
+  }
+
+  colorVar(content: EneatypeContent): string {
+    return `var(${content.color})`;
+  }
+
   // RF09/RF10 encuadre slot: reads the logged-in user's own accountType now
   // that Stage 7 collects it in the profile. Falls back to 'individual' for
   // an account that hasn't set it yet, same as before Stage 7 existed.

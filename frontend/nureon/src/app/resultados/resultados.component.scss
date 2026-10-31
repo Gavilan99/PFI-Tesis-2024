@@ -137,6 +137,48 @@
   }
 }
 
+// --eneatype-color (set on .resultados from eneatypeColorVar) accents every
+// boxed block below the intro — same border-top-as-accent pattern as
+// EneatypePageComponent's .eneatype__section, so a result and its own
+// /eneagrama/:tipo page read as the same design language. Body text stays
+// on white for contrast; the color only marks the block and its bullets.
+.resultados__card {
+  padding: var(--nureon-space-md);
+  border: 1px solid rgba(black, 0.12);
+  border-top: 6px solid var(--eneatype-color);
+  border-radius: var(--nureon-radius-md);
+
+  ul li::marker {
+    color: var(--eneatype-color);
+  }
+}
+
+.resultados__wings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--nureon-space-xs);
+}
+
+// Each wing in its own type's color, not the result's: "paleta oficial" in
+// the plural, not a repeat of --eneatype-color.
+.resultados__wing-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--nureon-space-3xs);
+  padding: var(--nureon-space-3xs) var(--nureon-space-sm);
+  border-radius: var(--nureon-radius-full);
+  background: rgba(black, 0.04);
+  font-weight: 600;
+}
+
+.resultados__wing-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--wing-color);
+  flex: none;
+}
+
 .resultados__premium-body {
   position: relative;
 }
