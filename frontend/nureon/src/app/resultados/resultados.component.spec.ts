@@ -91,6 +91,68 @@ describe('ResultadosComponent, continuing from the result', () => {
   });
 });
 
+describe('ResultadosComponent, the locked premium block (Capa 6)', () => {
+  function create(cutOverrides: Partial<CutStatus>) {
+    const continueTestAttempt = jasmine.createSpy('continueTestAttempt').and.returnValue(of({ ...attempt, id: 'attempt-2' }));
+    const api: Partial<ApiService> = {
+      getLatestAttempt: () => of(attempt),
+      getResult: () =>
+        of({ id: 'r-1', testAttemptId: attempt.id, eneatype: 3, descriptionText: '', generatedAt: attempt.completedAt! }),
+      getCutStatus: () => of({ ...cut, ...cutOverrides }),
+      getAttemptHistory: () => of([attempt]),
+      continueTestAttempt,
+      getSubscription: () =>
+        of({ active: false, currentPeriodEnd: null, planPrice: 4999, planCurrency: 'ARS', planDays: 30 }),
+    };
+    TestBed.configureTestingModule({
+      imports: [ResultadosComponent, NoopAnimationsModule],
+      providers: [
+        provideRouter([]),
+        { provide: API_SERVICE, useValue: api },
+        { provide: AuthService, useValue: { currentUser: { id: 'user-1', accountType: null } } },
+      ],
+    });
+    const fixture = TestBed.createComponent(ResultadosComponent);
+    fixture.detectChanges();
+    return { fixture, continueTestAttempt };
+  }
+
+  it('offers to continue the attempt, not the plans dialog, once the account can already continue', () => {
+    const { fixture, continueTestAttempt } = create({ canContinue: true, nextCutItems: 50 });
+    const page = fixture.componentInstance;
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(page.canUnlockByContinuing).toBeTrue();
+    const button = Array.from(element.querySelectorAll('.resultados__premium-overlay button')).find((b) =>
+      b.textContent?.includes('Seguir con 50 preguntas más'),
+    );
+    expect(button).toBeTruthy();
+    expect(element.textContent).not.toContain('Desbloquear mi perfil completo');
+
+    (button as HTMLButtonElement).click();
+    expect(continueTestAttempt).toHaveBeenCalledWith(attempt.id);
+    expect(page.showFreemiumInfo).toBeFalse();
+  });
+
+  it('still offers the plans dialog when the account has no active subscription to continue with', () => {
+    const { fixture } = create({ canContinue: false });
+    const page = fixture.componentInstance;
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(page.canUnlockByContinuing).toBeFalse();
+    const button = Array.from(element.querySelectorAll('.resultados__premium-overlay button')).find((b) =>
+      b.textContent?.includes('Desbloquear mi perfil completo'),
+    );
+    expect(button).toBeTruthy();
+
+    (button as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(page.showFreemiumInfo).toBeTrue();
+    expect(element.querySelector('[role="dialog"]')).toBeTruthy();
+  });
+});
+
 describe('ResultadosComponent, personalized description (Feature 18)', () => {
   const paidAttempt: TestAttempt = { ...attempt, tier: 'paid_full' };
   const result = {

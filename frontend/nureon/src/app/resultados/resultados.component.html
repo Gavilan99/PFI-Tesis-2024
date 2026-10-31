@@ -111,9 +111,15 @@
           }
           @if (!isPaid) {
             <div class="resultados__premium-overlay">
-              <app-brand-button variant="primary" (click)="openFreemiumInfo()">
-                Desbloquear mi perfil completo
-              </app-brand-button>
+              @if (canUnlockByContinuing) {
+                <app-brand-button variant="primary" [disabled]="continuing" (click)="continueFromResult()">
+                  {{ copy.continueWith(refine!.status.nextCutItems ?? 0) }}
+                </app-brand-button>
+              } @else {
+                <app-brand-button variant="primary" (click)="openFreemiumInfo()">
+                  Desbloquear mi perfil completo
+                </app-brand-button>
+              }
             </div>
           }
         </div>
