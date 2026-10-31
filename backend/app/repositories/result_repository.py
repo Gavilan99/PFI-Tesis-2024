@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.models import AnswerOption, ClassifierPrediction, Question, Response, Result, TestAttempt
-from app.db.models.enums import AttemptStatus, GroupingSystem
+from app.db.models.enums import AttemptStatus, AttemptTier, GroupingSystem
 from app.ml.classification import Answer, Classification
 from app.repositories.attempt_repository import option_ids_in_bank_order
 
@@ -82,3 +82,46 @@ def result_of_owned_completed(session: Session, attempt_id: uuid.UUID, user_id: 
             TestAttempt.status == AttemptStatus.COMPLETED,
         )
     )
+
+
+def result_of_owned_completed_with_tier(
+    session: Session, attempt_id: uuid.UUID, user_id: uuid.UUID
+) -> tuple[Result, AttemptTier] | None:
+    """Like `result_of_owned_completed`, plus the attempt's tier: GET .../result/personalized
+    (Feature 17) needs it to tell a free attempt from a paid one, without a second query."""
+    row = session.execute(
+        select(Result, TestAttempt.tier)
+        .join(TestAttempt, TestAttempt.id == Result.test_attempt_id)
+        .where(
+            Result.test_attempt_id == attempt_id,
+            TestAttempt.user_id == user_id,
+            TestAttempt.status == AttemptStatus.COMPLETED,
+        )
+    ).first()
+    if row is None:
+        return None
+    result, tier = row
+    return result, tier
+
+
+def save_personalized(
+    session: Session,
+    result: Result,
+    *,
+    strengths: list[str],
+    tensions: list[str],
+    growth: str,
+    stress: str,
+    profile_hash: str,
+    model: str,
+) -> None:
+    """Attaches a freshly generated personalized description to `result` (Feature 17), in the
+    caller's transaction. The caller commits."""
+    result.personalized_strengths = strengths
+    result.personalized_tensions = tensions
+    result.personalized_growth = growth
+    result.personalized_stress = stress
+    result.personalized_profile_hash = profile_hash
+    result.personalized_model = model
+    result.personalized_at = func.clock_timestamp()
+    session.flush()
