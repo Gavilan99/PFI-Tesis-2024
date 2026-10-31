@@ -39,7 +39,7 @@ def test_the_call_carries_the_model_the_prompts_and_the_configured_budget():
     assert call["modelId"] == MODEL_ID
     assert call["system"] == [{"text": "prompt de sistema"}]
     assert call["messages"] == [{"role": "user", "content": [{"text": "prompt de usuario"}]}]
-    assert call["inferenceConfig"] == {"maxTokens": 700, "temperature": 0.5}
+    assert call["inferenceConfig"] == {"maxTokens": 1500, "temperature": 0.5}
 
 
 def test_a_client_error_is_text_generation_failed_and_logs_only_the_code(captured_logs):

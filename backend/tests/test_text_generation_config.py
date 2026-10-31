@@ -58,9 +58,9 @@ def test_a_custom_model_id_can_be_configured(monkeypatch):
     assert get_config("development").BEDROCK_MODEL_ID == "amazon.nova-pro-v1:0"
 
 
-def test_the_timeout_defaults_to_ten_seconds(monkeypatch):
+def test_the_timeout_defaults_to_thirty_seconds(monkeypatch):
     monkeypatch.delenv("TEXT_GENERATION_TIMEOUT_SECONDS", raising=False)
-    assert get_config("development").TEXT_GENERATION_TIMEOUT_SECONDS == 10
+    assert get_config("development").TEXT_GENERATION_TIMEOUT_SECONDS == 30
 
 
 @pytest.mark.parametrize("value", ["0", "-3", "muchos"])

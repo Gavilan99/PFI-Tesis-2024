@@ -72,23 +72,12 @@ def insert_classification(
     return result
 
 
-def result_of_owned_completed(session: Session, attempt_id: uuid.UUID, user_id: uuid.UUID) -> Result | None:
-    return session.scalar(
-        select(Result)
-        .join(TestAttempt, TestAttempt.id == Result.test_attempt_id)
-        .where(
-            Result.test_attempt_id == attempt_id,
-            TestAttempt.user_id == user_id,
-            TestAttempt.status == AttemptStatus.COMPLETED,
-        )
-    )
-
-
 def result_of_owned_completed_with_tier(
     session: Session, attempt_id: uuid.UUID, user_id: uuid.UUID
 ) -> tuple[Result, AttemptTier] | None:
-    """Like `result_of_owned_completed`, plus the attempt's tier: GET .../result/personalized
-    (Feature 17) needs it to tell a free attempt from a paid one, without a second query."""
+    """The user's own completed attempt's result, with the attempt's tier: GET .../result/personalized
+    (Feature 17) needs the tier to tell a free attempt from a paid one. `result_of_owned_completed`
+    is this same lookup minus the tier, for GET .../result, which doesn't need it."""
     row = session.execute(
         select(Result, TestAttempt.tier)
         .join(TestAttempt, TestAttempt.id == Result.test_attempt_id)
@@ -102,6 +91,18 @@ def result_of_owned_completed_with_tier(
         return None
     result, tier = row
     return result, tier
+
+
+def result_of_owned_completed(session: Session, attempt_id: uuid.UUID, user_id: uuid.UUID) -> Result | None:
+    found = result_of_owned_completed_with_tier(session, attempt_id, user_id)
+    return found[0] if found else None
+
+
+def lock_for_personalization(session: Session, result_id: uuid.UUID) -> None:
+    """Serializes personalized-description generation for one result (Feature 17): without this,
+    two concurrent requests that both see a missing or stale personalized description would each
+    call the generator and each bill Bedrock for the same regeneration."""
+    session.execute(select(Result.id).where(Result.id == result_id).with_for_update())
 
 
 def save_personalized(

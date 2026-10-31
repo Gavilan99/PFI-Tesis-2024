@@ -91,6 +91,16 @@ def _empty_sections(status: str) -> PersonalizedSections:
     return PersonalizedSections(status=status, strengths=None, tensions=None, growth=None, stress=None)
 
 
+def _from_row(result) -> PersonalizedSections:
+    return PersonalizedSections(
+        status="personalized",
+        strengths=result.personalized_strengths,
+        tensions=result.personalized_tensions,
+        growth=result.personalized_growth,
+        stress=result.personalized_stress,
+    )
+
+
 def _normalized(value: str | None) -> str:
     return (value or "").strip()
 
@@ -105,7 +115,7 @@ def _fingerprint(account_type, age_range: str | None, profession_context: str | 
     parts = [
         _normalized(account_type.value if account_type else None).lower(),
         _normalized(age_range).lower(),
-        _normalized(profession_context)[:PROFESSION_CONTEXT_MAX_LENGTH],
+        _normalized(profession_context)[:PROFESSION_CONTEXT_MAX_LENGTH].lower(),
         model_id,
     ]
     # A separator outside the data's own alphabet: concatenation alone could make two different
@@ -197,13 +207,16 @@ def get_personalized_description(
 
     fingerprint = _fingerprint(user.account_type, user.age_range, user.profession_context, generator.model_id)
     if result.personalized_strengths and result.personalized_profile_hash == fingerprint:
-        return PersonalizedSections(
-            status="personalized",
-            strengths=result.personalized_strengths,
-            tensions=result.personalized_tensions,
-            growth=result.personalized_growth,
-            stress=result.personalized_stress,
-        )
+        return _from_row(result)
+
+    # Serializes regeneration for this result: a second request that arrives while another is still
+    # generating waits here, then — re-checked under the lock — finds the row the first one just
+    # saved instead of calling the generator (and billing Bedrock) a second time.
+    result_repository.lock_for_personalization(session, result.id)
+    session.refresh(result)
+    if result.personalized_strengths and result.personalized_profile_hash == fingerprint:
+        session.rollback()
+        return _from_row(result)
 
     prompt = _user_prompt(
         result.eneatype,
@@ -216,11 +229,13 @@ def get_personalized_description(
         raw = generator.generate(SYSTEM_PROMPT, prompt)
     except TextGenerationFailed:
         logger.error("Personalized description failed for result %s: %s", result.id, "TextGenerationFailed")
+        session.rollback()
         return _empty_sections("unavailable")
 
     parsed = _parsed_and_valid(raw)
     if parsed is None:
         logger.error("Personalized description failed for result %s: %s", result.id, "invalid_output")
+        session.rollback()
         return _empty_sections("unavailable")
 
     strengths, tensions, growth, stress = parsed
@@ -230,4 +245,4 @@ def get_personalized_description(
         profile_hash=fingerprint, model=generator.model_id,
     )
     session.commit()
-    return PersonalizedSections(status="personalized", strengths=strengths, tensions=tensions, growth=growth, stress=stress)
+    return _from_row(result)

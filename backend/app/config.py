@@ -234,7 +234,7 @@ class BaseConfig:
         self.TEXT_GENERATOR = "local"
         self.BEDROCK_REGION = os.environ.get("BEDROCK_REGION", "us-east-2")
         self.BEDROCK_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "").strip() or DEFAULT_BEDROCK_MODEL_ID
-        self.TEXT_GENERATION_TIMEOUT_SECONDS = _positive_int("TEXT_GENERATION_TIMEOUT_SECONDS", 10)
+        self.TEXT_GENERATION_TIMEOUT_SECONDS = _positive_int("TEXT_GENERATION_TIMEOUT_SECONDS", 30)
 
         self.AWS_PROFILE = os.environ.get("AWS_PROFILE") or None
 

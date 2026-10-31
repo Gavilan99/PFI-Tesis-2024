@@ -18,8 +18,14 @@ from app.services.text_generation.base import TextGenerationFailed, TextGenerato
 
 logger = logging.getLogger(__name__)
 
-MAX_TOKENS = 700
+# The parser allows up to 6 lines of 200 chars each for FORTALEZAS/TENSIONES plus two 700-char
+# paragraphs — close to 3800 characters of valid output, well above what 700 tokens buys in Spanish.
+# A maximal-but-otherwise-valid answer must never be cut off and rejected for it.
+MAX_TOKENS = 1500
 TEMPERATURE = 0.5
+# Reaching the regional endpoint should be near-instant; the configured budget
+# (TEXT_GENERATION_TIMEOUT_SECONDS) belongs to waiting for the model's answer, not the connection.
+CONNECT_TIMEOUT_SECONDS = 5
 
 
 def _error_code(exc: Exception) -> str:
@@ -41,7 +47,7 @@ class BedrockTextGenerator(TextGenerator):
             client = boto3.Session(profile_name=profile, region_name=region).client(
                 "bedrock-runtime",
                 config=Config(
-                    connect_timeout=timeout_seconds,
+                    connect_timeout=CONNECT_TIMEOUT_SECONDS,
                     read_timeout=timeout_seconds,
                     retries={"max_attempts": 1},
                 ),
