@@ -75,3 +75,25 @@ def test_the_suite_never_talks_to_bedrock_whatever_the_env_says(monkeypatch):
     config = get_config("test")
     assert config.TEXT_GENERATOR == "local"
     assert isinstance(build_text_generator(config), LocalTextGenerator)
+
+
+# --- pregenerated (Feature 19): a valid provider in every environment, not a double -----------------
+
+
+def test_pregenerated_can_be_selected_outside_production(monkeypatch):
+    monkeypatch.setenv("TEXT_GENERATOR", "pregenerated")
+    config = get_config("development")
+    assert config.TEXT_GENERATOR == "pregenerated"
+    assert build_text_generator(config) is None
+
+
+def test_production_accepts_pregenerated(production_env, monkeypatch):
+    # Like test_production_defaults_to_bedrock_with_the_configured_model: the production config
+    # itself accepts "pregenerated" without raising (unlike "local", which it refuses outright).
+    # create_app("production") is not exercised here: in this suite it always fails on the
+    # synthetic cut plan (test_cut_plan.py::test_production_refuses_synthetic_artifacts),
+    # regardless of TEXT_GENERATOR.
+    monkeypatch.setenv("TEXT_GENERATOR", "pregenerated")
+    config = get_config("production")
+    assert config.TEXT_GENERATOR == "pregenerated"
+    assert build_text_generator(config) is None

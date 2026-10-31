@@ -15,9 +15,10 @@ import pytest
 from sqlalchemy import select
 
 from app.db.models import Result, TestAttempt
-from app.db.models.enums import AttemptTier
+from app.db.models.enums import AccountType, AttemptTier
 from app.repositories import attempt_repository
 from app.services import personalized_descriptions as pd
+from app.services.text_generation.pregenerated_content import PREGENERATED_CONTENT
 from tests.attempt_helpers import answer_all, questions, start
 from tests.auth_helpers import assert_error, registered
 
@@ -63,6 +64,17 @@ def _nothing(status: str) -> dict:
 def _stored(db_session, attempt_id: str) -> Result:
     db_session.expire_all()
     return db_session.scalar(select(Result).where(Result.test_attempt_id == uuid.UUID(attempt_id)))
+
+
+def _result_eneatype(api, headers, attempt_id) -> int:
+    response = api.get(f"/api/attempts/{attempt_id}/result", headers=headers)
+    assert response.status_code == 200, response.get_json()
+    return response.get_json()["eneatype"]
+
+
+def _pregenerated_body(eneatype: int, account_type: AccountType) -> dict:
+    content = PREGENERATED_CONTENT[(eneatype, account_type)]
+    return {"status": "personalized", **content}
 
 
 # --- access: the same rule, and the same 404, as GET .../result --------------------------------
@@ -165,17 +177,20 @@ def test_changing_the_profile_regenerates(api, person, db_session, text_generato
     assert first["strengths"] != second["strengths"]
 
 
-# --- failures: unavailable, nothing stored, next visit retries -------------------------------------
+# --- failures (Feature 19): fall back to the pregenerated sections, nothing stored, next visit retries
 
 
-def test_a_failed_generation_is_unavailable_and_stores_nothing(api, person, db_session, text_generator):
+def test_a_failed_generation_falls_back_to_the_pregenerated_sections_and_stores_nothing(
+    api, person, db_session, text_generator
+):
     _, headers = person
     attempt = _closed(api, headers)
     _give_paid_tier(db_session, attempt["id"])
     _set_profile(api, headers, accountType="individual")
+    eneatype = _result_eneatype(api, headers, attempt["id"])
 
     text_generator.fail = True
-    assert _personalized(api, headers, attempt["id"]) == _nothing("unavailable")
+    assert _personalized(api, headers, attempt["id"]) == _pregenerated_body(eneatype, AccountType.INDIVIDUAL)
     row = _stored(db_session, attempt["id"])
     assert row.personalized_strengths is None
     assert row.personalized_tensions is None
@@ -185,9 +200,11 @@ def test_a_failed_generation_is_unavailable_and_stores_nothing(api, person, db_s
     assert row.personalized_model is None
     assert row.personalized_at is None
 
-    # Nothing was kept on the failed call, so the next visit tries again instead of staying stuck.
+    # Nothing was kept on the failed call, so the next visit tries the generator again.
     text_generator.fail = False
-    assert _personalized(api, headers, attempt["id"])["status"] == "personalized"
+    body = _personalized(api, headers, attempt["id"])
+    assert body["status"] == "personalized"
+    assert body != _pregenerated_body(eneatype, AccountType.INDIVIDUAL)
 
 
 @pytest.mark.parametrize(
@@ -199,17 +216,62 @@ def test_a_failed_generation_is_unavailable_and_stores_nothing(api, person, db_s
     ],
     ids=["no-markers", "too-few-strengths", "growth-too-short"],
 )
-def test_an_answer_that_does_not_pass_validation_is_unavailable_and_stores_nothing(
+def test_an_answer_that_does_not_pass_validation_falls_back_to_the_pregenerated_sections(
     api, person, db_session, text_generator, monkeypatch, broken_answer
 ):
     _, headers = person
     attempt = _closed(api, headers)
     _give_paid_tier(db_session, attempt["id"])
     _set_profile(api, headers, accountType="individual")
+    eneatype = _result_eneatype(api, headers, attempt["id"])
 
     monkeypatch.setattr(text_generator, "generate", lambda system, user: broken_answer)
-    assert _personalized(api, headers, attempt["id"]) == _nothing("unavailable")
+    assert _personalized(api, headers, attempt["id"]) == _pregenerated_body(eneatype, AccountType.INDIVIDUAL)
     assert _stored(db_session, attempt["id"]).personalized_strengths is None
+
+
+# --- TEXT_GENERATOR=pregenerated (Feature 19): a complete provider, never calls any generator -------
+
+
+def test_pregenerated_mode_returns_the_sections_for_the_users_account_type(
+    api, person, db_session, pregenerated_mode
+):
+    _, headers = person
+    attempt = _closed(api, headers)
+    _give_paid_tier(db_session, attempt["id"])
+    _set_profile(api, headers, accountType="rrhh")
+    eneatype = _result_eneatype(api, headers, attempt["id"])
+
+    body = _personalized(api, headers, attempt["id"])
+    assert body == _pregenerated_body(eneatype, AccountType.RRHH)
+    assert _stored(db_session, attempt["id"]).personalized_strengths is None
+
+
+def test_pregenerated_mode_defaults_to_individual_with_no_account_type(
+    api, person, db_session, pregenerated_mode
+):
+    _, headers = person
+    attempt = _closed(api, headers)
+    _give_paid_tier(db_session, attempt["id"])
+    _set_profile(api, headers, ageRange="35-44")
+    eneatype = _result_eneatype(api, headers, attempt["id"])
+
+    body = _personalized(api, headers, attempt["id"])
+    assert body == _pregenerated_body(eneatype, AccountType.INDIVIDUAL)
+
+
+def test_pregenerated_mode_still_refuses_a_free_attempt(api, person, pregenerated_mode):
+    _, headers = person
+    attempt = _closed(api, headers)
+    _set_profile(api, headers, accountType="individual")
+    assert _personalized(api, headers, attempt["id"]) == _nothing("not_in_plan")
+
+
+def test_pregenerated_mode_still_refuses_an_empty_profile(api, person, db_session, pregenerated_mode):
+    _, headers = person
+    attempt = _closed(api, headers)
+    _give_paid_tier(db_session, attempt["id"])
+    assert _personalized(api, headers, attempt["id"]) == _nothing("profile_missing")
 
 
 # --- confidentiality (RNF04): the prompt never carries what it must not ---------------------------

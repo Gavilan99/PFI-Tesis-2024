@@ -111,6 +111,20 @@ def text_generator(app):
 
 
 @pytest.fixture()
+def pregenerated_mode(app, text_generator):
+    """Simulates TEXT_GENERATOR=pregenerated (Feature 19): no generator at all, so
+    `get_personalized_description` must serve the pregenerated content directly. Takes
+    `text_generator` only to run after it: that fixture has already replaced
+    `app.extensions["text_generator"]` with its own local double by the time this one's body
+    runs, so the snapshot taken here — and restored on teardown — is that double, not whatever
+    the app originally started with."""
+    original = app.extensions["text_generator"]
+    app.extensions["text_generator"] = None
+    yield
+    app.extensions["text_generator"] = original
+
+
+@pytest.fixture()
 def contact_limiter(app):
     """A fresh contact rate limiter per test, with the configured limit, so counts never carry over."""
     original = app.extensions["contact_rate_limiter"]
