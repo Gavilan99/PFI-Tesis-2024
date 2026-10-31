@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { Question } from '../models/question.model';
 import { TestAttempt } from '../models/test-attempt.model';
 import { NewResponseInput, TestResponse } from '../models/response.model';
-import { Result } from '../models/result.model';
+import { PersonalizedDescription, Result } from '../models/result.model';
 import { User, UpdateProfileInput } from '../models/user.model';
 import { LoginInput, RegisterInput } from '../models/auth.model';
 import { SubmitFeedbackInput } from '../models/feedback.model';
@@ -59,6 +59,13 @@ export interface ApiService {
   // between cuts and the result screen.
   getCutStatus(attemptId: string): Observable<CutStatus>;
   getResult(attemptId: string): Observable<Result>;
+  // Feature 17 (backend) / Feature 18 (this UI) — the paid plan's
+  // personalized version of the four result sections, for the same attempt.
+  // Same access rule as getResult: not the account's own closed attempt
+  // rejects the same way. Never throws for a free attempt or a profile with
+  // nothing in it — the "not_in_plan"/"profile_missing" status says so
+  // instead, with all four sections null.
+  getPersonalizedDescription(attemptId: string): Observable<PersonalizedDescription>;
   // Most recent attempt for this user, or null if none exists yet. Drives the
   // user-journey state machine (UserJourneyStateService).
   getLatestAttempt(userId: string): Observable<TestAttempt | null>;

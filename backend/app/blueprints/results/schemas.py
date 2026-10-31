@@ -7,6 +7,7 @@ as a number, not derived, not in words. Every test response is checked for them 
 
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from app.blueprints.schemas import ApiOutput
 
@@ -17,3 +18,15 @@ class ResultOut(ApiOutput):
     eneatype: int
     description_text: str
     generated_at: datetime
+
+
+class PersonalizedDescriptionOut(ApiOutput):
+    """`PersonalizedDescription` of result.model.ts (Feature 17): a personalized version of the
+    result screen's own four sections (eneatype-content.ts). All four are null for every status but
+    "personalized"."""
+
+    status: Literal["not_in_plan", "profile_missing", "personalized", "unavailable"]
+    strengths: list[str] | None
+    tensions: list[str] | None
+    growth: str | None
+    stress: str | None

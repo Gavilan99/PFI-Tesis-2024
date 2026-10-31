@@ -41,6 +41,7 @@ $FrontendOac      = 'nureon-frontend'
 $DistributionNote = 'nureon-frontend'           # the distribution's Comment, used to find it
 $ContainerPort    = 8000
 $BankCsvInImage   = 'bank/NureonAI Prototype v4.1.2.csv'
+$BedrockModelId   = 'amazon.nova-lite-v1:0'   # Feature 17, personalized descriptions of the paid plan
 
 # The CLI executable itself: inside these scripts the name `aws` is the helper function below.
 $AwsExe = (Get-Command aws -CommandType Application | Select-Object -First 1).Source

@@ -9,12 +9,14 @@ much a defect as a key too few.
 One request per `ApiService` method, with the local identity and the filler bank: fifteen in the first
 test (`deleteAccount`, Feature 11, last), and the two of the fixed item cuts (Feature 9, methods since Feature 10) in their own test below,
 since they need the paid tier. `continueTestAttempt` answers a `TestAttempt` and `getCutStatus` a
-`CutStatus` (cut-status.model.ts). The three of the payments (Feature 6, subscription.model.ts) have
-their own test too, with the local payment gateway. Between them, the three tests check that every
-method `ApiService` declares is covered.
+`CutStatus` (cut-status.model.ts). The three of the payments (Feature 6, subscription.model.ts), and
+`getPersonalizedDescription` (Feature 17, result.model.ts), each have their own test too, since they
+also need the paid tier. Between them, the four tests check that every method `ApiService` declares
+is covered.
 """
 
 import re
+import uuid
 from pathlib import Path
 
 import pytest
@@ -72,6 +74,8 @@ def ts_methods(file: str, name: str, folder: Path = SERVICES) -> set[str]:
 CUT_METHODS = {"continueTestAttempt", "getCutStatus"}
 # The methods of the payment routes (Feature 6), covered by their own test.
 PAYMENT_METHODS = {"getSubscription", "startCheckout", "confirmPayment"}
+# Feature 17: needs the paid tier like the cut and payment methods, covered by its own test too.
+PERSONALIZED_METHODS = {"getPersonalizedDescription"}
 
 
 @pytest.fixture(scope="module")
@@ -86,6 +90,7 @@ def shapes() -> dict[str, set[str]]:
         "AnswerOption": ts_keys("answer-option.model.ts", "AnswerOption"),
         "TestResponse": ts_keys("response.model.ts", "TestResponse"),
         "Result": ts_keys("result.model.ts", "Result"),
+        "PersonalizedDescription": ts_keys("result.model.ts", "PersonalizedDescription"),
         "CutStatus": ts_keys("cut-status.model.ts", "CutStatus"),
         "Subscription": ts_keys("subscription.model.ts", "Subscription"),
         "CheckoutSession": ts_keys("subscription.model.ts", "CheckoutSession"),
@@ -101,6 +106,7 @@ def test_the_parser_reads_the_interfaces_it_is_trusted_with(shapes):
     }
     assert shapes["Question"] == {"id", "questionType", "promptText", "displayOrder", "answerOptions"}
     assert shapes["Result"] == {"id", "testAttemptId", "eneatype", "descriptionText", "generatedAt"}
+    assert shapes["PersonalizedDescription"] == {"status", "strengths", "tensions", "growth", "stress"}
     assert shapes["AuthResponse"] == {"user", "accessToken", "expiresIn"}
     assert shapes["CutStatus"] == {
         "currentCut", "cutCount", "servedItems", "answeredItems", "nextCutItems", "canContinue",
@@ -234,9 +240,9 @@ def test_every_route_answers_exactly_the_shape_of_its_interface(api, question_ba
     response = api.delete("/api/users/me", headers=headers)
     checked["deleteAccount"] = _empty(response)
 
-    assert set(checked) == ts_methods("api.service.ts", "ApiService") - CUT_METHODS - PAYMENT_METHODS, (
-        "a method of ApiService is not covered"
-    )
+    assert set(checked) == (
+        ts_methods("api.service.ts", "ApiService") - CUT_METHODS - PAYMENT_METHODS - PERSONALIZED_METHODS
+    ), "a method of ApiService is not covered"
     assert [name for name, ok in checked.items() if not ok] == []
 
 
@@ -313,4 +319,54 @@ def test_the_payment_routes_answer_exactly_their_interfaces(api, payments, shape
 
     assert {name.split()[0] for name in checked} == PAYMENT_METHODS
     assert PAYMENT_METHODS <= ts_methods("api.service.ts", "ApiService"), "a payment method is missing from ApiService"
+    assert [name for name, ok in checked.items() if not ok] == []
+
+
+def test_the_personalized_description_route_answers_exactly_its_interface(api, question_bank, db_session, shapes):
+    from app.db.models import TestAttempt
+    from app.db.models.enums import AttemptTier
+    from app.repositories import attempt_repository
+
+    response = api.post(
+        "/api/auth/register", json=register_body(username="Persona descripción", email=unique_email("descripcion"))
+    )
+    headers = bearer(response.get_json()["accessToken"])
+
+    attempt = api.post("/api/attempts", headers=headers).get_json()
+    attempt_url = f"/api/attempts/{attempt['id']}"
+    for item in api.get(f"{attempt_url}/questions", headers=headers).get_json():
+        body = answer_body(item["id"], item["answerOptions"][0]["id"])
+        assert api.post(f"{attempt_url}/responses", headers=headers, json=body).status_code == 200
+    assert api.post(f"{attempt_url}/complete", headers=headers).status_code == 200
+
+    checked = {}
+
+    # getPersonalizedDescription(attemptId) -> GET .../result/personalized, free: no sections.
+    response = api.get(f"{attempt_url}/result/personalized", headers=headers)
+    assert response.status_code == 200, response.get_json()
+    checked["getPersonalizedDescription free"] = _keys(response.get_json()) == shapes["PersonalizedDescription"]
+
+    # Paid, no profile: still no sections.
+    row = db_session.get(TestAttempt, uuid.UUID(attempt["id"]))
+    attempt_repository.set_tier(db_session, row, AttemptTier.PAID_FULL)
+    db_session.commit()
+    response = api.get(f"{attempt_url}/result/personalized", headers=headers)
+    assert response.status_code == 200, response.get_json()
+    checked["getPersonalizedDescription profile missing"] = (
+        _keys(response.get_json()) == shapes["PersonalizedDescription"]
+    )
+
+    # Paid, with a profile: the four generated sections, from the local double.
+    assert api.patch("/api/users/me", headers=headers, json={"accountType": "individual"}).status_code == 200
+    response = api.get(f"{attempt_url}/result/personalized", headers=headers)
+    assert response.status_code == 200, response.get_json()
+    body = response.get_json()
+    checked["getPersonalizedDescription personalized"] = (
+        _keys(body) == shapes["PersonalizedDescription"] and body["strengths"] and body["growth"]
+    )
+
+    assert {name.split()[0] for name in checked} == PERSONALIZED_METHODS
+    assert PERSONALIZED_METHODS <= ts_methods("api.service.ts", "ApiService"), (
+        "the personalized-description method is missing from ApiService"
+    )
     assert [name for name, ok in checked.items() if not ok] == []

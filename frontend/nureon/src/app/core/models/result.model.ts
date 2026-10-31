@@ -9,3 +9,17 @@ export interface Result {
   descriptionText: string;
   generatedAt: string;
 }
+
+// Feature 17 (backend) / Feature 18 (this UI): a personalized version of the
+// result screen's own four sections (eneatype-content.ts's strengths,
+// tensions, growth and stress), generated from the eneatype, descriptionText
+// and the account's profile. All four are non-null only when status is
+// 'personalized'; every other status means the generic, per-eneatype
+// versions in eneatype-content.ts are what gets shown instead.
+export interface PersonalizedDescription {
+  status: 'not_in_plan' | 'profile_missing' | 'personalized' | 'unavailable';
+  strengths: string[] | null;
+  tensions: string[] | null;
+  growth: string | null;
+  stress: string | null;
+}

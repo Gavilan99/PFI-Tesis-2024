@@ -20,7 +20,8 @@ las dos rutas de los cortes (Feature 9), con su método en `ApiService` desde la
 (`continueTestAttempt` y `getCutStatus`), en un test aparte porque necesitan el tier pago: ver
 [Feature 9](#feature-9-cortes-fijos). Y para las tres rutas de pagos (Feature 6: `getSubscription`,
 `startCheckout`, `confirmPayment`, en `subscription.model.ts`), en otro test aparte con la pasarela
-local: ver [Feature 6](#feature-6-pagos-con-mercado-pago).
+local: ver [Feature 6](#feature-6-pagos-con-mercado-pago). `getPersonalizedDescription` (Feature 17,
+también necesita el tier pago) tiene el suyo: ver [Feature 17](#feature-17-descripción-personalizada).
 
 ## Las quince rutas y `HttpApiService`
 
@@ -349,6 +350,40 @@ es ajeno, está `in_progress` o `abandoned`) responde lo mismo:
 
 Un `{id}` que no es un UUID responde `404 NOT_FOUND`.
 
+## Feature 17: descripción personalizada
+
+`PersonalizedDescription` (igual a `result.model.ts`):
+
+```json
+{
+  "status": "not_in_plan | profile_missing | personalized | unavailable",
+  "strengths": ["string"] | null,
+  "tensions": ["string"] | null,
+  "growth": "string | null",
+  "stress": "string | null"
+}
+```
+
+### `GET /api/attempts/{id}/result/personalized` — `getPersonalizedDescription(attemptId)`
+
+Misma regla de acceso que `getResult`, mismo `404 RESULT_NOT_FOUND`. `200` siempre, nunca un error por
+el plan o el perfil:
+
+- `not_in_plan`: el intento no es `paid_full`. Nunca llama al generador.
+- `profile_missing`: es `paid_full`, pero `accountType`, `ageRange` y `professionContext` están los
+  tres vacíos. Nunca llama al generador.
+- `personalized`: las cuatro secciones de abajo, generadas por Amazon Bedrock a partir del eneatipo,
+  `descriptionText` y esos tres campos del perfil (un solo pedido, no cuatro: el formato de la
+  respuesta se pide fijo y se separa con manejo de strings). Se reusan sin volver a generar si el
+  perfil y el modelo configurado no cambiaron desde la última vez. `strengths` y `tensions` son listas
+  de 3 a 6 frases cada una; `growth` y `stress`, un párrafo cada uno.
+- `unavailable`: la generación falló, o la respuesta del modelo no siguió el formato pedido o no pasó
+  los controles de longitud. No se guarda nada: el siguiente pedido lo vuelve a intentar.
+
+El prompt nunca lleva género, país, email ni nombre de usuario, ni nada de los clasificadores
+(RNF04): sólo `accountType`, `ageRange` y `professionContext`, éste último truncado a 255 caracteres y
+tratado como un dato de la persona, no como una instrucción.
+
 ## Feature 9: cortes fijos
 
 El test se sirve en tres cortes fijos y anidados de **40, 90 y 145 ítems** (bloques de 40 + 50 + 55).
@@ -583,6 +618,7 @@ que existe en la base y no sale:
 | Los comentarios (`feedback`) | No hay endpoint de lectura: se leen de la base, para el piloto |
 | Los mensajes de contacto | No se guardan en ningún lado |
 | `subscriptions.mercadopago_subscription_id`, `payments.*` | Ids y registros de Mercado Pago: internos. El estado del plan sale por `GET /api/subscription` |
+| `results.personalized_profile_hash`, `personalized_model`, `personalized_at` | Internos: sólo para decidir si hay que regenerar la descripción personalizada (Feature 17) |
 
 `tests/leak_guard.py` revisa toda respuesta JSON de la suite y falla si aparece una clave o un valor de
 la clave de corrección o de la salida interna de los clasificadores. `tests/test_contract.py` exige

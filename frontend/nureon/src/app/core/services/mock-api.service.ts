@@ -6,7 +6,7 @@ import { ApiService } from './api.service';
 import { Question, QuestionType } from '../models/question.model';
 import { TestAttempt } from '../models/test-attempt.model';
 import { NewResponseInput, TestResponse } from '../models/response.model';
-import { Result } from '../models/result.model';
+import { PersonalizedDescription, Result } from '../models/result.model';
 import { User, UpdateProfileInput, withEmptyProfile } from '../models/user.model';
 import { LoginInput, RegisterInput } from '../models/auth.model';
 import { SubmitFeedbackInput } from '../models/feedback.model';
@@ -36,6 +36,12 @@ const MOCK_PLAN = { planPrice: 4999, planCurrency: 'ARS', planDays: 30 };
 const MOCK_CUT_ACCURACY = [0.62, 0.71, 0.77];
 
 const MOCK_DELAY_MS = 150;
+
+// The shape getPersonalizedDescription answers with for every status but
+// 'personalized': all four sections null, like the backend.
+function NOTHING_PERSONALIZED(status: PersonalizedDescription['status']): PersonalizedDescription {
+  return { status, strengths: null, tensions: null, growth: null, stress: null };
+}
 
 // The backend's message for a registration without the consent.
 const CONSENT_REQUIRED_MESSAGE =
@@ -444,6 +450,37 @@ export class MockApiService implements ApiService {
       return throwError(() => new Error(`MockApiService: no result for attempt "${attemptId}"`));
     }
     return of(result).pipe(delay(MOCK_DELAY_MS));
+  }
+
+  // Feature 17 (backend) / Feature 18 (this UI). No real generation here: just
+  // the same three-way branch the backend answers with, from the attempt's
+  // tier and its owner's profile, and four example sections shaped like the
+  // real ones (a short list for strengths/tensions, one paragraph each for
+  // growth/stress) — enough for the UI to be built against before the real
+  // backend call exists. Not built from eneatype-content.ts on purpose: core
+  // services don't depend on a feature folder like resultados/.
+  getPersonalizedDescription(attemptId: string): Observable<PersonalizedDescription> {
+    const attempt = this.state.attempts[attemptId];
+    const result = this.state.resultsByAttempt[attemptId];
+    if (!attempt || !result) {
+      return throwError(() => new Error(`MockApiService: no result for attempt "${attemptId}"`));
+    }
+    if (attempt.tier !== 'paid_full') {
+      return of<PersonalizedDescription>(NOTHING_PERSONALIZED('not_in_plan')).pipe(delay(MOCK_DELAY_MS));
+    }
+    const owner = Object.values(this.state.usersByEmail).find((r) => r.user.id === attempt.userId)?.user;
+    const hasProfile = !!(owner?.accountType || owner?.ageRange || owner?.professionContext);
+    if (!hasProfile) {
+      return of<PersonalizedDescription>(NOTHING_PERSONALIZED('profile_missing')).pipe(delay(MOCK_DELAY_MS));
+    }
+    const marker = `eneatipo ${result.eneatype}, cuenta ${owner?.accountType}`;
+    return of<PersonalizedDescription>({
+      status: 'personalized',
+      strengths: [1, 2, 3].map((n) => `Fortaleza de ejemplo ${n} personalizada (${marker}).`),
+      tensions: [1, 2, 3].map((n) => `Tensión de ejemplo ${n} personalizada (${marker}).`),
+      growth: `Párrafo de ejemplo de crecimiento personalizado (${marker}). Contenido real pendiente (Feature 18).`,
+      stress: `Párrafo de ejemplo de estrés personalizado (${marker}). Contenido real pendiente (Feature 18).`,
+    }).pipe(delay(MOCK_DELAY_MS));
   }
 
   getLatestAttempt(userId: string): Observable<TestAttempt | null> {
