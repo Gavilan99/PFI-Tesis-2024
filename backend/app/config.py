@@ -37,7 +37,7 @@ def _split_origins(raw: str) -> list[str]:
 IDENTITY_PROVIDERS = ("cognito", "local")
 MAIL_SENDERS = ("ses", "local")
 PAYMENT_PROVIDERS = ("mercadopago", "local")
-TEXT_GENERATORS = ("bedrock", "local")
+TEXT_GENERATORS = ("bedrock", "local", "pregenerated")
 DEFAULT_BEDROCK_MODEL_ID = "amazon.nova-lite-v1:0"
 # The individual plan outside production when nothing is set. EXAMPLE VALUES: the real price and period
 # come from the business model, which is not closed yet. Production has no default (`_set_plan`).
