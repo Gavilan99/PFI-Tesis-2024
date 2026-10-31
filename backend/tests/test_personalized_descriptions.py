@@ -231,7 +231,8 @@ def test_the_prompt_never_carries_gender_country_email_or_the_display_name(
     assert body["status"] == "personalized"
     whole = " ".join([*body["strengths"], *body["tensions"], body["growth"], body["stress"]]).lower()
     for leaked in ("femenino", "argentina", user["email"].lower(), (user["displayName"] or "").lower()):
-        assert leaked and leaked not in whole
+        assert leaked, "the value to check for a leak must not itself be empty"
+        assert leaked not in whole
 
 
 def test_the_professional_context_is_truncated_and_delimited():

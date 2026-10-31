@@ -4,8 +4,10 @@ model (BEDROCK_MODEL_ID) and a fixed, short answer budget.
 https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html
 
 Nothing about the request or the response is logged: see app.services.personalized_descriptions for
-what may and may not reach a log line. Retries are disabled (`max_attempts: 1`): the caller has its
-own short timeout budget (TEXT_GENERATION_TIMEOUT_SECONDS) and a retry here could run well past it.
+what may and may not reach a log line. Retries are disabled (`total_max_attempts: 1`): the caller has
+its own timeout budget (TEXT_GENERATION_TIMEOUT_SECONDS) and a retry here could run well past it —
+note that `{"max_attempts": N}` is *not* the same knob: botocore's legacy retry mode counts it as
+retries after the first attempt, so `max_attempts: 1` would still allow one retry.
 """
 
 import logging
@@ -19,8 +21,8 @@ from app.services.text_generation.base import TextGenerationFailed, TextGenerato
 logger = logging.getLogger(__name__)
 
 # The parser allows up to 6 lines of 200 chars each for FORTALEZAS/TENSIONES plus two 700-char
-# paragraphs — close to 3800 characters of valid output, well above what 700 tokens buys in Spanish.
-# A maximal-but-otherwise-valid answer must never be cut off and rejected for it.
+# paragraphs — close to 3800 characters of valid output. A maximal-but-otherwise-valid answer must
+# never be cut off and rejected for it, so the budget stays generous above that ceiling.
 MAX_TOKENS = 1500
 TEMPERATURE = 0.5
 # Reaching the regional endpoint should be near-instant; the configured budget
@@ -49,7 +51,7 @@ class BedrockTextGenerator(TextGenerator):
                 config=Config(
                     connect_timeout=CONNECT_TIMEOUT_SECONDS,
                     read_timeout=timeout_seconds,
-                    retries={"max_attempts": 1},
+                    retries={"total_max_attempts": 1},
                 ),
             )
         self._client = client
