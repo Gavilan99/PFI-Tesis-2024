@@ -113,12 +113,15 @@ def text_generator(app):
 @pytest.fixture()
 def pregenerated_mode(app, text_generator):
     """Simulates TEXT_GENERATOR=pregenerated (Feature 19): no generator at all, so
-    `get_personalized_description` must serve the pregenerated content directly. Depends on
-    `text_generator` so it always overrides *after* that fixture has set its own local double,
-    and restores to it (not to the app's true original) on teardown."""
+    `get_personalized_description` must serve the pregenerated content directly. Takes
+    `text_generator` only to run after it: that fixture has already replaced
+    `app.extensions["text_generator"]` with its own local double by the time this one's body
+    runs, so the snapshot taken here — and restored on teardown — is that double, not whatever
+    the app originally started with."""
+    original = app.extensions["text_generator"]
     app.extensions["text_generator"] = None
     yield
-    app.extensions["text_generator"] = text_generator
+    app.extensions["text_generator"] = original
 
 
 @pytest.fixture()

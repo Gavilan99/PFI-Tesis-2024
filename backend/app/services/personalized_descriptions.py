@@ -9,9 +9,10 @@ A free attempt or a profile with nothing in it falls back silently to "not_in_pl
 this module only ever adds a second, personalized set of sections to a `Result`, never touches
 `description_text` or the generic strengths/tensions the result screen already shows for free.
 
-Feature 19 adds a second source for the same four sections: human-reviewed, pregenerated content per
-eneatype and account type (`app.services.text_generation.pregenerated_content`), already structured
-as lists and paragraphs — it never goes through SYSTEM_PROMPT's marker format or `_parse_sections`.
+Feature 19 adds a second source for the same four sections: pregenerated content per eneatype and
+account type (`app.services.text_generation.pregenerated_content` — a draft, pending human review
+before it reaches production; see that module's docstring), already structured as lists and
+paragraphs — it never goes through SYSTEM_PROMPT's marker format or `_parse_sections`.
 With TEXT_GENERATOR=pregenerated there is no generator at all (`generator` is `None`): every paid
 attempt with a profile gets its pregenerated sections straight away, nothing is stored. With a real
 generator (bedrock or, in tests, local), a failed call or an answer that doesn't follow the format or
@@ -120,6 +121,15 @@ def _pregenerated_sections(eneatype: int, account_type: AccountType | None) -> P
         growth=content["growth"],
         stress=content["stress"],
     )
+
+
+def _generation_failed(session: Session, result, user: User, reason: str) -> PersonalizedSections:
+    """Logs the failure (never the prompt, the generated text or any profile field), rolls back
+    whatever `lock_for_personalization` left open, and falls back to the pregenerated sections —
+    the one behavior shared by a failed call and an answer that doesn't parse or validate."""
+    logger.error("Personalized description failed for result %s: %s", result.id, reason)
+    session.rollback()
+    return _pregenerated_sections(result.eneatype, user.account_type)
 
 
 def _normalized(value: str | None) -> str:
@@ -253,15 +263,11 @@ def get_personalized_description(
     try:
         raw = generator.generate(SYSTEM_PROMPT, prompt)
     except TextGenerationFailed:
-        logger.error("Personalized description failed for result %s: %s", result.id, "TextGenerationFailed")
-        session.rollback()
-        return _pregenerated_sections(result.eneatype, user.account_type)
+        return _generation_failed(session, result, user, "TextGenerationFailed")
 
     parsed = _parsed_and_valid(raw)
     if parsed is None:
-        logger.error("Personalized description failed for result %s: %s", result.id, "invalid_output")
-        session.rollback()
-        return _pregenerated_sections(result.eneatype, user.account_type)
+        return _generation_failed(session, result, user, "invalid_output")
 
     strengths, tensions, growth, stress = parsed
     result_repository.save_personalized(

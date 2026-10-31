@@ -1,23 +1,28 @@
-# BORRADOR: pendiente de revisión.
-"""Contenido pregenerado (Feature 19) de las cuatro secciones personalizadas del resultado —
-fortalezas, tensiones, crecimiento y estrés — por eneatipo y tipo de cuenta.
+# DRAFT: pending human review before this is merged (see the module docstring below).
+"""Pregenerated content (Feature 19) for the result screen's four personalized sections —
+strengths, tensions, growth, stress — one entry per eneatype and account type.
 
-Usado por `app.services.personalized_descriptions` de dos maneras: como proveedor completo con
-TEXT_GENERATOR=pregenerated (el endpoint nunca llama a un modelo), y como respaldo cuando una
-generación con Bedrock falla o no pasa la validación del formato (TEXT_GENERATOR=bedrock). No pasa
-por el formato de marcadores FORTALEZAS/TENSIONES/CRECIMIENTO/ESTRES ni por su parser: ya está
-estructurado como listas y párrafos, igual que lo que ese parser produce.
+A human has not reviewed this content yet: it is a draft, written to the same rules as
+SYSTEM_PROMPT, meant to be read and corrected before this file reaches `TEXT_GENERATOR=pregenerated`
+or `TEXT_GENERATOR=bedrock` in production. Nothing in the code gates on that — the DRAFT marker above
+is for the person reviewing the diff, not a runtime check.
 
-Mismo registro y mismas reglas de contenido que SYSTEM_PROMPT (español rioplatense con voseo, sin
-diagnóstico ni lenguaje clínico, basado únicamente en la descripción genérica de cada eneatipo en
-`app.services.result_descriptions` / `eneatype-content.ts`, sin contradecirla ni agregar rasgos de
-otros eneatipos), pero adaptado al tipo de cuenta en lugar de al perfil de la persona: "individual"
-apunta al autoconocimiento personal, "salud" da por hecho un acompañamiento profesional, "rrhh" lo
-enmarca en el contexto laboral. A diferencia de lo que genera un modelo, esto es fijo por eneatipo y
-tipo de cuenta — no usa edad ni contexto profesional, porque no hay un perfil del que tomarlos.
+Used by `app.services.personalized_descriptions` two ways: as a complete provider with
+TEXT_GENERATOR=pregenerated (the endpoint never calls a model), and as a fallback when a Bedrock
+generation fails or doesn't pass the format validation (TEXT_GENERATOR=bedrock). It never goes
+through the FORTALEZAS/TENSIONES/CRECIMIENTO/ESTRES marker format or its parser: it's already
+structured as lists and paragraphs, the same shape that parser produces.
 
-Las 27 entradas (9 eneatipos × 3 tipos de cuenta) deben pasar la misma validación de cantidad y largo
-que `app.services.personalized_descriptions` aplica a la salida parseada de Bedrock
+Same register and the same content rules as SYSTEM_PROMPT (Spanish rioplatense with voseo, no
+diagnosis or clinical language, based only on each eneatype's generic description in
+`app.services.result_descriptions` / `eneatype-content.ts`, without contradicting it or adding traits
+of other eneatypes), but adapted to the account type instead of to a person's profile: "individual"
+is personal self-knowledge, "salud" assumes a health professional's accompaniment, "rrhh" frames it
+for the workplace. Unlike what a model generates, this is fixed per eneatype and account type — it
+never uses age or professional context, because there is no profile to take them from.
+
+The 27 entries (9 eneatypes x 3 account types) must pass the same length and count validation
+`app.services.personalized_descriptions` applies to a parsed Bedrock answer
 (`tests/test_pregenerated_content.py`).
 """
 

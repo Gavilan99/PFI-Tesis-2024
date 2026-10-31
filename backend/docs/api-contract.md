@@ -377,12 +377,28 @@ el plan o el perfil:
   respuesta se pide fijo y se separa con manejo de strings). Se reusan sin volver a generar si el
   perfil y el modelo configurado no cambiaron desde la última vez. `strengths` y `tensions` son listas
   de 3 a 6 frases cada una; `growth` y `stress`, un párrafo cada uno.
-- `unavailable`: la generación falló, o la respuesta del modelo no siguió el formato pedido o no pasó
-  los controles de longitud. No se guarda nada: el siguiente pedido lo vuelve a intentar.
+- `unavailable`: reservado en el tipo por compatibilidad, pero ya no lo devuelve esta ruta (ver
+  Feature 19 más abajo): toda generación que falla o no valida cae a contenido pregenerado con
+  `personalized` en su lugar.
 
 El prompt nunca lleva género, país, email ni nombre de usuario, ni nada de los clasificadores
 (RNF04): sólo `accountType`, `ageRange` y `professionContext`, éste último truncado a 255 caracteres y
 tratado como un dato de la persona, no como una instrucción.
+
+## Feature 19: contenido pregenerado
+
+Mismo endpoint y mismo `PersonalizedDescription` de arriba; cambia de dónde salen las cuatro
+secciones de `personalized`, según `TEXT_GENERATOR`:
+
+- `TEXT_GENERATOR=pregenerated`: nunca llama a un modelo. `paid_full` con perfil recibe directamente
+  el contenido pregenerado de su eneatipo y `accountType` (`individual` si no tiene uno cargado), con
+  `status: "personalized"`. No se guarda nada en `results`.
+- `TEXT_GENERATOR=bedrock`: si la generación o el parseo fallan, en lugar de `unavailable` la
+  respuesta trae el mismo contenido pregenerado, también con `status: "personalized"` — sin guardar
+  nada en las columnas `personalized_*`, así que el siguiente pedido vuelve a intentar con Bedrock.
+
+`not_in_plan` y `profile_missing` no cambian: siguen sin llamar a nada, generador o contenido
+pregenerado.
 
 ## Feature 9: cortes fijos
 
