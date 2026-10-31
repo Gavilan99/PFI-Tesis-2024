@@ -61,6 +61,40 @@
   font: var(--nureon-text-h2-weight) var(--nureon-text-h2-size) / var(--nureon-text-h2-line-height)
     var(--nureon-text-h2-font);
   margin-bottom: var(--nureon-space-xs);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--nureon-space-xs);
+}
+
+// Feature 18 — the discreet "Personalizando…" cue next to a section title
+// while getPersonalizedDescription is in flight. Plain text, no spinner: it
+// never blocks the generic content already drawn under it. aria-hidden in
+// the template — the one aria-live announcement that matters is the single
+// region at the top of the screen, said once the personalized content lands.
+.resultados__personalizing {
+  font-size: var(--nureon-text-body-sm-size);
+  font-weight: 400;
+  color: rgba(black, 0.5);
+}
+
+// Feature 18 — the line that says the result was adapted to the profile, or
+// the invitation to complete it. Same muted small text as .resultados__framing.
+.resultados__personalize-note {
+  font-size: var(--nureon-text-body-sm-size);
+  color: rgba(black, 0.6);
+}
+
+// Feature 18 — the aria-live region for the one-time personalization
+// announcement: present at all times so assistive tech picks up the text
+// change, but never visible or part of the layout.
+.resultados__visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 
 .resultados__framing {

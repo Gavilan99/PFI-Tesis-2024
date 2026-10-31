@@ -1,6 +1,6 @@
 import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable, Subscription, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { API_SERVICE, ApiService } from '../core/services/api.service';
 import { ApiError, isPaidTierRequired } from '../core/services/api-error';
@@ -10,6 +10,7 @@ import { hasNextCut } from '../core/cuts/cut-plan';
 import { AuthService } from '../core/services/auth.service';
 import { AttemptTier, TestAttempt } from '../core/models/test-attempt.model';
 import { AccountType } from '../core/models/user.model';
+import { PersonalizedDescription } from '../core/models/result.model';
 import { PageContainerComponent } from '../shared/layout/page-container/page-container.component';
 import { ErrorStateComponent } from '../shared/components/error-state/error-state.component';
 import { LoadingStateComponent } from '../shared/components/loading-state/loading-state.component';
@@ -18,6 +19,10 @@ import { EnneagramDiagramComponent, ENEATYPE_STRUCTURE } from './enneagram-diagr
 import { FreemiumInfoDialogComponent } from './freemium-info-dialog/freemium-info-dialog.component';
 import { RefineResultComponent } from './refine-result/refine-result.component';
 import { ENEATYPE_CONTENT, EneatypeContent, FRAMING_TEXT } from './eneatype-content';
+
+// Feature 18 — the one-line announcement for the aria-live region, said once
+// per load when the personalized description actually replaces something.
+const PERSONALIZED_ANNOUNCEMENT = 'Tu resultado se personalizó según tu perfil.';
 
 // CU004 — layered reading, top to bottom: eneatype + name, one-line summary,
 // core motivation, strengths/tensions, wings, then (only then) the blurred
@@ -36,6 +41,7 @@ import { ENEATYPE_CONTENT, EneatypeContent, FRAMING_TEXT } from './eneatype-cont
   selector: 'app-resultados',
   standalone: true,
   imports: [
+    RouterLink,
     PageContainerComponent,
     ErrorStateComponent,
     LoadingStateComponent,
@@ -80,6 +86,18 @@ export class ResultadosComponent implements OnInit {
   // A failed "Seguir", shown inside the block: the result stays on screen.
   refineError: string | null = null;
 
+  // Feature 18 — the paid plan's personalized version of strengths, tensions,
+  // growth and stress, loaded apart from the result and never blocking it:
+  // not_in_plan/unavailable/a network error all leave this null, same as the
+  // free tier, so the screen just keeps the generic content. Reset on every
+  // load() so returning from /perfil asks again.
+  private personalizedSubscription: Subscription | null = null;
+  personalizing = false;
+  private personalized: PersonalizedDescription | null = null;
+  // Said once via aria-live when the personalized sections actually land;
+  // null the rest of the time so the region stays empty.
+  personalizedAnnouncement: string | null = null;
+
   constructor(
     @Inject(API_SERVICE) private readonly api: ApiService,
     private readonly auth: AuthService,
@@ -119,6 +137,43 @@ export class ResultadosComponent implements OnInit {
 
   get isPaid(): boolean {
     return this.tier === 'paid_full';
+  }
+
+  // Each section falls back to its generic eneatype-content.ts version on
+  // its own — an empty list or a blank paragraph never replaces a section,
+  // even when the other three did.
+  get strengths(): string[] {
+    const list = this.personalized?.strengths;
+    return list && list.length > 0 ? list : this.content?.strengths ?? [];
+  }
+
+  get tensions(): string[] {
+    const list = this.personalized?.tensions;
+    return list && list.length > 0 ? list : this.content?.tensions ?? [];
+  }
+
+  get growthText(): string | undefined {
+    return this.personalized?.growth || this.content?.growth;
+  }
+
+  get stressText(): string | undefined {
+    return this.personalized?.stress || this.content?.stress;
+  }
+
+  private get usesPersonalizedContent(): boolean {
+    const p = this.personalized;
+    return !!p && (!!(p.strengths && p.strengths.length) || !!(p.tensions && p.tensions.length) || !!p.growth || !!p.stress);
+  }
+
+  // The short "adapted to your profile" line and its link to /perfil: only
+  // once the personalized sections actually replaced something, not just
+  // because the status said 'personalized'.
+  get showPersonalizedNote(): boolean {
+    return this.personalized?.status === 'personalized' && this.usesPersonalizedContent;
+  }
+
+  get showProfileMissingNotice(): boolean {
+    return this.personalized?.status === 'profile_missing';
   }
 
   retry(): void {
@@ -179,6 +234,10 @@ export class ResultadosComponent implements OnInit {
     this.refineError = null;
     this.continuing = false;
     this.loadedAttemptId = null;
+    this.personalizedSubscription?.unsubscribe();
+    this.personalizing = false;
+    this.personalized = null;
+    this.personalizedAnnouncement = null;
 
     let attempt$: Observable<TestAttempt | null>;
     if (this.attemptId) {
@@ -208,8 +267,32 @@ export class ResultadosComponent implements OnInit {
           this.loadedAttemptId = loaded.attempt.id;
           this.loading = false;
           this.loadRefine(loaded.attempt);
+          this.loadPersonalizedDescription(loaded.attempt);
         },
         error: () => this.fail(),
+      });
+  }
+
+  // Feature 18 — only asked for the paid tier, and apart from the result:
+  // not_in_plan, unavailable and a network error all leave `personalized`
+  // null, same as a free attempt, so the screen keeps the generic content.
+  private loadPersonalizedDescription(attempt: TestAttempt): void {
+    if (attempt.tier !== 'paid_full') {
+      return;
+    }
+    this.personalizing = true;
+    this.personalizedSubscription = this.api
+      .getPersonalizedDescription(attempt.id)
+      .pipe(
+        catchError(() => of(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((description) => {
+        this.personalizing = false;
+        this.personalized = description;
+        if (this.showPersonalizedNote) {
+          this.personalizedAnnouncement = PERSONALIZED_ANNOUNCEMENT;
+        }
       });
   }
 
