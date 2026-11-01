@@ -6,7 +6,7 @@ import { ProfileComponent } from './profile.component';
 import { API_SERVICE, ApiService } from '../core/services/api.service';
 import { ApiError } from '../core/services/api-error';
 import { AuthService } from '../core/services/auth.service';
-import { withEmptyProfile } from '../core/models/user.model';
+import { AccountType, withEmptyProfile } from '../core/models/user.model';
 
 const user = withEmptyProfile({ id: 'user-1', displayName: 'Persona', email: 'persona@example.test' });
 
@@ -112,5 +112,86 @@ describe('ProfileComponent, deleting the account (Feature 11)', () => {
     expect(calls).toEqual(['deleteAccount']);
     expect(element(fixture).querySelector('.profile__delete-panel .profile__error')?.textContent?.trim()).toBe(message);
     expect(confirmButton(fixture).disabled).toBeFalse();
+  });
+});
+
+describe('ProfileComponent, the professionContext field label and placeholder', () => {
+  function create() {
+    const api: Partial<ApiService> = { getAttemptHistory: () => of([]) };
+    const auth: Partial<AuthService> = { currentUser: user };
+    TestBed.configureTestingModule({
+      imports: [ProfileComponent, NoopAnimationsModule],
+      providers: [
+        provideRouter([]),
+        { provide: API_SERVICE, useValue: api },
+        { provide: AuthService, useValue: auth },
+      ],
+    });
+    const fixture = TestBed.createComponent(ProfileComponent);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  function element(fixture: ReturnType<typeof create>): HTMLElement {
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  function professionField(fixture: ReturnType<typeof create>) {
+    const label = Array.from(element(fixture).querySelectorAll('.profile__field span')).find((span) =>
+      span.textContent?.includes('Contexto profesional') || span.textContent?.includes('Puesto o contexto laboral'),
+    );
+    const input = label?.closest('.profile__field')?.querySelector('input') as HTMLInputElement | undefined;
+    return { labelText: label?.textContent?.trim(), input };
+  }
+
+  // The selector binds its options with [ngValue], so a real <select> change event drives this
+  // same form control — this sets it the same way the user's click would, without going through
+  // Angular's internal index-based option values.
+  function selectAccountType(fixture: ReturnType<typeof create>, value: AccountType | null) {
+    fixture.componentInstance.form.controls.accountType.setValue(value);
+    fixture.detectChanges();
+  }
+
+  it('shows the rrhh label and placeholder when the account type is rrhh', () => {
+    const fixture = create();
+    selectAccountType(fixture, 'rrhh');
+
+    const { labelText, input } = professionField(fixture);
+    expect(labelText).toBe('Puesto o contexto laboral');
+    expect(input?.placeholder).toBe('ej. Postulante a analista de datos junior');
+  });
+
+  it('keeps the default label and placeholder for salud', () => {
+    const fixture = create();
+    selectAccountType(fixture, 'salud');
+
+    const { labelText, input } = professionField(fixture);
+    expect(labelText).toBe('Contexto profesional');
+    expect(input?.placeholder).toBe('ej. Psicóloga clínica');
+  });
+
+  it('hides the field entirely for individual, unchanged from before', () => {
+    const fixture = create();
+    selectAccountType(fixture, 'individual');
+
+    expect(professionField(fixture).input).toBeUndefined();
+  });
+
+  it('keeps the default label and placeholder with no account type selected', () => {
+    const fixture = create();
+    selectAccountType(fixture, null);
+
+    const { labelText, input } = professionField(fixture);
+    expect(labelText).toBe('Contexto profesional');
+    expect(input?.placeholder).toBe('ej. Psicóloga clínica');
+  });
+
+  it('switches the label when the selector changes, without saving', () => {
+    const fixture = create();
+    selectAccountType(fixture, 'rrhh');
+    expect(professionField(fixture).labelText).toBe('Puesto o contexto laboral');
+
+    selectAccountType(fixture, null);
+    expect(professionField(fixture).labelText).toBe('Contexto profesional');
   });
 });
