@@ -311,6 +311,48 @@ def test_the_fingerprint_uses_the_truncated_profession_context_too():
     assert short == long
 
 
+# --- rrhh: relate the sections to the job, without a fitness judgment (this fix) -------------------
+
+
+def test_system_prompt_tells_the_model_to_relate_sections_to_the_rrhh_job():
+    assert "relacioná cada sección con las demandas de ese puesto" in pd.SYSTEM_PROMPT
+    assert "No emitas un juicio de aptitud" in pd.SYSTEM_PROMPT
+
+
+def test_the_fingerprint_changes_with_the_prompt_version(monkeypatch):
+    same_inputs = dict(account_type=AccountType.RRHH, age_range=None, profession_context="Analista", model_id="m")
+    with_current_version = pd._fingerprint(**same_inputs)
+
+    monkeypatch.setattr(pd, "PROMPT_VERSION", "previous-version-marker")
+    with_old_version = pd._fingerprint(**same_inputs)
+
+    assert with_current_version != with_old_version
+
+
+def test_a_result_stored_under_the_previous_prompt_version_is_regenerated(
+    api, person, db_session, text_generator
+):
+    _, headers = person
+    attempt = _closed(api, headers)
+    _give_paid_tier(db_session, attempt["id"])
+    _set_profile(api, headers, accountType="rrhh", professionContext="Postulante a analista de datos junior")
+
+    _personalized(api, headers, attempt["id"])
+    assert text_generator.calls == 1
+
+    # Simulate a row saved under an older PROMPT_VERSION: its hash no longer matches what
+    # _fingerprint computes now, so the next visit must regenerate instead of serving it as-is.
+    # personalized_profile_hash is VARCHAR(64), exactly a sha256 hex digest's length, so the stale
+    # value flips the first character instead of growing past that limit.
+    row = _stored(db_session, attempt["id"])
+    stale_first_char = "1" if row.personalized_profile_hash[0] != "1" else "2"
+    row.personalized_profile_hash = stale_first_char + row.personalized_profile_hash[1:]
+    db_session.commit()
+
+    _personalized(api, headers, attempt["id"])
+    assert text_generator.calls == 2
+
+
 # --- the parser (plain string handling, not structured output) ------------------------------------
 
 

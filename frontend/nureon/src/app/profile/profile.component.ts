@@ -162,6 +162,18 @@ export class ProfileComponent implements OnInit {
     return this.auth.currentUser?.email ?? '';
   }
 
+  get professionContextLabel(): string {
+    return this.form.controls.accountType.value === 'rrhh'
+      ? 'Puesto o contexto laboral'
+      : 'Contexto profesional';
+  }
+
+  get professionContextPlaceholder(): string {
+    return this.form.controls.accountType.value === 'rrhh'
+      ? 'ej. Postulante a analista de datos junior'
+      : 'ej. Psicóloga clínica';
+  }
+
   get deleteConfirmed(): boolean {
     const typed = this.deleteConfirmation.value.trim().toLowerCase();
     return typed !== '' && typed === this.accountEmail.toLowerCase();

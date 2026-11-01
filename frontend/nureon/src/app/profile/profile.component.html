@@ -51,8 +51,8 @@
 
       @if (form.controls.accountType.value !== 'individual') {
         <label class="profile__field">
-          <span>Contexto profesional</span>
-          <input formControlName="professionContext" placeholder="ej. Psicóloga clínica" />
+          <span>{{ professionContextLabel }}</span>
+          <input formControlName="professionContext" [placeholder]="professionContextPlaceholder" />
         </label>
       }
 
