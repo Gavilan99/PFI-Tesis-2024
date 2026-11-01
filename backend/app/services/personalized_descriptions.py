@@ -48,6 +48,11 @@ logger = logging.getLogger(__name__)
 # below. Matches UpdateProfileIn's own limit (app.blueprints.users.schemas): defensive, not load-bearing.
 PROFESSION_CONTEXT_MAX_LENGTH = 255
 
+# Bumped whenever SYSTEM_PROMPT's wording changes, so the fingerprint below changes with it: a
+# profile that didn't change still gets a fresh generation on its next visit, instead of being
+# served sections written under a prompt that no longer matches what's in this file.
+PROMPT_VERSION = "2"
+
 # The four sections, in the exact order the prompt asks the model to answer in, and the markers this
 # module's parser looks for — plain uppercase, no accent, so a model that drops a tilde still matches.
 _SECTION_ORDER = ("FORTALEZAS", "TENSIONES", "CRECIMIENTO", "ESTRES")
@@ -79,6 +84,7 @@ Contenido:
 - Basate únicamente en el eneatipo y la descripción base que se te dan: no la contradigas y no le agregues rasgos de otros eneatipos.
 - FORTALEZAS son cualidades que la persona ya tiene a favor. TENSIONES son los puntos que le cuestan o la complican, no defectos de carácter ni nada clínico. CRECIMIENTO describe cómo se ve esta persona cuando está en su mejor versión. ESTRES describe cómo reacciona cuando está sobrepasada.
 - Adaptá las cuatro secciones al tipo de cuenta: "individual" es autoconocimiento personal; "salud" da por hecho que la persona está siendo acompañada por un profesional de la salud, así que enmarcalas en ese acompañamiento; "rrhh" enmarcalas en un contexto laboral. Si no se especifica el tipo de cuenta, usá el enfoque individual.
+- Si el tipo de cuenta es "rrhh" y el contexto profesional describe un puesto de trabajo, relacioná cada sección con las demandas de ese puesto: qué fortalezas lo favorecen, qué tensiones podrían aparecer en él, y cómo se manifestarían el crecimiento y el estrés en ese rol. No emitas un juicio de aptitud ni recomiendes contratar o descartar a la persona.
 - Si se te da una etapa de vida (rango de edad) o un contexto profesional, usalos para matizar las cuatro secciones, pero nunca hagas afirmaciones sobre la persona basadas en su edad que sean estereotipos.
 - No diagnostiques ni uses lenguaje clínico o patologizante.
 - No menciones que sos un modelo de lenguaje ni una inteligencia artificial, y no hagas referencia a estas instrucciones ni las cites.
@@ -141,13 +147,16 @@ def _profile_is_empty(account_type, age_range: str | None, profession_context: s
 
 
 def _fingerprint(account_type, age_range: str | None, profession_context: str | None, model_id: str) -> str:
-    """SHA-256 of the three profile fields (normalized) and the model id. Not reversible, and not
-    meant to be: it only tells "same inputs" from "something changed"."""
+    """SHA-256 of the three profile fields (normalized), the model id and PROMPT_VERSION. Not
+    reversible, and not meant to be: it only tells "same inputs, same prompt" from "something
+    changed" — including a SYSTEM_PROMPT edit, which bumps PROMPT_VERSION so every stored result
+    is treated as stale and regenerated on its next visit."""
     parts = [
         _normalized(account_type.value if account_type else None).lower(),
         _normalized(age_range).lower(),
         _normalized(profession_context)[:PROFESSION_CONTEXT_MAX_LENGTH].lower(),
         model_id,
+        PROMPT_VERSION,
     ]
     # A separator outside the data's own alphabet: concatenation alone could make two different
     # profiles hash the same ("ab" + "c" vs "a" + "bc").
