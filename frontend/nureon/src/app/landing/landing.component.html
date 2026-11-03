@@ -12,7 +12,16 @@
         En tu perfil están tus resultados y tu historial de tests, y desde ahí podés editar tus
         datos.
       </p>
-      <app-brand-button variant="primary" routerLink="/perfil">Ir a mi perfil</app-brand-button>
+      <div class="hero__actions">
+        @if (inProgress$ | async) {
+          <app-brand-button variant="secondary" routerLink="/test">Continuar test</app-brand-button>
+        } @else if (isProfessional(user)) {
+          <app-brand-button variant="primary" (click)="openStartTestDialog()">Empezar el test</app-brand-button>
+        } @else {
+          <app-brand-button variant="primary" routerLink="/test">Empezar el test</app-brand-button>
+        }
+        <app-brand-button variant="text" routerLink="/perfil">Ir a mi perfil</app-brand-button>
+      </div>
     } @else {
       <h1 class="nureon-heading">Descubrí qué te motiva, no solo cómo actuás</h1>
       <p class="hero__lead">
@@ -71,3 +80,7 @@
     </div>
   </section>
 </app-page-container>
+
+@if (showStartTestDialog) {
+  <app-start-test-dialog (closed)="closeStartTestDialog()"></app-start-test-dialog>
+}
