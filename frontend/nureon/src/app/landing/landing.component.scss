@@ -16,6 +16,13 @@
   padding: var(--nureon-space-xl) 0;
 }
 
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--nureon-space-sm);
+}
+
 .hero__lead {
   font: var(--nureon-text-body-lg-weight) var(--nureon-text-body-lg-size) /
     var(--nureon-text-body-lg-line-height) var(--nureon-font-body);
