@@ -12,6 +12,7 @@ from app.blueprints.attempts.schemas import (
 from app.blueprints.schemas import parse_body
 from app.security import current_user
 from app.services import attempts
+from app.services.attempts import SubjectRequest
 
 bp = Blueprint("attempts", __name__, url_prefix="/api/attempts")
 
@@ -23,8 +24,13 @@ def _attempt(attempt):
 @bp.post("")
 def create_attempt():
     # No body is the normal case; a body that is there must be valid JSON and pass the schema.
-    parse_body(CreateAttemptIn, request.get_json(silent=True) if request.get_data() else {})
-    attempt = attempts.create_attempt(current_user(), current_app.extensions["cut_plan"])
+    data = parse_body(CreateAttemptIn, request.get_json(silent=True) if request.get_data() else {})
+    subject = (
+        SubjectRequest(label=data.subject.label, context=data.subject.context, consent_declared=data.subject.consent_declared)
+        if data.subject is not None
+        else None
+    )
+    attempt = attempts.create_attempt(current_user(), current_app.extensions["cut_plan"], subject)
     return jsonify(_attempt(attempt)), 201
 
 

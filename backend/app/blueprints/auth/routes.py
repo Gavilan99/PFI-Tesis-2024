@@ -27,6 +27,7 @@ def register():
         username=data.username,
         email=data.email,
         password=data.password.get_secret_value(),
+        account_type=data.account_type,
         consent_accepted=data.consent_accepted,
         consent_version=current_app.config["CONSENT_VERSION"],
     )

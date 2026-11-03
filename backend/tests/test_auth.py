@@ -28,7 +28,7 @@ def test_register_returns_the_user_and_the_access_token(api, db_session):
     assert set(body["user"]) == USER_FIELDS
     assert body["user"]["displayName"] == "Juan Pérez"
     assert body["user"]["email"] == email
-    assert body["user"]["accountType"] is None
+    assert body["user"]["accountType"] == "individual"
     assert isinstance(body["expiresIn"], int) and body["expiresIn"] > 0
 
     row = db_session.scalar(select(User).where(User.email == email))
@@ -68,18 +68,25 @@ def test_email_differing_only_in_case_is_the_same_account(api):
 @pytest.mark.parametrize(
     "body",
     [
-        {"email": "a@example.test", "password": PASSWORD, "consentAccepted": True},
-        {"username": "abc", "password": PASSWORD, "consentAccepted": True},
-        {"username": "abc", "email": "a@example.test", "consentAccepted": True},
-        {"username": "abc", "email": "a@example.test", "password": PASSWORD, "consentAccepted": True,
-         "accountType": "salud"},
-        {"username": "ab", "email": "a@example.test", "password": PASSWORD, "consentAccepted": True},
-        {"username": "abc", "email": "not-an-email", "password": PASSWORD, "consentAccepted": True},
-        {"username": "abc", "email": "a@example.test", "password": "short", "consentAccepted": True},
-        {"username": "abc", "email": "a@example.test", "password": 12345678, "consentAccepted": True},
+        {"email": "a@example.test", "password": PASSWORD, "accountType": "individual", "consentAccepted": True},
+        {"username": "abc", "password": PASSWORD, "accountType": "individual", "consentAccepted": True},
+        {"username": "abc", "email": "a@example.test", "accountType": "individual", "consentAccepted": True},
+        {"username": "abc", "email": "a@example.test", "password": PASSWORD, "consentAccepted": True},
+        {"username": "abc", "email": "a@example.test", "password": PASSWORD, "accountType": "admin",
+         "consentAccepted": True},
+        {"username": "abc", "email": "a@example.test", "password": PASSWORD, "accountType": "individual",
+         "consentAccepted": True, "isAdmin": True},
+        {"username": "ab", "email": "a@example.test", "password": PASSWORD, "accountType": "individual",
+         "consentAccepted": True},
+        {"username": "abc", "email": "not-an-email", "password": PASSWORD, "accountType": "individual",
+         "consentAccepted": True},
+        {"username": "abc", "email": "a@example.test", "password": "short", "accountType": "individual",
+         "consentAccepted": True},
+        {"username": "abc", "email": "a@example.test", "password": 12345678, "accountType": "individual",
+         "consentAccepted": True},
     ],
-    ids=["no-username", "no-email", "no-password", "extra-field", "short-username", "bad-email",
-         "short-password", "non-string-password"],
+    ids=["no-username", "no-email", "no-password", "no-account-type", "bad-account-type", "extra-field",
+         "short-username", "bad-email", "short-password", "non-string-password"],
 )
 def test_register_body_is_exactly_register_input(api, body):
     assert_error(api.post("/api/auth/register", json=body), 400, "VALIDATION_ERROR")

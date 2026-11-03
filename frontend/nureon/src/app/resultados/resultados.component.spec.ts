@@ -20,6 +20,8 @@ const attempt: TestAttempt = {
   status: 'completed',
   startedAt: '2026-10-01T12:00:00Z',
   completedAt: '2026-10-01T12:20:00Z',
+  subjectLabel: null,
+  subjectContext: null,
 };
 
 const cut: CutStatus = {
@@ -233,6 +235,18 @@ describe('ResultadosComponent, personalized description (Feature 18)', () => {
 
     expect(element.textContent).toContain('Completá tu tipo de cuenta');
     expect(element.querySelector('a')?.getAttribute('href')).toBe('/perfil');
+    expect(page.strengths).toEqual(genericContent.strengths);
+    expect(page.tensions).toEqual(genericContent.tensions);
+  });
+
+  it('shows the context_missing notice with no link, and the generic content (Feature 20)', () => {
+    const fixture = create({ getPersonalizedDescription: () => of(nothing('context_missing')) });
+    const page = fixture.componentInstance;
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.textContent).toContain('no tiene un contexto declarado');
+    expect(element.textContent).not.toContain('Completá tu tipo de cuenta');
+    expect(element.querySelector('a[routerLink="/perfil"]')).toBeNull();
     expect(page.strengths).toEqual(genericContent.strengths);
     expect(page.tensions).toEqual(genericContent.tensions);
   });

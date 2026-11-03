@@ -74,12 +74,12 @@ def test_seed_leaves_version_zero_alone_once_it_has_responses(db_session, monkey
     from contextlib import contextmanager
 
     from app.db.models import Question, Response, TestAttempt, User
-    from app.db.models.enums import AttemptTier
+    from app.db.models.enums import AccountType, AttemptTier
     from scripts import seed_filler_bank
 
     load_bank(db_session, build_filler_bank(), version=FILLER_VERSION, activate=True)
     question = db_session.query(Question).filter_by(version=0, display_order=1).one()
-    user = User(cognito_sub="seed-test", email="seed@example.test")
+    user = User(cognito_sub="seed-test", email="seed@example.test", account_type=AccountType.INDIVIDUAL)
     db_session.add(user)
     db_session.flush()
     attempt = TestAttempt(user_id=user.id, tier=AttemptTier.FREE_REDUCED, questionnaire_version=0)

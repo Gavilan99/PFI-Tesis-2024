@@ -7,7 +7,7 @@ import pytest
 from sqlalchemy import select, text
 
 from app.db.models import AnswerOption, Question, Response, TestAttempt, User
-from app.db.models.enums import AttemptTier, GroupingSystem, QuestionType
+from app.db.models.enums import AccountType, AttemptTier, GroupingSystem, QuestionType
 from app.ml.training import bank as training_bank
 from app.repositories import question_repository
 from app.services.question_bank import QuestionBankError, load_bank, validate_bank
@@ -287,7 +287,7 @@ def test_changed_question_without_responses_is_updated(db_session, tmp_path):
 
 
 def _serve(db_session, question: Question) -> None:
-    user = User(cognito_sub="import-test", email="import@example.test")
+    user = User(cognito_sub="import-test", email="import@example.test", account_type=AccountType.INDIVIDUAL)
     db_session.add(user)
     db_session.flush()
     attempt = TestAttempt(user_id=user.id, tier=AttemptTier.FREE_REDUCED, questionnaire_version=1)

@@ -15,6 +15,7 @@ import { SubmitFeedbackInput } from '../models/feedback.model';
 import { SubmitContactMessageInput } from '../models/contact-message.model';
 import { CutStatus } from '../models/cut-status.model';
 import { CheckoutSession, PaymentConfirmation, Subscription } from '../models/subscription.model';
+import { Subject, SubjectInput } from '../models/subject.model';
 
 // Moved to api-error.ts so MockApiService can reject with it too; re-exported
 // so existing imports keep working.
@@ -80,8 +81,23 @@ export class HttpApiService implements ApiService {
     );
   }
 
-  createTestAttempt(_userId: string): Observable<TestAttempt> {
-    return this.http.post<TestAttempt>(this.url('/api/attempts'), null).pipe(catchError(toApiError));
+  // `subject` administers the test to an evaluado instead of the account itself (Feature 20); not
+  // part of ApiService yet — see subject.model.ts.
+  createTestAttempt(_userId: string, subject?: SubjectInput): Observable<TestAttempt> {
+    return this.http
+      .post<TestAttempt>(this.url('/api/attempts'), subject ? { subject } : null)
+      .pipe(catchError(toApiError));
+  }
+
+  listSubjects(): Observable<Subject[]> {
+    return this.http.get<Subject[]>(this.url('/api/subjects')).pipe(catchError(toApiError));
+  }
+
+  deleteSubject(subjectId: string): Observable<void> {
+    return this.http.delete(this.url(`/api/subjects/${encodeURIComponent(subjectId)}`)).pipe(
+      map(() => undefined),
+      catchError(toApiError),
+    );
   }
 
   getQuestions(attemptId: string): Observable<Question[]> {

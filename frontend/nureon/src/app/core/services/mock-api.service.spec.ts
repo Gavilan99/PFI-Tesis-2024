@@ -12,6 +12,7 @@ const input: RegisterInput = {
   username: 'Persona',
   email: 'persona@example.test',
   password: 'Contraseña-1',
+  accountType: 'individual',
   consentAccepted: true,
 };
 

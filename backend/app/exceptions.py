@@ -26,6 +26,15 @@ class EmailNotEditable(AppError):
     message = "El email no se puede modificar."
 
 
+class AccountTypeLocked(AppError):
+    """Changing accountType while the account has active subjects (Feature 20): the personalization
+    and the consent already recorded for them are tied to it."""
+
+    status_code = 409
+    code = "ACCOUNT_TYPE_LOCKED"
+    message = "No podés cambiar el tipo de cuenta mientras tengas evaluados activos."
+
+
 class PasswordRejected(AppError):
     status_code = 400
     code = "PASSWORD_REJECTED"
@@ -166,6 +175,32 @@ class OptionNotInQuestion(AppError):
     status_code = 400
     code = "OPTION_NOT_IN_QUESTION"
     message = "La opción elegida no corresponde a esa pregunta."
+
+
+class SubjectsNotAllowed(AppError):
+    """Evaluados (Feature 20) are a salud/rrhh feature: any other account type is refused, for both
+    the subjects routes and creating an attempt with a `subject`."""
+
+    status_code = 403
+    code = "SUBJECTS_NOT_ALLOWED"
+    message = "Esta función es sólo para cuentas de salud o de recursos humanos."
+
+
+class SubjectConsentRequired(AppError):
+    """Starting a subject's attempt without declaring the informed consent (Feature 20). The
+    declaration is per test: it is recorded again even when the subject already existed."""
+
+    status_code = 422
+    code = "SUBJECT_CONSENT_REQUIRED"
+    message = "Para administrarle el test a otra persona tenés que declarar que diste el consentimiento informado."
+
+
+class SubjectNotFound(AppError):
+    """A foreign or nonexistent subject answers the same, like an attempt."""
+
+    status_code = 404
+    code = "SUBJECT_NOT_FOUND"
+    message = "El evaluado no existe."
 
 
 class QuestionnaireUnavailable(AppError):

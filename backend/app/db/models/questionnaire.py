@@ -8,6 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.models._columns import created_now, fk, uuid_pk
+from app.db.models.users import Subject
 from app.db.models.enums import (
     GROUP_LABELS,
     AttemptStatus,
@@ -67,19 +68,24 @@ class AnswerOption(Base):
 class TestAttempt(Base):
     __tablename__ = "test_attempts"
     __table_args__ = (
-        # Exactly one owner: a self-testing user or a professional-administered subject.
-        sa.CheckConstraint("(user_id IS NULL) <> (subject_id IS NULL)", name="user_xor_subject"),
         sa.CheckConstraint(
             "(status = 'completed') = (completed_at IS NOT NULL)",
             name="completed_at_matches_status",
         ),
-        # At most one attempt in progress per user.
+        # At most one attempt in progress per person: a self-testing user (subject_id NULL) or a
+        # professional-administered subject (Feature 20). NULLS NOT DISTINCT (Postgres 16) makes two
+        # NULL subject_ids collide, so this also still covers the self-testing case on its own.
         sa.Index(
-            "uq_test_attempts_user_id_in_progress",
+            "uq_test_attempts_user_subject_in_progress",
             "user_id",
+            "subject_id",
             unique=True,
             postgresql_where=sa.text("status = 'in_progress'"),
+            postgresql_nulls_not_distinct=True,
         ),
+        # Backs GET /api/subjects' per-subject aggregates and DELETE /api/subjects/<id>'s update,
+        # neither of which the partial index above (limited to status = 'in_progress') helps.
+        sa.Index("ix_test_attempts_subject_id", "subject_id"),
         # A closed attempt is continued at most once, in a new attempt (migration 0004).
         sa.UniqueConstraint("continued_from_attempt_id"),
         sa.CheckConstraint(
@@ -90,7 +96,10 @@ class TestAttempt(Base):
     __test__ = False  # not a pytest test class, despite the name
 
     id: Mapped[uuid.UUID] = uuid_pk()
-    user_id: Mapped[uuid.UUID | None] = fk("users.id", nullable=True)
+    # Every attempt belongs to one account (Feature 20): `user_id` is never NULL any more.
+    # `subject_id` additionally names the evaluado this attempt is about, when the account
+    # administered it to someone else instead of taking it themselves.
+    user_id: Mapped[uuid.UUID] = fk("users.id", nullable=False)
     subject_id: Mapped[uuid.UUID | None] = fk("subjects.id", nullable=True)
     tier: Mapped[AttemptTier] = mapped_column(attempt_tier_enum, nullable=False)
     questionnaire_version: Mapped[int] = mapped_column(sa.Integer, nullable=False)
@@ -102,6 +111,19 @@ class TestAttempt(Base):
     # The closed attempt this one continues, with its answers copied. The copies appear in both: this
     # link is what keeps an analysis from counting them twice.
     continued_from_attempt_id: Mapped[uuid.UUID | None] = fk("test_attempts.id", nullable=True)
+    # The free-text context declared for this subject's test, at the time it was taken (Feature 20).
+    # NULL for a self-testing attempt, or once the subject is deleted (`app.repositories.user_repository`,
+    # `app.repositories.subject_repository.anonymize`). Never the subject's label.
+    subject_context: Mapped[str | None] = mapped_column(sa.Text)
+
+    subject: Mapped[Subject | None] = relationship(viewonly=True)
+
+    @property
+    def subject_label(self) -> str | None:
+        """The subject's current label, or None without one or once it was anonymized. Checking
+        `subject_id` first keeps a self-testing attempt (the overwhelming majority) from ever
+        touching the `subject` relationship."""
+        return self.subject.label if self.subject_id is not None and self.subject is not None else None
 
 
 class Response(Base):

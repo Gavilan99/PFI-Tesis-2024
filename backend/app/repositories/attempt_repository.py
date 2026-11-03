@@ -4,7 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import func, insert, literal, select, update
 from sqlalchemy.engine import Row
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.db.models import AnswerOption, Question, Response, TestAttempt, User
 from app.db.models.enums import AttemptStatus, AttemptTier
@@ -16,10 +16,16 @@ def lock_user(session: Session, user_id: uuid.UUID) -> None:
     session.execute(select(User.id).where(User.id == user_id).with_for_update())
 
 
-def abandon_in_progress(session: Session, user_id: uuid.UUID) -> None:
+def abandon_in_progress(session: Session, user_id: uuid.UUID, subject_id: uuid.UUID | None = None) -> None:
+    """Abandons only the in-progress attempt of this exact person: the account itself when
+    `subject_id` is None, or the named evaluado's when it isn't (Feature 20)."""
     session.execute(
         update(TestAttempt)
-        .where(TestAttempt.user_id == user_id, TestAttempt.status == AttemptStatus.IN_PROGRESS)
+        .where(
+            TestAttempt.user_id == user_id,
+            TestAttempt.subject_id == subject_id,
+            TestAttempt.status == AttemptStatus.IN_PROGRESS,
+        )
         .values(status=AttemptStatus.ABANDONED)
     )
 
@@ -61,10 +67,14 @@ def insert_attempt(
     user_id: uuid.UUID,
     tier: AttemptTier,
     version: int,
+    subject_id: uuid.UUID | None = None,
+    subject_context: str | None = None,
     continued_from: uuid.UUID | None = None,
 ) -> TestAttempt:
     attempt = TestAttempt(
         user_id=user_id,
+        subject_id=subject_id,
+        subject_context=subject_context,
         tier=tier,
         questionnaire_version=version,
         continued_from_attempt_id=continued_from,
@@ -120,10 +130,18 @@ def continuation_of(session: Session, attempt_id: uuid.UUID) -> uuid.UUID | None
     return session.scalar(select(TestAttempt.id).where(TestAttempt.continued_from_attempt_id == attempt_id))
 
 
-def latest_completed_for_user(session: Session, user_id: uuid.UUID) -> uuid.UUID | None:
+def latest_completed_for_user(
+    session: Session, user_id: uuid.UUID, subject_id: uuid.UUID | None = None
+) -> uuid.UUID | None:
+    """The latest completed attempt of this exact person (Feature 20): "only the latest closed
+    attempt is continuable" is per person, not per account."""
     return session.scalar(
         select(TestAttempt.id)
-        .where(TestAttempt.user_id == user_id, TestAttempt.status == AttemptStatus.COMPLETED)
+        .where(
+            TestAttempt.user_id == user_id,
+            TestAttempt.subject_id == subject_id,
+            TestAttempt.status == AttemptStatus.COMPLETED,
+        )
         .order_by(TestAttempt.completed_at.desc(), TestAttempt.id.desc())
         .limit(1)
     )
@@ -151,15 +169,19 @@ def latest_for_user(session: Session, user_id: uuid.UUID) -> TestAttempt | None:
         .where(TestAttempt.user_id == user_id)
         .order_by(TestAttempt.started_at.desc(), TestAttempt.id.desc())
         .limit(1)
+        .options(selectinload(TestAttempt.subject))
     )
 
 
 def history_for_user(session: Session, user_id: uuid.UUID) -> list[TestAttempt]:
+    # Eager-loaded: TestAttemptOut reads `subject_label` off every row, which would otherwise
+    # lazy-load `subject` once per subject-linked attempt (N+1) instead of in one extra query.
     return list(
         session.scalars(
             select(TestAttempt)
             .where(TestAttempt.user_id == user_id)
             .order_by(TestAttempt.started_at.desc(), TestAttempt.id.desc())
+            .options(selectinload(TestAttempt.subject))
         )
     )
 

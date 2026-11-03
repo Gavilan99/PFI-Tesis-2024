@@ -4,10 +4,10 @@ export type AttemptStatus = 'in_progress' | 'completed' | 'abandoned';
 
 export interface TestAttempt {
   id: string;
-  // XOR with subjectId at the DB level (CHECK constraint) — an attempt
-  // belongs to a self-testing user or a professional-administered subject,
-  // never both, never neither. Professional/subject accounts are Stage 4+
-  // scope; the mock only ever populates userId for now.
+  // Every attempt belongs to one account (userId, never null). subjectId
+  // additionally names the evaluado it was administered to (Feature 20),
+  // when a salud/rrhh account tested someone else instead of themselves;
+  // the mock only ever populates userId for now.
   userId: string | null;
   subjectId: string | null;
   tier: AttemptTier;
@@ -15,4 +15,8 @@ export interface TestAttempt {
   status: AttemptStatus;
   startedAt: string;
   completedAt: string | null;
+  // The subject's current label (null without one, or once it was
+  // deleted) and the free-text context declared for this attempt.
+  subjectLabel: string | null;
+  subjectContext: string | null;
 }

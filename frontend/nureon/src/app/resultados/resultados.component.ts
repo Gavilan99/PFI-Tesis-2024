@@ -210,6 +210,13 @@ export class ResultadosComponent implements OnInit {
     return this.personalized?.status === 'profile_missing';
   }
 
+  // Feature 20: an attempt administered to an evaluado (subject) with no declared context. Unlike
+  // profile_missing, this isn't about the viewer's own profile — the account administering the
+  // test is salud/rrhh and already has one — so this never points to /perfil.
+  get showContextMissingNotice(): boolean {
+    return this.personalized?.status === 'context_missing';
+  }
+
   retry(): void {
     this.load();
   }

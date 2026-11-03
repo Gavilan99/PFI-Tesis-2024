@@ -17,7 +17,7 @@ export interface Result {
 // 'personalized'; every other status means the generic, per-eneatype
 // versions in eneatype-content.ts are what gets shown instead.
 export interface PersonalizedDescription {
-  status: 'not_in_plan' | 'profile_missing' | 'personalized' | 'unavailable';
+  status: 'not_in_plan' | 'profile_missing' | 'context_missing' | 'personalized' | 'unavailable';
   strengths: string[] | null;
   tensions: string[] | null;
   growth: string | null;

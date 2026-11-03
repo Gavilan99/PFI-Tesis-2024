@@ -39,11 +39,12 @@ from app.exceptions import (
     PaidTierRequired,
     QuestionNotInAttempt,
     QuestionnaireUnavailable,
+    SubjectConsentRequired,
 )
 from app.ml.classification import Classifier
 from app.ml.cut_plan import Cut, CutPlan, question_code
-from app.repositories import attempt_repository
-from app.services import results, tiers
+from app.repositories import attempt_repository, subject_repository
+from app.services import results, subjects, tiers
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +67,16 @@ class ServedQuestion:
 
 
 @dataclass(frozen=True)
+class SubjectRequest:
+    """The optional `subject` of CreateAttemptIn (Feature 20), already validated by the schema:
+    `label` trimmed and bounded, `context` too, `consent_declared` a strict bool."""
+
+    label: str
+    context: str | None
+    consent_declared: bool
+
+
+@dataclass(frozen=True)
 class CutState:
     """Where an attempt stands in the cuts. The accuracy is the estimated eneatype accuracy of a cut:
     public on purpose, it is the number the product shows. Nothing else of the models is."""
@@ -81,12 +92,26 @@ class CutState:
     continued_by_attempt_id: uuid.UUID | None
 
 
-def create_attempt(user: User, plan: CutPlan) -> TestAttempt:
-    """Start an attempt for `user` with cut 1, abandoning the one in progress, in one transaction."""
+def create_attempt(user: User, plan: CutPlan, subject: SubjectRequest | None = None) -> TestAttempt:
+    """Start an attempt for `user` with cut 1, abandoning the one in progress, in one transaction.
+
+    With `subject` (Feature 20), the attempt is administered to that evaluado instead of taken by
+    the account itself: only the one in progress of that same person (this subject) is abandoned,
+    an existing active subject of the account with that label (case-insensitively) is reused, and
+    the informed consent is (re)declared either way, since the declaration is per test.
+    """
     session = Session()
     try:
         attempt_repository.lock_user(session, user.id)
-        attempt_repository.abandon_in_progress(session, user.id)
+        if subject is not None:
+            # lock_user only selects `id`, so it locks the row without refreshing `user`'s other
+            # attributes: without this, a concurrent update_profile that just lost the race to
+            # change accountType away from salud/rrhh (app.services.accounts.update_profile takes
+            # the same lock) would be invisible here, and a subject could still be resolved under
+            # a stale, no-longer-true account type.
+            session.refresh(user)
+        subject_id, subject_context = _resolve_subject(session, user, subject)
+        attempt_repository.abandon_in_progress(session, user.id, subject_id)
 
         version = attempt_repository.current_version(session)
         if version is None:
@@ -95,7 +120,12 @@ def create_attempt(user: User, plan: CutPlan) -> TestAttempt:
         items = _resolve_cut(session, version, plan.cuts[0])
 
         attempt = attempt_repository.insert_attempt(
-            session, user_id=user.id, tier=tiers.new_attempt_tier(), version=version
+            session,
+            user_id=user.id,
+            subject_id=subject_id,
+            subject_context=subject_context,
+            tier=tiers.new_attempt_tier(),
+            version=version,
         )
         attempt_repository.insert_served_items(session, attempt.id, items)
         session.commit()
@@ -103,6 +133,26 @@ def create_attempt(user: User, plan: CutPlan) -> TestAttempt:
         session.rollback()
         raise
     return attempt
+
+
+def _resolve_subject(
+    session, user: User, subject: SubjectRequest | None
+) -> tuple[uuid.UUID | None, str | None]:
+    """The subject id and declared context to store on a new attempt, or (None, None) for a
+    self-testing one. Finds or creates the account's active subject with this label, and always
+    (re)declares the consent: it is a fact about this test, not a one-time fact about the subject."""
+    if subject is None:
+        return None, None
+    subjects.require_professional(user)
+    if subject.consent_declared is not True:
+        raise SubjectConsentRequired()
+    now = datetime.now(timezone.utc)
+    existing = subject_repository.find_active_by_label(session, user.id, subject.label, for_update=True)
+    if existing is not None:
+        subject_repository.touch_consent(session, existing, now)
+        return existing.id, subject.context
+    created = subject_repository.insert(session, professional_user_id=user.id, label=subject.label, consent_at=now)
+    return created.id, subject.context
 
 
 def continue_attempt(user: User, attempt_id: uuid.UUID, plan: CutPlan) -> tuple[TestAttempt, bool]:
@@ -128,10 +178,12 @@ def continue_attempt(user: User, attempt_id: uuid.UUID, plan: CutPlan) -> tuple[
             attempt_repository.insert_served_items(session, attempt.id, items, first=served + 1)
             target, created = attempt, False
         else:
-            attempt_repository.abandon_in_progress(session, user.id)
+            attempt_repository.abandon_in_progress(session, user.id, attempt.subject_id)
             target = attempt_repository.insert_attempt(
                 session,
                 user_id=user.id,
+                subject_id=attempt.subject_id,
+                subject_context=attempt.subject_context,
                 tier=tier,
                 version=attempt.questionnaire_version,
                 continued_from=attempt.id,
@@ -179,7 +231,7 @@ def _continuation_block(
     if attempt.status is AttemptStatus.COMPLETED:
         if attempt_repository.continuation_of(session, attempt.id) is not None:
             return AttemptAlreadyContinued()
-        if attempt_repository.latest_completed_for_user(session, user.id) != attempt.id:
+        if attempt_repository.latest_completed_for_user(session, user.id, attempt.subject_id) != attempt.id:
             return AttemptNotContinuable()
         if attempt_repository.current_version(session) != attempt.questionnaire_version:
             return AttemptNotContinuable()

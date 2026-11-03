@@ -11,15 +11,17 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from app.db.models import User
+from app.db.models.enums import AccountType
 from app.db.session import Session
 from app.exceptions import (
     AccountConflict,
     AccountNotEnabled,
+    AccountTypeLocked,
     ConsentRequired,
     EmailAlreadyRegistered,
     Unauthenticated,
 )
-from app.repositories import user_repository
+from app.repositories import attempt_repository, subject_repository, user_repository
 from app.services.identity import IdentityProvider, IssuedToken
 
 
@@ -42,6 +44,7 @@ def register(
     username: str,
     email: str,
     password: str,
+    account_type: AccountType,
     consent_accepted: bool,
     consent_version: str,
 ) -> AuthenticatedSession:
@@ -60,6 +63,7 @@ def register(
             sub=created.sub,
             email=email,
             display_name=username,
+            account_type=account_type,
             consent_accepted_at=datetime.now(timezone.utc),
             consent_version=consent_version,
         )
@@ -101,13 +105,34 @@ def authenticated_user(identity: IdentityProvider, sub: str, *, provision_missin
         logger.warning("Refused an account that exists in the identity provider but has no users row")
         raise AccountNotEnabled()
     email = normalize_email(account.email)
-    user = _provision(session, sub=sub, email=email, display_name=account.display_name or email.split("@")[0])
+    user = _provision(
+        session,
+        sub=sub,
+        email=email,
+        display_name=account.display_name or email.split("@")[0],
+        # This fallback predates account types and has no signal for one: an account that reaches it
+        # never chose a type at registration, so it gets the same default a self-testing one would.
+        account_type=AccountType.INDIVIDUAL,
+    )
     session.commit()
     return user
 
 
 def update_profile(user: User, changes: dict) -> User:
+    """`changes["account_type"]` to a different value is refused while the account has active
+    subjects (Feature 20): the consent and the personalization already recorded for them are tied
+    to it. Keeping the same type, even if sent, is always allowed.
+
+    Changing the type locks the user row with the same `lock_user` attempt-creation serializes on,
+    so this can't race a concurrent `createTestAttempt` with a `subject`: whichever of the two gets
+    there first finishes (and, if it creates a subject, is seen by `has_active_subjects`) before
+    the other proceeds.
+    """
     session = Session()
+    if "account_type" in changes and changes["account_type"] != user.account_type:
+        attempt_repository.lock_user(session, user.id)
+        if subject_repository.has_active_subjects(session, user.id):
+            raise AccountTypeLocked()
     user_repository.update_profile(session, user, changes)
     session.commit()
     return user
@@ -133,8 +158,12 @@ def delete_account(identity: IdentityProvider, user: User) -> None:
     session.commit()
 
 
-def _provision(session, *, sub: str, email: str, display_name: str | None, **consent) -> User:
-    user = user_repository.insert_if_absent(session, sub=sub, email=email, display_name=display_name, **consent)
+def _provision(
+    session, *, sub: str, email: str, display_name: str | None, account_type: AccountType, **consent
+) -> User:
+    user = user_repository.insert_if_absent(
+        session, sub=sub, email=email, display_name=display_name, account_type=account_type, **consent
+    )
     if user is None:
         session.rollback()
         raise AccountConflict()

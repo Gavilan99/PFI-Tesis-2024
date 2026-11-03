@@ -97,7 +97,9 @@ export class RegistroComponent {
 
     this.submitting = true;
     this.submitError = null;
-    this.auth.register(this.form.getRawValue()).subscribe({
+    // accountType is required by the backend (Feature 20) but this form still doesn't ask for it —
+    // every account registers as 'individual'; salud/rrhh is chosen later, in the profile (RF07).
+    this.auth.register({ ...this.form.getRawValue(), accountType: 'individual' }).subscribe({
       next: (user) => {
         this.submitting = false;
         this.registeredUser = user;

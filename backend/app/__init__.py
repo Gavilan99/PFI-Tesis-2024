@@ -9,6 +9,7 @@ from app.blueprints.billing import billing_bp
 from app.blueprints.core import core_bp
 from app.blueprints.feedback import feedback_bp
 from app.blueprints.results import results_bp
+from app.blueprints.subjects import subjects_bp
 from app.blueprints.users import users_bp
 from app.config import ConfigError, get_config, load_env_file
 from app.errors import register_error_handlers
@@ -86,5 +87,6 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(results_bp)
     app.register_blueprint(feedback_bp)
     app.register_blueprint(billing_bp)
+    app.register_blueprint(subjects_bp)
 
     return app

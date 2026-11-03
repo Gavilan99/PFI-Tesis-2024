@@ -76,7 +76,13 @@ describe('RegistroComponent, consent (Feature 11)', () => {
     submit(fixture);
 
     expect(sent).toEqual([
-      { username: 'Persona', email: 'persona@example.test', password: 'Contraseña-1', consentAccepted: true },
+      {
+        username: 'Persona',
+        email: 'persona@example.test',
+        password: 'Contraseña-1',
+        consentAccepted: true,
+        accountType: 'individual',
+      },
     ]);
   });
 

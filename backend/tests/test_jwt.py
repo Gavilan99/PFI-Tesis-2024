@@ -92,7 +92,7 @@ def test_client_supplied_identity_headers_are_ignored(api, db_session):
     )
 
     assert response.get_json()["id"] == alice["id"]
-    assert response.get_json()["accountType"] is None
+    assert response.get_json()["accountType"] == "individual"
 
 
 def test_public_routes_need_no_token(api):
