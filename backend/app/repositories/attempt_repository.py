@@ -4,7 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import func, insert, literal, select, update
 from sqlalchemy.engine import Row
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.db.models import AnswerOption, Question, Response, TestAttempt, User
 from app.db.models.enums import AttemptStatus, AttemptTier
@@ -169,15 +169,19 @@ def latest_for_user(session: Session, user_id: uuid.UUID) -> TestAttempt | None:
         .where(TestAttempt.user_id == user_id)
         .order_by(TestAttempt.started_at.desc(), TestAttempt.id.desc())
         .limit(1)
+        .options(selectinload(TestAttempt.subject))
     )
 
 
 def history_for_user(session: Session, user_id: uuid.UUID) -> list[TestAttempt]:
+    # Eager-loaded: TestAttemptOut reads `subject_label` off every row, which would otherwise
+    # lazy-load `subject` once per subject-linked attempt (N+1) instead of in one extra query.
     return list(
         session.scalars(
             select(TestAttempt)
             .where(TestAttempt.user_id == user_id)
             .order_by(TestAttempt.started_at.desc(), TestAttempt.id.desc())
+            .options(selectinload(TestAttempt.subject))
         )
     )
 

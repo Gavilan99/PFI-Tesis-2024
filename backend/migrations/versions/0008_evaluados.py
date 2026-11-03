@@ -47,6 +47,16 @@ def upgrade() -> None:
     op.alter_column("users", "account_type", nullable=False)
 
     # --- test_attempts ------------------------------------------------------------------------
+    # Unlike account_type above, there is no account to backfill a subject-only attempt (allowed
+    # until now by user_xor_subject) with: fail loudly and by name here rather than let it surface
+    # as an opaque NOT NULL violation on the alter_column below.
+    orphaned = op.get_bind().execute(sa.text("SELECT count(*) FROM test_attempts WHERE user_id IS NULL")).scalar()
+    if orphaned:
+        raise RuntimeError(
+            f"{orphaned} test_attempts row(s) have no user_id (subject-only, allowed before this "
+            "migration, never actually produced by the application). There is no account to "
+            "backfill them with: resolve or remove them by hand before upgrading to 0008."
+        )
     op.drop_constraint(op.f("ck_test_attempts_user_xor_subject"), "test_attempts", type_="check")
     op.alter_column("test_attempts", "user_id", nullable=False)
     op.add_column("test_attempts", sa.Column("subject_context", sa.Text(), nullable=True))

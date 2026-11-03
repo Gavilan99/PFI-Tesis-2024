@@ -73,7 +73,10 @@ def list_active_with_stats(session: Session, professional_user_id: uuid.UUID) ->
     new attempt's context). Ordered by that newest attempt, subjects without one last.
 
     The count and the newest row are both window functions over the same partition, computed in
-    one pass over `test_attempts` instead of two separate subqueries.
+    one pass over `test_attempts` instead of two separate subqueries. The join to `Subject` here,
+    inside the windowed subquery, narrows that pass to this professional's own subjects before the
+    aggregation runs, instead of windowing over every account's subject-linked attempts first and
+    only filtering down to this one afterwards.
     """
     ranked = (
         select(
@@ -85,7 +88,8 @@ def list_active_with_stats(session: Session, professional_user_id: uuid.UUID) ->
             .over(partition_by=TestAttempt.subject_id, order_by=TestAttempt.started_at.desc())
             .label("rank"),
         )
-        .where(TestAttempt.subject_id.is_not(None))
+        .join(Subject, Subject.id == TestAttempt.subject_id)
+        .where(TestAttempt.subject_id.is_not(None), Subject.professional_user_id == professional_user_id)
         .subquery()
     )
     latest = (

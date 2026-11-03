@@ -160,6 +160,35 @@ def test_downgrade_0008_reconciles_data_the_old_constraints_forbid(app):
         engine.dispose()
 
 
+def test_upgrade_0008_refuses_a_subject_only_attempt_it_cannot_backfill(app):
+    """The pre-0008 schema allowed a subject-only attempt (user_id NULL, user_xor_subject's other
+    side); 0008 makes user_id NOT NULL with nothing to backfill it from. If one ever existed, the
+    migration must fail by name instead of surfacing the generic NOT NULL violation."""
+    with scratch_database(app.config["SQLALCHEMY_DATABASE_URI"]) as url:
+        config = alembic_config(url)
+        command.upgrade(config, "0007")
+        engine = create_engine(url)
+        with engine.begin() as connection:
+            professional_id = connection.execute(
+                text("INSERT INTO users (cognito_sub, email) VALUES ('sub-orphan', 'orphan@example.test') RETURNING id")
+            ).scalar_one()
+            subject_id = connection.execute(
+                text("INSERT INTO subjects (professional_user_id, label) VALUES (:pid, 'Huérfano') RETURNING id"),
+                {"pid": professional_id},
+            ).scalar_one()
+            connection.execute(
+                text(
+                    "INSERT INTO test_attempts (subject_id, tier, questionnaire_version) "
+                    "VALUES (:sid, 'free_reduced', 0)"
+                ),
+                {"sid": subject_id},
+            )
+
+        with pytest.raises(RuntimeError, match=r"1 test_attempts row\(s\) have no user_id"):
+            command.upgrade(config, "0008")
+        engine.dispose()
+
+
 def test_production_migrations_need_only_the_database(app):
     with scratch_database(app.config["SQLALCHEMY_DATABASE_URI"]) as url:
         environment = {name: value for name, value in os.environ.items() if name not in _APP_SETTINGS}
