@@ -35,6 +35,7 @@ describe('RegistroComponent, consent (Feature 11)', () => {
       username: 'Persona',
       email: 'persona@example.test',
       password: 'Contraseña-1',
+      accountType: 'individual',
     });
   }
 
@@ -95,5 +96,117 @@ describe('RegistroComponent, consent (Feature 11)', () => {
       ['Política de privacidad', '/privacidad', '_blank'],
       ['Términos y condiciones', '/terminos', '_blank'],
     ]);
+  });
+});
+
+describe('RegistroComponent, the required account type selector (Feature 21)', () => {
+  let sent: RegisterInput[];
+
+  function create() {
+    sent = [];
+    const auth: Partial<AuthService> = {
+      register: (input: RegisterInput) => {
+        sent.push(input);
+        return of(withEmptyProfile({ id: 'user-1', displayName: input.username, email: input.email }));
+      },
+    };
+    TestBed.configureTestingModule({
+      imports: [RegistroComponent, NoopAnimationsModule],
+      providers: [provideRouter([]), { provide: AuthService, useValue: auth }],
+    });
+    const fixture = TestBed.createComponent(RegistroComponent);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  function fillWithoutAccountType(fixture: ReturnType<typeof create>) {
+    fixture.componentInstance.form.patchValue({
+      username: 'Persona',
+      email: 'persona@example.test',
+      password: 'Contraseña-1',
+    });
+    const checkbox = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+      'input[type="checkbox"]',
+    )!;
+    checkbox.click();
+    fixture.detectChanges();
+  }
+
+  function submit(fixture: ReturnType<typeof create>) {
+    (fixture.nativeElement as HTMLElement).querySelector('form')!.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+  }
+
+  it('shows one explanatory line per account type', () => {
+    const fixture = create();
+    const text = (fixture.nativeElement as HTMLElement).textContent!;
+    expect(text).toContain('Para conocerte a vos mismo o misma.');
+    expect(text).toContain('Para evaluar a pacientes.');
+    expect(text).toContain('Para evaluar a postulantes.');
+  });
+
+  it("doesn't send without an account type chosen", () => {
+    const fixture = create();
+    fillWithoutAccountType(fixture);
+
+    submit(fixture);
+
+    expect(sent).toEqual([]);
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('.registro-form__account-type .registro-form__error'),
+    ).toBeTruthy();
+  });
+
+  it('sends the chosen account type once one is picked', () => {
+    const fixture = create();
+    fillWithoutAccountType(fixture);
+    const radios = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLInputElement>(
+      'input[type="radio"]',
+    );
+    radios[1].click(); // salud, by ACCOUNT_TYPE_OPTIONS order
+    fixture.detectChanges();
+
+    submit(fixture);
+
+    expect(sent.length).toBe(1);
+    expect(sent[0].accountType).toBe('salud');
+  });
+});
+
+describe('RegistroComponent, the post-registration step (Feature 21)', () => {
+  function create() {
+    const auth: Partial<AuthService> = {
+      register: (input: RegisterInput) =>
+        of(withEmptyProfile({ id: 'user-1', displayName: input.username, email: input.email })),
+    };
+    TestBed.configureTestingModule({
+      imports: [RegistroComponent, NoopAnimationsModule],
+      providers: [provideRouter([]), { provide: AuthService, useValue: auth }],
+    });
+    const fixture = TestBed.createComponent(RegistroComponent);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('offers to complete the profile now or later instead of jumping to the test', () => {
+    const fixture = create();
+    fixture.componentInstance.form.patchValue({
+      username: 'Persona',
+      email: 'persona@example.test',
+      password: 'Contraseña-1',
+      accountType: 'individual',
+    });
+    const checkbox = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+      'input[type="checkbox"]',
+    )!;
+    checkbox.click();
+    fixture.detectChanges();
+    (fixture.nativeElement as HTMLElement).querySelector('form')!.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent!;
+    expect(text).toContain('Completar perfil');
+    expect(text).toContain('Completar después');
+    expect(text).not.toContain('Empezar el test');
   });
 });

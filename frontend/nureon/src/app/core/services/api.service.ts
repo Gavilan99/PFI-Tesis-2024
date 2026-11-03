@@ -10,6 +10,7 @@ import { SubmitFeedbackInput } from '../models/feedback.model';
 import { SubmitContactMessageInput } from '../models/contact-message.model';
 import { CutStatus } from '../models/cut-status.model';
 import { CheckoutSession, PaymentConfirmation, Subscription } from '../models/subscription.model';
+import { Subject, SubjectInput } from '../models/subject.model';
 
 // Frontend-facing contract only — see PDR — NureonAI Data Model for the full
 // DB schema. Components depend on this interface and the API_SERVICE token,
@@ -37,7 +38,17 @@ export interface ApiService {
   // getLatestAttempt, getAttemptHistory) for the same reason as updateProfile:
   // there's no session token standing in for "whose attempts these are" yet.
   // A real backend would derive it from the auth token instead of a param.
-  createTestAttempt(userId: string): Observable<TestAttempt>;
+  // Feature 20/21 — `subject` administers the test to an evaluado instead of
+  // the account itself: salud/rrhh accounts only, rejected otherwise. Omitted
+  // (or undefined), the attempt belongs to the account itself, as before.
+  createTestAttempt(userId: string, subject?: SubjectInput): Observable<TestAttempt>;
+  // Feature 20/21 — the account's evaluados (salud/rrhh only): identifier,
+  // how many tests each has and their last one's context, for the profile's
+  // history and the "¿Para quién es este test?" dialog's autocomplete.
+  listSubjects(): Observable<Subject[]>;
+  // Logical deletion (Ley 25.326): the identifier and the declared context
+  // are erased, the evaluado's attempts and results stay, anonymous.
+  deleteSubject(subjectId: string): Observable<void>;
   // Contract decision: the whole subset (~40 items) arrives in one call when
   // the attempt is created, not one question at a time — the progress bar
   // can say "7 de 40" for real, and going back costs no request.

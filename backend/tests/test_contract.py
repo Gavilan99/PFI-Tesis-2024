@@ -76,6 +76,8 @@ CUT_METHODS = {"continueTestAttempt", "getCutStatus"}
 PAYMENT_METHODS = {"getSubscription", "startCheckout", "confirmPayment"}
 # Feature 17: needs the paid tier like the cut and payment methods, covered by its own test too.
 PERSONALIZED_METHODS = {"getPersonalizedDescription"}
+# Feature 20/21: salud/rrhh only, covered by their own test too.
+SUBJECT_METHODS = {"listSubjects", "deleteSubject"}
 
 
 @pytest.fixture(scope="module")
@@ -88,6 +90,7 @@ def shapes() -> dict[str, set[str]]:
         "TestAttempt": ts_keys("test-attempt.model.ts", "TestAttempt"),
         "Question": ts_keys("question.model.ts", "Question"),
         "AnswerOption": ts_keys("answer-option.model.ts", "AnswerOption"),
+        "Subject": ts_keys("subject.model.ts", "Subject"),
         "TestResponse": ts_keys("response.model.ts", "TestResponse"),
         "Result": ts_keys("result.model.ts", "Result"),
         "PersonalizedDescription": ts_keys("result.model.ts", "PersonalizedDescription"),
@@ -107,6 +110,7 @@ def test_the_parser_reads_the_interfaces_it_is_trusted_with(shapes):
     assert shapes["Question"] == {"id", "questionType", "promptText", "displayOrder", "answerOptions"}
     assert shapes["Result"] == {"id", "testAttemptId", "eneatype", "descriptionText", "generatedAt"}
     assert shapes["PersonalizedDescription"] == {"status", "strengths", "tensions", "growth", "stress"}
+    assert shapes["Subject"] == {"id", "label", "testCount", "lastTestAt", "lastTestContext"}
     assert shapes["AuthResponse"] == {"user", "accessToken", "expiresIn"}
     assert shapes["CutStatus"] == {
         "currentCut", "cutCount", "servedItems", "answeredItems", "nextCutItems", "canContinue",
@@ -241,7 +245,11 @@ def test_every_route_answers_exactly_the_shape_of_its_interface(api, question_ba
     checked["deleteAccount"] = _empty(response)
 
     assert set(checked) == (
-        ts_methods("api.service.ts", "ApiService") - CUT_METHODS - PAYMENT_METHODS - PERSONALIZED_METHODS
+        ts_methods("api.service.ts", "ApiService")
+        - CUT_METHODS
+        - PAYMENT_METHODS
+        - PERSONALIZED_METHODS
+        - SUBJECT_METHODS
     ), "a method of ApiService is not covered"
     assert [name for name, ok in checked.items() if not ok] == []
 
@@ -368,5 +376,48 @@ def test_the_personalized_description_route_answers_exactly_its_interface(api, q
     assert {name.split()[0] for name in checked} == PERSONALIZED_METHODS
     assert PERSONALIZED_METHODS <= ts_methods("api.service.ts", "ApiService"), (
         "the personalized-description method is missing from ApiService"
+    )
+    assert [name for name, ok in checked.items() if not ok] == []
+
+
+def test_the_subject_routes_answer_exactly_their_interfaces(api, question_bank, shapes):
+    # Feature 20/21: salud/rrhh only — createTestAttempt's optional `subject` is exercised here too,
+    # since it is what gives the account its first evaluado to list and delete.
+    response = api.post(
+        "/api/auth/register",
+        json=register_body(username="Persona evaluados", email=unique_email("evaluados"), account_type="salud"),
+    )
+    assert response.status_code == 201, response.get_json()
+    headers = bearer(response.get_json()["accessToken"])
+
+    checked = {}
+
+    response = api.post(
+        "/api/attempts",
+        headers=headers,
+        json={"subject": {"label": "Paciente de contrato", "context": "Primera consulta", "consentDeclared": True}},
+    )
+    assert response.status_code == 201, response.get_json()
+    attempt = response.get_json()
+
+    # listSubjects() -> GET /api/subjects
+    response = api.get("/api/subjects", headers=headers)
+    assert response.status_code == 200, response.get_json()
+    subjects = response.get_json()
+    checked["listSubjects"] = (
+        len(subjects) == 1
+        and _keys(subjects[0]) == shapes["Subject"]
+        and subjects[0]["label"] == "Paciente de contrato"
+    )
+    subject_id = subjects[0]["id"]
+    assert attempt["subjectId"] == subject_id
+
+    # deleteSubject(subjectId) -> DELETE /api/subjects/{id}: Observable<void>, no body.
+    response = api.delete(f"/api/subjects/{subject_id}", headers=headers)
+    checked["deleteSubject"] = _empty(response)
+
+    assert set(checked) == SUBJECT_METHODS
+    assert SUBJECT_METHODS <= ts_methods("api.service.ts", "ApiService"), (
+        "a subject method is missing from ApiService"
     )
     assert [name for name, ok in checked.items() if not ok] == []

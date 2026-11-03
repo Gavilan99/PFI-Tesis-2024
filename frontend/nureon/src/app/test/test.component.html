@@ -3,58 +3,62 @@
     <app-loading-state message="Cargando el test…"></app-loading-state>
   } @else if (error) {
     <app-error-state [message]="error" (retry)="retry()"></app-error-state>
-  } @else if (done) {
-    <section class="test-done">
-      <h1 class="nureon-heading">¡Listo! Terminaste el test.</h1>
-      <p>Ya podés ver tu resultado.</p>
-      <app-brand-button variant="primary" routerLink="/resultados">Ver mi resultado</app-brand-button>
+  } @else {
+    <app-subject-banner [label]="subjectLabel"></app-subject-banner>
 
-      <div class="test-done__feedback">
-        <h2>¿Qué te pareció el test?</h2>
-        <app-feedback-form [testAttemptId]="attemptId"></app-feedback-form>
+    @if (done) {
+      <section class="test-done">
+        <h1 class="nureon-heading">¡Listo! Terminaste el test.</h1>
+        <p>Ya podés ver tu resultado.</p>
+        <app-brand-button variant="primary" routerLink="/resultados">Ver mi resultado</app-brand-button>
+
+        <div class="test-done__feedback">
+          <h2>¿Qué te pareció el test?</h2>
+          <app-feedback-form [testAttemptId]="attemptId"></app-feedback-form>
+        </div>
+      </section>
+    } @else if (betweenCuts && cut) {
+      <app-between-cuts
+        [status]="cut"
+        [attemptId]="attemptId"
+        [paidTierRequired]="paidTierRequired"
+        [busy]="busy"
+        (seeResult)="seeResult()"
+        (continue)="continueToNextCut()"
+      ></app-between-cuts>
+    } @else if (currentQuestion) {
+      <app-progress-bar
+        [prefix]="progressPrefix"
+        [current]="progressCurrent"
+        [total]="progressTotal"
+      ></app-progress-bar>
+
+      <div class="test__question">
+        @if (instruction) {
+          <p class="test__instruction">{{ instruction }}</p>
+        }
+
+        @if (currentIndex > cutStartIndex) {
+          <button type="button" class="test__back" (click)="goBack()">← Volver</button>
+        }
+
+        @switch (currentQuestion.questionType) {
+          @case ('scenario') {
+            <app-scenario-item
+              [question]="currentQuestion"
+              [selectedOptionId]="selectedOptionId"
+              (select)="onSelect($event)"
+            ></app-scenario-item>
+          }
+          @case ('multiple_choice') {
+            <app-likert-item
+              [question]="currentQuestion"
+              [selectedOptionId]="selectedOptionId"
+              (select)="onSelect($event)"
+            ></app-likert-item>
+          }
+        }
       </div>
-    </section>
-  } @else if (betweenCuts && cut) {
-    <app-between-cuts
-      [status]="cut"
-      [attemptId]="attemptId"
-      [paidTierRequired]="paidTierRequired"
-      [busy]="busy"
-      (seeResult)="seeResult()"
-      (continue)="continueToNextCut()"
-    ></app-between-cuts>
-  } @else if (currentQuestion) {
-    <app-progress-bar
-      [prefix]="progressPrefix"
-      [current]="progressCurrent"
-      [total]="progressTotal"
-    ></app-progress-bar>
-
-    <div class="test__question">
-      @if (instruction) {
-        <p class="test__instruction">{{ instruction }}</p>
-      }
-
-      @if (currentIndex > cutStartIndex) {
-        <button type="button" class="test__back" (click)="goBack()">← Volver</button>
-      }
-
-      @switch (currentQuestion.questionType) {
-        @case ('scenario') {
-          <app-scenario-item
-            [question]="currentQuestion"
-            [selectedOptionId]="selectedOptionId"
-            (select)="onSelect($event)"
-          ></app-scenario-item>
-        }
-        @case ('multiple_choice') {
-          <app-likert-item
-            [question]="currentQuestion"
-            [selectedOptionId]="selectedOptionId"
-            (select)="onSelect($event)"
-          ></app-likert-item>
-        }
-      }
-    </div>
+    }
   }
 </app-page-container>

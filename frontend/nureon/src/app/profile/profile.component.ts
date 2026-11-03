@@ -2,11 +2,13 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { catchError, forkJoin, map, of } from 'rxjs';
+import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { API_SERVICE, ApiService } from '../core/services/api.service';
+import { ApiError } from '../core/services/api-error';
 import { AuthService } from '../core/services/auth.service';
 import { AccountType } from '../core/models/user.model';
 import { TestAttempt } from '../core/models/test-attempt.model';
+import { Subject } from '../core/models/subject.model';
 import { PageContainerComponent } from '../shared/layout/page-container/page-container.component';
 import { EmptyStateComponent } from '../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../shared/components/error-state/error-state.component';
@@ -17,6 +19,16 @@ import { FeedbackFormComponent } from '../shared/components/feedback-form/feedba
 interface HistoryEntry {
   attempt: TestAttempt;
   eneatype: number | null;
+}
+
+// Feature 20/21: one evaluado's row in the grouped history — its own attempts, grouped apart from
+// "Mis tests", with the inline "Eliminar evaluado" confirmation's own open/busy/error state.
+interface SubjectGroup {
+  subject: Subject;
+  lastEneatype: number | null;
+  deleteOpen: boolean;
+  deleting: boolean;
+  deleteError: string | null;
 }
 
 const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
@@ -96,6 +108,9 @@ export class ProfileComponent implements OnInit {
 
   saving = false;
   saveError: string | null = null;
+  // ACCOUNT_TYPE_LOCKED (Feature 20/21): shown next to the selector instead of the generic
+  // saveError, with the selector reverted to the account's current type.
+  accountTypeError: string | null = null;
   saved = false;
 
   deleteOpen = false;
@@ -105,7 +120,10 @@ export class ProfileComponent implements OnInit {
 
   historyLoading = true;
   historyError: string | null = null;
+  // The account's own attempts (every attempt, for an individual account; just the ones without
+  // an evaluado, for salud/rrhh — see isProfessional/subjectGroups below).
   history: HistoryEntry[] = [];
+  subjectGroups: SubjectGroup[] = [];
 
   constructor(
     private readonly fb: NonNullableFormBuilder,
@@ -135,7 +153,9 @@ export class ProfileComponent implements OnInit {
     }
     this.saving = true;
     this.saveError = null;
+    this.accountTypeError = null;
     this.saved = false;
+    const previousAccountType = this.auth.currentUser?.accountType ?? null;
     const raw = this.form.getRawValue();
     this.auth
       .updateProfile({
@@ -151,8 +171,15 @@ export class ProfileComponent implements OnInit {
           this.saving = false;
           this.saved = true;
         },
-        error: () => {
+        error: (err: unknown) => {
           this.saving = false;
+          // The account has active evaluados: their consent and personalization are tied to the
+          // type, so it's reverted instead of left showing a change that didn't save.
+          if (err instanceof ApiError && err.code === 'ACCOUNT_TYPE_LOCKED') {
+            this.accountTypeError = err.message;
+            this.form.controls.accountType.setValue(previousAccountType);
+            return;
+          }
           this.saveError = 'No pudimos guardar los cambios. Probá de nuevo.';
         },
       });
@@ -162,16 +189,11 @@ export class ProfileComponent implements OnInit {
     return this.auth.currentUser?.email ?? '';
   }
 
-  get professionContextLabel(): string {
-    return this.form.controls.accountType.value === 'rrhh'
-      ? 'Puesto o contexto laboral'
-      : 'Contexto profesional';
-  }
-
-  get professionContextPlaceholder(): string {
-    return this.form.controls.accountType.value === 'rrhh'
-      ? 'ej. Postulante a analista de datos junior'
-      : 'ej. Psicóloga clínica';
+  // Feature 20/21: salud/rrhh accounts administer the test to evaluados — their history groups
+  // separately (loadHistory) and "Iniciar test" (inicio) offers to test someone else.
+  get isProfessional(): boolean {
+    const type = this.auth.currentUser?.accountType;
+    return type === 'salud' || type === 'rrhh';
   }
 
   get deleteConfirmed(): boolean {
@@ -215,48 +237,106 @@ export class ProfileComponent implements OnInit {
     this.loadHistory();
   }
 
+  openDeleteSubject(group: SubjectGroup): void {
+    group.deleteOpen = true;
+    group.deleteError = null;
+  }
+
+  cancelDeleteSubject(group: SubjectGroup): void {
+    group.deleteOpen = false;
+    group.deleteError = null;
+  }
+
+  // Logical deletion (Ley 25.326): the identifier and the declared context are erased, the
+  // evaluado's attempts and results stay, anonymous — same as deleting the account itself, scoped
+  // to one evaluado. The group disappears from the list; its own past attempts aren't reloaded,
+  // same as "Mis tests" never refetching after a completed one changes nothing about it.
+  confirmDeleteSubject(group: SubjectGroup): void {
+    if (group.deleting) {
+      return;
+    }
+    group.deleting = true;
+    group.deleteError = null;
+    this.api.deleteSubject(group.subject.id).subscribe({
+      next: () => {
+        this.subjectGroups = this.subjectGroups.filter((g) => g !== group);
+      },
+      error: (err: Error) => {
+        group.deleting = false;
+        group.deleteError = err.message || 'No pudimos eliminar al evaluado.';
+      },
+    });
+  }
+
   private loadHistory(): void {
     this.historyLoading = true;
     this.historyError = null;
     const userId = this.auth.currentUser?.id;
     if (!userId) {
       this.history = [];
+      this.subjectGroups = [];
       this.historyLoading = false;
       return;
     }
-    this.api.getAttemptHistory(userId).subscribe({
-      next: (attempts) => {
-        const completed = attempts.filter((a) => a.status === 'completed');
-        if (completed.length === 0) {
-          this.history = attempts.map((attempt) => ({ attempt, eneatype: null }));
-          this.historyLoading = false;
-          return;
-        }
-        // Each fetch is independently resilient: one attempt with a missing/
-        // corrupted result (e.g. simulated via nureonDev.breakResultLoading())
-        // must not blank out every OTHER attempt's result — forkJoin as a
-        // whole errors if any single inner observable does, so each one
-        // catches its own failure instead of propagating it.
-        forkJoin(
-          completed.map((a) =>
-            this.api.getResult(a.id).pipe(
-              map((result) => ({ attemptId: a.id, eneatype: result.eneatype as number | null })),
-              catchError(() => of({ attemptId: a.id, eneatype: null })),
+    const isProfessional = this.isProfessional;
+    forkJoin({
+      attempts: this.api.getAttemptHistory(userId),
+      subjects: isProfessional ? this.api.listSubjects() : of<Subject[]>([]),
+    })
+      .pipe(
+        switchMap(({ attempts, subjects }) => {
+          const completed = attempts.filter((a) => a.status === 'completed');
+          if (completed.length === 0) {
+            return of({ attempts, subjects, eneatypeByAttempt: new Map<string, number | null>() });
+          }
+          // Each fetch is independently resilient: one attempt with a missing/
+          // corrupted result (e.g. simulated via nureonDev.breakResultLoading())
+          // must not blank out every OTHER attempt's result — forkJoin as a
+          // whole errors if any single inner observable does, so each one
+          // catches its own failure instead of propagating it.
+          return forkJoin(
+            completed.map((a) =>
+              this.api.getResult(a.id).pipe(
+                map((result) => ({ attemptId: a.id, eneatype: result.eneatype as number | null })),
+                catchError(() => of({ attemptId: a.id, eneatype: null })),
+              ),
             ),
-          ),
-        ).subscribe((results) => {
-          const eneatypeByAttempt = new Map(results.map((r) => [r.attemptId, r.eneatype]));
-          this.history = attempts.map((attempt) => ({
+          ).pipe(
+            map((results) => ({
+              attempts,
+              subjects,
+              eneatypeByAttempt: new Map(results.map((r) => [r.attemptId, r.eneatype])),
+            })),
+          );
+        }),
+      )
+      .subscribe({
+        next: ({ attempts, subjects, eneatypeByAttempt }) => {
+          // A salud/rrhh account's own attempts are the ones with no evaluado; an individual
+          // account's attempts never have one, so this is a no-op filter for it.
+          const ownAttempts = isProfessional ? attempts.filter((a) => a.subjectId === null) : attempts;
+          this.history = ownAttempts.map((attempt) => ({
             attempt,
             eneatype: eneatypeByAttempt.get(attempt.id) ?? null,
           }));
+          this.subjectGroups = subjects.map((subject) => {
+            const lastCompleted = attempts
+              .filter((a) => a.subjectId === subject.id && a.status === 'completed' && a.completedAt)
+              .sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime())[0];
+            return {
+              subject,
+              lastEneatype: lastCompleted ? eneatypeByAttempt.get(lastCompleted.id) ?? null : null,
+              deleteOpen: false,
+              deleting: false,
+              deleteError: null,
+            };
+          });
           this.historyLoading = false;
-        });
-      },
-      error: () => {
-        this.historyLoading = false;
-        this.historyError = 'No pudimos cargar tu historial.';
-      },
-    });
+        },
+        error: () => {
+          this.historyLoading = false;
+          this.historyError = 'No pudimos cargar tu historial.';
+        },
+      });
   }
 }

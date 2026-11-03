@@ -1,0 +1,11 @@
+.subject-banner {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--nureon-space-2xs) var(--nureon-space-sm);
+  margin-bottom: var(--nureon-space-sm);
+  background: var(--nureon-green-mint);
+  color: var(--nureon-type-on);
+  border-radius: var(--nureon-radius-full);
+  font-size: var(--nureon-text-body-sm-size);
+  font-weight: 600;
+}

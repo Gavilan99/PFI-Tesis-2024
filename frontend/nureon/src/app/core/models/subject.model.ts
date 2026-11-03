@@ -1,7 +1,5 @@
-// Evaluados (Feature 20): the people a salud/rrhh account tests in person,
-// from its own account — backend-only so far. Not part of ApiService yet;
-// http-api.service.ts and mock-api.service.ts implement listSubjects() and
-// deleteSubject() directly, ahead of the UI that will use them.
+// Evaluados (Feature 20 backend / Feature 21 UI): the people a salud/rrhh
+// account tests in person, from its own account.
 export interface Subject {
   id: string;
   label: string;

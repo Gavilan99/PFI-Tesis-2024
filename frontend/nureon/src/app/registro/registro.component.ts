@@ -6,12 +6,35 @@ import { RouterLink } from '@angular/router';
 import { PageContainerComponent } from '../shared/layout/page-container/page-container.component';
 import { BrandButtonComponent } from '../shared/components/brand-button/brand-button.component';
 import { AuthService } from '../core/services/auth.service';
-import { User } from '../core/models/user.model';
+import { AccountType, User } from '../core/models/user.model';
 import { CONSENT_SUMMARY } from '../legal/legal-content';
 
-// CU001 — Registrarse. One step, three fields (RF01), inline validation,
-// and an on-screen confirmation (flow step 6) instead of a redirect.
-// Errors (e.g. duplicate email) render inline in the form — never alert().
+interface AccountTypeOption {
+  value: AccountType;
+  label: string;
+  description: string;
+}
+
+// Feature 21 (RF01): the registration form now asks for the account type instead of always
+// sending 'individual' — one short line per option so the choice is informed without a trip to
+// the profile first. salud/rrhh is still editable later in the profile (unless it's locked by
+// active evaluados — see ProfileComponent).
+const ACCOUNT_TYPE_OPTIONS: AccountTypeOption[] = [
+  { value: 'individual', label: 'Individual', description: 'Para conocerte a vos mismo o misma.' },
+  { value: 'salud', label: 'Salud mental', description: 'Para evaluar a pacientes.' },
+  { value: 'rrhh', label: 'Recursos humanos', description: 'Para evaluar a postulantes.' },
+];
+
+// CU001 — Registrarse. One step, three fields plus the account type (RF01),
+// inline validation, and an on-screen confirmation (flow step 6) instead of
+// a redirect. Errors (e.g. duplicate email) render inline in the form —
+// never alert().
+//
+// Feature 21: the account type (individual/salud/rrhh) is required, chosen
+// here instead of always defaulting to 'individual' — a plain radio group,
+// like the consent checkbox below, with one line explaining what each is
+// for. The confirmation afterward offers to complete the rest of the
+// profile right away or later, instead of jumping straight to the test.
 //
 // Feature 11: informed, express consent (Ley 25.326 arts. 5, 6 and 12)
 // before anything is collected. A short notice above the button, and a
@@ -44,10 +67,12 @@ export class RegistroComponent {
     username: ['', [Validators.required, Validators.minLength(3)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
+    accountType: this.fb.control<AccountType | null>(null, Validators.required),
     consentAccepted: [false, Validators.requiredTrue],
   });
 
   readonly consentSummary = CONSENT_SUMMARY;
+  readonly accountTypeOptions = ACCOUNT_TYPE_OPTIONS;
 
   submitting = false;
   submitError: string | null = null;
@@ -82,6 +107,12 @@ export class RegistroComponent {
     return null;
   }
 
+  get accountTypeError(): string | null {
+    const control = this.form.controls.accountType;
+    if (!control.touched || !control.invalid) return null;
+    return 'Elegí el tipo de cuenta.';
+  }
+
   get consentError(): string | null {
     const control = this.form.controls.consentAccepted;
     if (!control.touched || !control.invalid) return null;
@@ -97,17 +128,25 @@ export class RegistroComponent {
 
     this.submitting = true;
     this.submitError = null;
-    // accountType is required by the backend (Feature 20) but this form still doesn't ask for it —
-    // every account registers as 'individual'; salud/rrhh is chosen later, in the profile (RF07).
-    this.auth.register({ ...this.form.getRawValue(), accountType: 'individual' }).subscribe({
-      next: (user) => {
-        this.submitting = false;
-        this.registeredUser = user;
-      },
-      error: (err: Error) => {
-        this.submitting = false;
-        this.submitError = err.message;
-      },
-    });
+    const raw = this.form.getRawValue();
+    this.auth
+      .register({
+        username: raw.username,
+        email: raw.email,
+        password: raw.password,
+        consentAccepted: raw.consentAccepted,
+        // The form's own Validators.required already refused submission without one.
+        accountType: raw.accountType!,
+      })
+      .subscribe({
+        next: (user) => {
+          this.submitting = false;
+          this.registeredUser = user;
+        },
+        error: (err: Error) => {
+          this.submitting = false;
+          this.submitError = err.message;
+        },
+      });
   }
 }

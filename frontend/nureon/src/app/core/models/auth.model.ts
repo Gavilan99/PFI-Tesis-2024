@@ -1,14 +1,11 @@
 import { AccountType } from './user.model';
 
 // RF01: username, email, password, plus the consent (Ley 25.326, Feature 11)
-// — nothing else but accountType. The rest of what the `users` table
-// eventually needs is collected in the profile (RF07, Stage 7).
+// and the account type (Feature 21) — nothing else. The rest of what the
+// `users` table eventually needs is collected in the profile (RF07, Stage 7).
 // consentAccepted must be true: the backend rejects the registration
 // otherwise (CONSENT_REQUIRED), and records the version of the texts in
-// force itself — the client never sends it. accountType is required by the
-// backend (Feature 20) but the registration form still doesn't ask for it —
-// RegistroComponent always sends 'individual'; salud/rrhh is chosen later,
-// in the profile, same as before.
+// force itself — the client never sends it.
 export interface RegisterInput {
   username: string;
   email: string;

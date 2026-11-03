@@ -16,6 +16,8 @@
     </ng-template>
 
     <section class="resultados" [style.--eneatype-color]="eneatypeColorVar">
+      <app-subject-banner [label]="subjectLabel"></app-subject-banner>
+
       <!-- Capas 1-3: eneatipo, resumen y motivación central comparten el
            alto del diagrama en desktop en vez de apilarse una abajo de la
            otra — ver la nota de layout en el .scss. -->
@@ -53,7 +55,8 @@
         </p>
       } @else if (showContextMissingNotice) {
         <p class="resultados__profile-missing-warning" role="status">
-          Este test no tiene un contexto declarado: no se pudo personalizar este resultado.
+          No pudimos personalizar este resultado: completá el contexto del evaluado al iniciar su
+          próximo test.
         </p>
       }
 

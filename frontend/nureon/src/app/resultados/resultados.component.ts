@@ -16,6 +16,7 @@ import { PageContainerComponent } from '../shared/layout/page-container/page-con
 import { ErrorStateComponent } from '../shared/components/error-state/error-state.component';
 import { LoadingStateComponent } from '../shared/components/loading-state/loading-state.component';
 import { BrandButtonComponent } from '../shared/components/brand-button/brand-button.component';
+import { SubjectBannerComponent } from '../shared/components/subject-banner/subject-banner.component';
 import { EnneagramDiagramComponent, ENEATYPE_STRUCTURE } from './enneagram-diagram/enneagram-diagram.component';
 import { FreemiumInfoDialogComponent } from './freemium-info-dialog/freemium-info-dialog.component';
 import { RefineResultComponent } from './refine-result/refine-result.component';
@@ -48,6 +49,7 @@ const PERSONALIZED_ANNOUNCEMENT = 'Tu resultado se personalizó según tu perfil
     ErrorStateComponent,
     LoadingStateComponent,
     BrandButtonComponent,
+    SubjectBannerComponent,
     EnneagramDiagramComponent,
     FreemiumInfoDialogComponent,
     RefineResultComponent,
@@ -72,6 +74,9 @@ export class ResultadosComponent implements OnInit {
   loading = true;
   error: string | null = null;
   eneatype: number | null = null;
+  // Feature 20/21: the evaluado's identifier, when this result is theirs — the "Evaluación de"
+  // banner, null for the account's own result.
+  subjectLabel: string | null = null;
   private tier: AttemptTier | null = null;
   // From the route on every param change: the router reuses this component
   // when going from /resultados/A to /resultados/B, so reading the snapshot
@@ -268,6 +273,7 @@ export class ResultadosComponent implements OnInit {
     this.loading = true;
     this.error = null;
     this.eneatype = null;
+    this.subjectLabel = null;
     this.tier = null;
     this.showFreemiumInfo = false;
     this.refineSubscription?.unsubscribe();
@@ -305,6 +311,7 @@ export class ResultadosComponent implements OnInit {
           }
           this.tier = loaded.attempt.tier;
           this.eneatype = loaded.result.eneatype;
+          this.subjectLabel = loaded.attempt.subjectLabel;
           this.loadedAttemptId = loaded.attempt.id;
           this.loading = false;
           this.loadRefine(loaded.attempt);

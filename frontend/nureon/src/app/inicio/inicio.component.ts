@@ -9,6 +9,7 @@ import { LoadingStateComponent } from '../shared/components/loading-state/loadin
 import { ErrorStateComponent } from '../shared/components/error-state/error-state.component';
 import { BrandButtonComponent } from '../shared/components/brand-button/brand-button.component';
 import { ProgressBarComponent } from '../shared/components/progress-bar/progress-bar.component';
+import { StartTestDialogComponent } from './start-test-dialog/start-test-dialog.component';
 
 type InicioState = 'no-attempts' | 'in-progress' | 'completed';
 
@@ -27,6 +28,7 @@ type InicioState = 'no-attempts' | 'in-progress' | 'completed';
     ErrorStateComponent,
     BrandButtonComponent,
     ProgressBarComponent,
+    StartTestDialogComponent,
   ],
   templateUrl: './inicio.component.html',
   styleUrl: './inicio.component.scss',
@@ -38,6 +40,9 @@ export class InicioComponent implements OnInit {
   answered = 0;
   total = 0;
   startingOver = false;
+  // CU008 (Feature 21): for salud/rrhh accounts, every action that would otherwise start a fresh
+  // attempt for the account itself opens this dialog instead, to ask who the test is for.
+  showStartTestDialog = false;
 
   constructor(
     @Inject(API_SERVICE) private readonly api: ApiService,
@@ -53,8 +58,23 @@ export class InicioComponent implements OnInit {
     return this.auth.currentUser?.displayName ?? '';
   }
 
+  // CU008: a salud/rrhh account also tests evaluados, not just itself — every "start a fresh
+  // attempt" action asks who it's for instead of assuming the account.
+  get isProfessional(): boolean {
+    const type = this.auth.currentUser?.accountType;
+    return type === 'salud' || type === 'rrhh';
+  }
+
   retry(): void {
     this.load();
+  }
+
+  openStartTestDialog(): void {
+    this.showStartTestDialog = true;
+  }
+
+  closeStartTestDialog(): void {
+    this.showStartTestDialog = false;
   }
 
   // Creating a new attempt makes it the user's latest (MockApiService
@@ -62,6 +82,10 @@ export class InicioComponent implements OnInit {
   // right after resumes THIS attempt from question 1 — no separate
   // "abandon" step needed for the one being left behind.
   startOver(): void {
+    if (this.isProfessional) {
+      this.openStartTestDialog();
+      return;
+    }
     const userId = this.auth.currentUser?.id;
     if (!userId || this.startingOver) {
       return;
