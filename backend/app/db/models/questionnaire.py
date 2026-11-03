@@ -83,6 +83,9 @@ class TestAttempt(Base):
             postgresql_where=sa.text("status = 'in_progress'"),
             postgresql_nulls_not_distinct=True,
         ),
+        # Backs GET /api/subjects' per-subject aggregates and DELETE /api/subjects/<id>'s update,
+        # neither of which the partial index above (limited to status = 'in_progress') helps.
+        sa.Index("ix_test_attempts_subject_id", "subject_id"),
         # A closed attempt is continued at most once, in a new attempt (migration 0004).
         sa.UniqueConstraint("continued_from_attempt_id"),
         sa.CheckConstraint(

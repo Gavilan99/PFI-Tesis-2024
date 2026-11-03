@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 from typing import Annotated, Any
 
-from pydantic import StrictBool, StringConstraints, model_validator
+from pydantic import StrictBool, StringConstraints, field_validator, model_validator
 
 from app.blueprints.schemas import ApiModel, ApiOutput
 from app.db.models.enums import AttemptStatus, AttemptTier, QuestionType
@@ -30,6 +30,11 @@ class SubjectIn(ApiModel):
     # SUBJECT_CONSENT_REQUIRED, the message that says what is missing, rather than a generic
     # validation error.
     consent_declared: StrictBool = False
+
+    @field_validator("context")
+    @classmethod
+    def _blank_is_none(cls, value: str | None) -> str | None:
+        return value or None
 
 
 class CreateAttemptIn(ApiModel):

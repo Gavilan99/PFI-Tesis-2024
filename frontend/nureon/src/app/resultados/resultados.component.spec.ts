@@ -239,6 +239,18 @@ describe('ResultadosComponent, personalized description (Feature 18)', () => {
     expect(page.tensions).toEqual(genericContent.tensions);
   });
 
+  it('shows the context_missing notice with no link, and the generic content (Feature 20)', () => {
+    const fixture = create({ getPersonalizedDescription: () => of(nothing('context_missing')) });
+    const page = fixture.componentInstance;
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.textContent).toContain('no tiene un contexto declarado');
+    expect(element.textContent).not.toContain('Completá tu tipo de cuenta');
+    expect(element.querySelector('a[routerLink="/perfil"]')).toBeNull();
+    expect(page.strengths).toEqual(genericContent.strengths);
+    expect(page.tensions).toEqual(genericContent.tensions);
+  });
+
   (['not_in_plan', 'unavailable'] as const).forEach((status) => {
     it(`shows the generic content with no message for status "${status}"`, () => {
       const fixture = create({ getPersonalizedDescription: () => of(nothing(status)) });

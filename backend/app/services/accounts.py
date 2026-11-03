@@ -21,7 +21,7 @@ from app.exceptions import (
     EmailAlreadyRegistered,
     Unauthenticated,
 )
-from app.repositories import subject_repository, user_repository
+from app.repositories import attempt_repository, subject_repository, user_repository
 from app.services.identity import IdentityProvider, IssuedToken
 
 
@@ -121,9 +121,16 @@ def authenticated_user(identity: IdentityProvider, sub: str, *, provision_missin
 def update_profile(user: User, changes: dict) -> User:
     """`changes["account_type"]` to a different value is refused while the account has active
     subjects (Feature 20): the consent and the personalization already recorded for them are tied
-    to it. Keeping the same type, even if sent, is always allowed."""
+    to it. Keeping the same type, even if sent, is always allowed.
+
+    Changing the type locks the user row with the same `lock_user` attempt-creation serializes on,
+    so this can't race a concurrent `createTestAttempt` with a `subject`: whichever of the two gets
+    there first finishes (and, if it creates a subject, is seen by `has_active_subjects`) before
+    the other proceeds.
+    """
     session = Session()
     if "account_type" in changes and changes["account_type"] != user.account_type:
+        attempt_repository.lock_user(session, user.id)
         if subject_repository.has_active_subjects(session, user.id):
             raise AccountTypeLocked()
     user_repository.update_profile(session, user, changes)

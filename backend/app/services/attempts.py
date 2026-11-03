@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from app.db.models import Response, TestAttempt, User
-from app.db.models.enums import AccountType, AttemptStatus, AttemptTier, QuestionType
+from app.db.models.enums import AttemptStatus, AttemptTier, QuestionType
 from app.db.session import Session
 from app.exceptions import (
     AppError,
@@ -40,12 +40,11 @@ from app.exceptions import (
     QuestionNotInAttempt,
     QuestionnaireUnavailable,
     SubjectConsentRequired,
-    SubjectsNotAllowed,
 )
 from app.ml.classification import Classifier
 from app.ml.cut_plan import Cut, CutPlan, question_code
 from app.repositories import attempt_repository, subject_repository
-from app.services import results, tiers
+from app.services import results, subjects, tiers
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +103,13 @@ def create_attempt(user: User, plan: CutPlan, subject: SubjectRequest | None = N
     session = Session()
     try:
         attempt_repository.lock_user(session, user.id)
+        if subject is not None:
+            # lock_user only selects `id`, so it locks the row without refreshing `user`'s other
+            # attributes: without this, a concurrent update_profile that just lost the race to
+            # change accountType away from salud/rrhh (app.services.accounts.update_profile takes
+            # the same lock) would be invisible here, and a subject could still be resolved under
+            # a stale, no-longer-true account type.
+            session.refresh(user)
         subject_id, subject_context = _resolve_subject(session, user, subject)
         attempt_repository.abandon_in_progress(session, user.id, subject_id)
 
@@ -137,12 +143,11 @@ def _resolve_subject(
     (re)declares the consent: it is a fact about this test, not a one-time fact about the subject."""
     if subject is None:
         return None, None
-    if user.account_type not in (AccountType.SALUD, AccountType.RRHH):
-        raise SubjectsNotAllowed()
+    subjects.require_professional(user)
     if subject.consent_declared is not True:
         raise SubjectConsentRequired()
     now = datetime.now(timezone.utc)
-    existing = subject_repository.find_active_by_label(session, user.id, subject.label)
+    existing = subject_repository.find_active_by_label(session, user.id, subject.label, for_update=True)
     if existing is not None:
         subject_repository.touch_consent(session, existing, now)
         return existing.id, subject.context

@@ -51,6 +51,10 @@
           Completá tu tipo de cuenta, rango etario y contexto profesional en
           <a routerLink="/perfil">tu perfil</a> para personalizar este resultado.
         </p>
+      } @else if (showContextMissingNotice) {
+        <p class="resultados__profile-missing-warning" role="status">
+          Este test no tiene un contexto declarado: no se pudo personalizar este resultado.
+        </p>
       }
 
       <!-- Capa 4: fortalezas y tensiones -->

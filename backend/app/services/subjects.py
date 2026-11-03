@@ -29,13 +29,15 @@ class SubjectSummary:
     last_test_context: str | None
 
 
-def _require_professional(user: User) -> None:
+def require_professional(user: User) -> None:
+    """The one place the "salud or rrhh" rule lives: shared with `app.services.attempts`, which
+    needs the same check for `CreateAttemptIn.subject`."""
     if user.account_type not in (AccountType.SALUD, AccountType.RRHH):
         raise SubjectsNotAllowed()
 
 
 def list_subjects(user: User) -> list[SubjectSummary]:
-    _require_professional(user)
+    require_professional(user)
     rows = subject_repository.list_active_with_stats(Session(), user.id)
     return [
         SubjectSummary(
@@ -52,9 +54,9 @@ def list_subjects(user: User) -> list[SubjectSummary]:
 def delete_subject(user: User, subject_id: uuid.UUID) -> None:
     """Anonymizes the subject (label and context_data to NULL, deleted_at now) and nulls the
     declared context of its attempts. The attempts, answers and results survive, still linked."""
-    _require_professional(user)
+    require_professional(user)
     session = Session()
-    subject = subject_repository.get_active_owned(session, subject_id, user.id)
+    subject = subject_repository.get_active_owned(session, subject_id, user.id, for_update=True)
     if subject is None:
         raise SubjectNotFound()
     subject_repository.anonymize(session, subject, datetime.now(timezone.utc))

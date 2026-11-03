@@ -163,18 +163,27 @@ function defaultState(): PersistedState {
 }
 
 function seededAccounts(): PersistedState['usersByEmail'] {
+  // accountType: 'individual', not null — every account has one since Feature 20 (the real
+  // backend backfilled every existing row the same way), so a seeded account that "never touched
+  // its profile" still has this much, same as a freshly registered one.
   return {
     [DEMO_ACCOUNT_EMAIL]: {
       password: DEMO_ACCOUNT_PASSWORD,
-      user: withEmptyProfile({ id: DEMO_USER_ID, displayName: 'Cuenta demo', email: DEMO_ACCOUNT_EMAIL }),
+      user: {
+        ...withEmptyProfile({ id: DEMO_USER_ID, displayName: 'Cuenta demo', email: DEMO_ACCOUNT_EMAIL }),
+        accountType: 'individual',
+      },
     },
     [PREMIUM_ACCOUNT_EMAIL]: {
       password: PREMIUM_ACCOUNT_PASSWORD,
-      user: withEmptyProfile({
-        id: PREMIUM_USER_ID,
-        displayName: 'Cuenta premium',
-        email: PREMIUM_ACCOUNT_EMAIL,
-      }),
+      user: {
+        ...withEmptyProfile({
+          id: PREMIUM_USER_ID,
+          displayName: 'Cuenta premium',
+          email: PREMIUM_ACCOUNT_EMAIL,
+        }),
+        accountType: 'individual',
+      },
     },
   };
 }

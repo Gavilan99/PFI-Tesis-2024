@@ -110,6 +110,56 @@ _APP_SETTINGS = (
 )
 
 
+def test_downgrade_0008_reconciles_data_the_old_constraints_forbid(app):
+    """Feature 20 (migration 0008) allows what the schema forbade before it: an attempt naming
+    both a user and a subject, and more than one in-progress attempt per user (one per subject).
+    The downgrade has to clean that up before `ck_test_attempts_user_xor_subject` and the old
+    per-user unique index can be recreated, instead of failing outright the moment the feature
+    was ever actually used.
+    """
+    with scratch_database(app.config["SQLALCHEMY_DATABASE_URI"]) as url:
+        config = alembic_config(url)
+        command.upgrade(config, "head")
+        engine = create_engine(url)
+        with engine.begin() as connection:
+            user_id = connection.execute(
+                text(
+                    "INSERT INTO users (cognito_sub, email, account_type) "
+                    "VALUES ('sub-downgrade', 'downgrade@example.test', 'salud') RETURNING id"
+                )
+            ).scalar_one()
+            subjects = [
+                connection.execute(
+                    text(
+                        "INSERT INTO subjects (professional_user_id, label, consent_declared_at) "
+                        "VALUES (:uid, :label, now()) RETURNING id"
+                    ),
+                    {"uid": user_id, "label": label},
+                ).scalar_one()
+                for label in ("A", "B")
+            ]
+            # Two in-progress attempts for the same user, one per subject: allowed since 0008,
+            # forbidden by the pre-0008 per-user-only unique index.
+            for subject_id in subjects:
+                connection.execute(
+                    text(
+                        "INSERT INTO test_attempts (user_id, subject_id, tier, questionnaire_version, status) "
+                        "VALUES (:uid, :sid, 'free_reduced', 0, 'in_progress')"
+                    ),
+                    {"uid": user_id, "sid": subject_id},
+                )
+
+        command.downgrade(config, "0007")
+
+        with engine.connect() as connection:
+            rows = connection.execute(
+                text("SELECT status, subject_id FROM test_attempts WHERE user_id = :uid"), {"uid": user_id}
+            ).all()
+        assert sorted(status for status, _ in rows) == ["abandoned", "in_progress"]
+        assert all(subject_id is None for _, subject_id in rows)
+        engine.dispose()
+
+
 def test_production_migrations_need_only_the_database(app):
     with scratch_database(app.config["SQLALCHEMY_DATABASE_URI"]) as url:
         environment = {name: value for name, value in os.environ.items() if name not in _APP_SETTINGS}
