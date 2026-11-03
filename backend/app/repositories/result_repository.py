@@ -98,6 +98,24 @@ def result_of_owned_completed(session: Session, attempt_id: uuid.UUID, user_id: 
     return found[0] if found else None
 
 
+def result_of_owned_completed_for_personalization(
+    session: Session, attempt_id: uuid.UUID, user_id: uuid.UUID
+) -> tuple[Result, AttemptTier, uuid.UUID | None, str | None] | None:
+    """Like `result_of_owned_completed_with_tier`, plus the attempt's `subject_id` and
+    `subject_context` (Feature 20): GET .../result/personalized builds the prompt from the attempt's
+    own declared context instead of the account's profile when there is a subject."""
+    row = session.execute(
+        select(Result, TestAttempt.tier, TestAttempt.subject_id, TestAttempt.subject_context)
+        .join(TestAttempt, TestAttempt.id == Result.test_attempt_id)
+        .where(
+            Result.test_attempt_id == attempt_id,
+            TestAttempt.user_id == user_id,
+            TestAttempt.status == AttemptStatus.COMPLETED,
+        )
+    ).first()
+    return tuple(row) if row is not None else None
+
+
 def lock_for_personalization(session: Session, result_id: uuid.UUID) -> None:
     """Serializes personalized-description generation for one result (Feature 17): without this,
     two concurrent requests that both see a missing or stale personalized description would each

@@ -4,6 +4,7 @@ from pydantic import Field, SecretStr, StrictBool, StringConstraints
 
 from app.blueprints.schemas import ApiModel, ApiOutput
 from app.blueprints.users.schemas import UserOut
+from app.db.models.enums import AccountType
 
 # Deliberately loose: the provider is the authority on what an email is. This only rejects what is
 # obviously not one, before spending a call.
@@ -22,6 +23,9 @@ class RegisterIn(ApiModel):
     username: Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=255)]
     email: Email
     password: Annotated[SecretStr, Field(min_length=8, max_length=256)]
+    # Feature 20: required from here on, so every account has one from the start. The frontend keeps
+    # registering everyone as 'individual' for now; salud/rrhh is chosen afterwards, in the profile.
+    account_type: AccountType
     consent_accepted: StrictBool = False
 
 

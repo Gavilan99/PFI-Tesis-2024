@@ -4,6 +4,7 @@ import pytest
 
 from app.blueprints.users.schemas import AGE_RANGES
 from app.db.models import User
+from tests.attempt_helpers import start, subject_body
 from tests.auth_helpers import USER_FIELDS, assert_error, registered
 
 
@@ -47,12 +48,19 @@ def test_patch_only_touches_the_fields_sent(api):
 
 def test_patch_with_null_or_empty_clears_an_optional_field(api):
     _, headers = registered(api)
-    api.patch("/api/users/me", headers=headers, json={"country": "Uruguay", "accountType": "rrhh"})
+    api.patch("/api/users/me", headers=headers, json={"country": "Uruguay", "gender": "femenino"})
 
-    response = api.patch("/api/users/me", headers=headers, json={"country": "", "accountType": None})
+    response = api.patch("/api/users/me", headers=headers, json={"country": "", "gender": None})
 
     assert response.get_json()["country"] is None
-    assert response.get_json()["accountType"] is None
+    assert response.get_json()["gender"] is None
+
+
+def test_account_type_cannot_be_cleared_to_null(api):
+    """Unlike the other profile fields: the column is NOT NULL since Feature 20."""
+    _, headers = registered(api)
+    assert_error(api.patch("/api/users/me", headers=headers, json={"accountType": None}), 400, "VALIDATION_ERROR")
+    assert api.get("/api/users/me", headers=headers).get_json()["accountType"] == "individual"
 
 
 def test_email_is_not_editable(api):
@@ -126,3 +134,36 @@ def test_patch_accepts_a_null_age_range(api):
 
     assert response.status_code == 200
     assert response.get_json()["ageRange"] is None
+
+
+# --- accountType lock while there are active subjects (Feature 20) ------------------------------
+
+
+def test_account_type_change_is_blocked_while_the_account_has_active_subjects(api, question_bank):
+    _, headers = registered(api, username="Profesional")
+    api.patch("/api/users/me", headers=headers, json={"accountType": "salud"})
+    start(api, headers, subject=subject_body("Paciente"))
+
+    response = api.patch("/api/users/me", headers=headers, json={"accountType": "rrhh"})
+
+    assert_error(response, 409, "ACCOUNT_TYPE_LOCKED")
+    assert api.get("/api/users/me", headers=headers).get_json()["accountType"] == "salud"
+
+
+def test_account_type_can_stay_the_same_with_active_subjects(api, question_bank):
+    _, headers = registered(api, username="Profesional")
+    api.patch("/api/users/me", headers=headers, json={"accountType": "salud"})
+    start(api, headers, subject=subject_body("Paciente"))
+
+    response = api.patch("/api/users/me", headers=headers, json={"accountType": "salud"})
+
+    assert response.status_code == 200
+
+
+def test_account_type_change_is_allowed_without_active_subjects(api):
+    _, headers = registered(api, username="Profesional")
+    api.patch("/api/users/me", headers=headers, json={"accountType": "salud"})
+
+    response = api.patch("/api/users/me", headers=headers, json={"accountType": "rrhh"})
+
+    assert response.status_code == 200

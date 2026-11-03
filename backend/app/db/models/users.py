@@ -41,7 +41,9 @@ class User(Base):
     cognito_sub: Mapped[str | None] = mapped_column(sa.String(255))
     email: Mapped[str | None] = mapped_column(sa.String(320))
     display_name: Mapped[str | None] = mapped_column(sa.String(255))
-    account_type: Mapped[AccountType | None] = mapped_column(account_type_enum)
+    # Required since Feature 20 (migration 0008): registration always sends one now. Existing rows
+    # were backfilled to 'individual'.
+    account_type: Mapped[AccountType] = mapped_column(account_type_enum, nullable=False)
     age_range: Mapped[str | None] = mapped_column(sa.String(32))
     gender: Mapped[str | None] = mapped_column(sa.String(64))
     country: Mapped[str | None] = mapped_column(sa.String(64))
@@ -56,9 +58,30 @@ class User(Base):
 
 
 class Subject(Base):
-    """A person tested in person by a professional account."""
+    """A person tested in person by a professional (salud/rrhh) account (Feature 20).
+
+    `label` identifies the subject inside the professional's own account (unique, case-insensitive,
+    among the active ones: the partial index below). `consent_declared_at` is the informed consent
+    the professional declares when starting the subject's test; it is overwritten on every attempt,
+    since the declaration is per test, not a one-time fact about the subject. `deleted_at` is this
+    table's own soft delete (DELETE /api/subjects/<id>): it anonymizes `label` and `context_data`,
+    like account deletion already did, and frees the label for reuse. The attempts and their results
+    survive deletion, still linked by `subject_id`.
+    """
 
     __tablename__ = "subjects"
+    __table_args__ = (
+        # The identifier a professional gives an evaluado does not repeat within their own active
+        # ones, so reusing a label at test time reliably means "the same person". Case-insensitive,
+        # and only among the active rows: a deleted one's label is free again.
+        sa.Index(
+            "uq_subjects_professional_user_id_label",
+            "professional_user_id",
+            sa.text("lower(label)"),
+            unique=True,
+            postgresql_where=sa.text("deleted_at IS NULL"),
+        ),
+    )
 
     id: Mapped[uuid.UUID] = uuid_pk()
     professional_user_id: Mapped[uuid.UUID] = fk("users.id", nullable=False)
@@ -66,4 +89,6 @@ class Subject(Base):
     context_data: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     # Reserved for the deferred delegation-link feature. Unused.
     linked_user_id: Mapped[uuid.UUID | None] = fk("users.id", nullable=True)
+    consent_declared_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True), nullable=False)
+    deleted_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
     created_at: Mapped[datetime] = created_now()

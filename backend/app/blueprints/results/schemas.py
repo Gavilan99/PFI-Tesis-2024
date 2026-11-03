@@ -25,7 +25,7 @@ class PersonalizedDescriptionOut(ApiOutput):
     result screen's own four sections (eneatype-content.ts). All four are null for every status but
     "personalized"."""
 
-    status: Literal["not_in_plan", "profile_missing", "personalized", "unavailable"]
+    status: Literal["not_in_plan", "profile_missing", "context_missing", "personalized", "unavailable"]
     strengths: list[str] | None
     tensions: list[str] | None
     growth: str | None

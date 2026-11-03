@@ -16,6 +16,7 @@ from sqlalchemy.exc import IntegrityError
 from alembic import command
 from app.config import LOCAL_CONSENT_VERSION, ConfigError, get_config
 from app.db.models import User
+from app.db.models.enums import AccountType
 from app.exceptions import InvalidCredentials
 from tests.auth_helpers import PASSWORD, assert_error, bearer, register_body
 from tests.migration_helpers import alembic_config, scratch_database
@@ -87,7 +88,12 @@ def test_the_consent_does_not_reach_the_browser(api):
 
 
 def test_the_consent_is_recorded_whole_or_not_at_all(db_session):
-    db_session.add(User(cognito_sub="sub-a-medias", email="a-medias@example.test", consent_version="2026-10-20"))
+    db_session.add(
+        User(
+            cognito_sub="sub-a-medias", email="a-medias@example.test", consent_version="2026-10-20",
+            account_type=AccountType.INDIVIDUAL,
+        )
+    )
     with pytest.raises(IntegrityError, match="ck_users_consent_recorded_whole"):
         db_session.flush()
 

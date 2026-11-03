@@ -13,6 +13,7 @@ import { SubmitFeedbackInput } from '../models/feedback.model';
 import { SubmitContactMessageInput } from '../models/contact-message.model';
 import { CutStatus } from '../models/cut-status.model';
 import { CheckoutSession, PaymentConfirmation, Subscription } from '../models/subscription.model';
+import { Subject, SubjectInput } from '../models/subject.model';
 import { ApiError, PAID_TIER_REQUIRED } from './api-error';
 import { CUT_ENDS, cutOfServed } from '../cuts/cut-plan';
 
@@ -127,6 +128,8 @@ function seedDemoAttempt(): { attempt: TestAttempt; eneatype: number } {
     status: 'completed',
     startedAt: '2026-01-01T12:00:00.000Z',
     completedAt: '2026-01-01T12:15:00.000Z',
+    subjectLabel: null,
+    subjectContext: null,
   };
   const eneatype = (Math.abs(hashCode(DEMO_ATTEMPT_ID)) % 9) + 1;
   return { attempt, eneatype };
@@ -232,11 +235,10 @@ export class MockApiService implements ApiService {
     if (this.state.usersByEmail[email]) {
       return throwError(() => new Error('Ese email ya está registrado.'));
     }
-    const user = withEmptyProfile({
-      id: `user-${this.state.nextId++}`,
-      displayName: input.username,
-      email: input.email,
-    });
+    const user: User = {
+      ...withEmptyProfile({ id: `user-${this.state.nextId++}`, displayName: input.username, email: input.email }),
+      accountType: input.accountType,
+    };
     this.state.usersByEmail[email] = { password: input.password, user };
     this.state.sessionUserId = user.id;
     this.saveState();
@@ -279,7 +281,9 @@ export class MockApiService implements ApiService {
     return of(undefined).pipe(delay(MOCK_DELAY_MS));
   }
 
-  createTestAttempt(userId: string): Observable<TestAttempt> {
+  // `subject` is not modeled in the mock's persisted state (Feature 20 is backend-only so far):
+  // this just carries the label/context straight onto the created attempt.
+  createTestAttempt(userId: string, subject?: SubjectInput): Observable<TestAttempt> {
     const id = `attempt-${this.state.nextId++}`;
     const attempt: TestAttempt = {
       id,
@@ -290,6 +294,8 @@ export class MockApiService implements ApiService {
       status: 'in_progress',
       startedAt: new Date().toISOString(),
       completedAt: null,
+      subjectLabel: subject?.label ?? null,
+      subjectContext: subject?.context ?? null,
     };
     this.abandonInProgress(userId);
     this.state.attempts[id] = attempt;
@@ -298,6 +304,15 @@ export class MockApiService implements ApiService {
     this.state.latestAttemptIdByUser[userId] = id;
     this.saveState();
     return of(attempt).pipe(delay(MOCK_DELAY_MS));
+  }
+
+  // Stubs: no persisted subjects in the mock yet (Feature 20 is backend-only so far).
+  listSubjects(): Observable<Subject[]> {
+    return of([]).pipe(delay(MOCK_DELAY_MS));
+  }
+
+  deleteSubject(_subjectId: string): Observable<void> {
+    return of(undefined).pipe(delay(MOCK_DELAY_MS));
   }
 
   getQuestions(attemptId: string): Observable<Question[]> {

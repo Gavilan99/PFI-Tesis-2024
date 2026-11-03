@@ -18,6 +18,8 @@ const attempt: TestAttempt = {
   status: 'in_progress',
   startedAt: '2026-10-01T12:00:00Z',
   completedAt: null,
+  subjectLabel: null,
+  subjectContext: null,
 };
 
 function questions(count: number): Question[] {

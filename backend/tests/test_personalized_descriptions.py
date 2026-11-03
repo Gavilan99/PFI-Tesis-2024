@@ -109,17 +109,18 @@ def test_a_free_attempt_is_not_in_plan_and_never_calls_the_generator(api, person
     assert text_generator.calls == 0
 
 
-# --- paid plan, nothing in the profile ------------------------------------------------------------
+# --- paid plan, nothing filled in beyond the account type (Feature 20) -----------------------------
 
 
-def test_paid_with_an_empty_profile_is_profile_missing_and_never_calls_the_generator(
-    api, person, db_session, text_generator
-):
+def test_paid_right_after_registering_is_already_personalized(api, person, db_session, text_generator):
+    """Since Feature 20, registration always sets `accountType` (defaulted to 'individual' here):
+    a brand new account already has that much profile, so "profile_missing" no longer happens for
+    a self-testing account just because nothing else was ever filled in."""
     _, headers = person
     attempt = _closed(api, headers)
     _give_paid_tier(db_session, attempt["id"])
-    assert _personalized(api, headers, attempt["id"]) == _nothing("profile_missing")
-    assert text_generator.calls == 0
+    assert _personalized(api, headers, attempt["id"])["status"] == "personalized"
+    assert text_generator.calls == 1
 
 
 # --- paid plan, with a profile ---------------------------------------------------------------------
@@ -267,11 +268,16 @@ def test_pregenerated_mode_still_refuses_a_free_attempt(api, person, pregenerate
     assert _personalized(api, headers, attempt["id"]) == _nothing("not_in_plan")
 
 
-def test_pregenerated_mode_still_refuses_an_empty_profile(api, person, db_session, pregenerated_mode):
+def test_pregenerated_mode_serves_the_default_account_type_right_after_registering(
+    api, person, db_session, pregenerated_mode
+):
+    """Like `test_paid_right_after_registering_is_already_personalized`: a brand new account's
+    default `accountType` ('individual') is already enough of a profile for the pregenerated path."""
     _, headers = person
     attempt = _closed(api, headers)
     _give_paid_tier(db_session, attempt["id"])
-    assert _personalized(api, headers, attempt["id"]) == _nothing("profile_missing")
+    eneatype = _result_eneatype(api, headers, attempt["id"])
+    assert _personalized(api, headers, attempt["id"]) == _pregenerated_body(eneatype, AccountType.INDIVIDUAL)
 
 
 # --- confidentiality (RNF04): the prompt never carries what it must not ---------------------------

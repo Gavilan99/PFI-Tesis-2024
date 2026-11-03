@@ -11,6 +11,7 @@ from sqlalchemy import delete, func, select, text
 from sqlalchemy.exc import IntegrityError
 
 from app.db.models import User
+from app.db.models.enums import AccountType
 from app.db.session import Session
 from app.services import accounts
 
@@ -58,7 +59,12 @@ def test_concurrent_first_requests_create_one_row(app, identity, committed):
 def test_email_is_stored_lowercase_by_the_database_too(db_session):
     savepoint = db_session.begin_nested()
     with pytest.raises(IntegrityError) as excinfo:
-        db_session.execute(text("INSERT INTO users (cognito_sub, email) VALUES ('s-upper', 'Upper@Example.test')"))
+        db_session.execute(
+            text(
+                "INSERT INTO users (cognito_sub, email, account_type) "
+                "VALUES ('s-upper', 'Upper@Example.test', 'individual')"
+            )
+        )
     savepoint.rollback()
     assert excinfo.value.orig.diag.constraint_name == "ck_users_email_is_lowercase"
 
@@ -72,7 +78,9 @@ def test_live_email_index_compares_lowercase(db_session):
 
 
 def test_provisioning_refuses_an_email_held_by_another_live_account(api, identity, db_session):
-    db_session.add(User(cognito_sub="otra-cuenta", email="ocupado@example.test", display_name="Otra"))
+    db_session.add(
+        User(cognito_sub="otra-cuenta", email="ocupado@example.test", display_name="Otra", account_type=AccountType.INDIVIDUAL)
+    )
     db_session.commit()
     account = identity.create_user("ocupado@example.test", "una-contraseña", "Huérfana")
 

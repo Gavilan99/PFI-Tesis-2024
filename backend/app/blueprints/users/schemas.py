@@ -33,7 +33,9 @@ class UpdateProfileIn(ApiModel):
     """`UpdateProfileInput`: every field optional, and no field outside it. Email is not editable."""
 
     display_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)] = None
-    account_type: AccountType | None = None
+    # Not optional any more (Feature 20): the column is NOT NULL, so clearing it is refused the same
+    # way as display_name's — the type has no `| None`, so an explicit null is a validation error.
+    account_type: AccountType = None
     age_range: Literal[*AGE_RANGES] | None = None
     gender: _text(64) | None = None
     country: _text(64) | None = None

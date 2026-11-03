@@ -2,6 +2,7 @@ QUESTION_FIELDS = {"id", "questionType", "promptText", "displayOrder", "answerOp
 OPTION_FIELDS = {"id", "questionId", "optionText", "displayOrder"}
 ATTEMPT_FIELDS = {
     "id", "userId", "subjectId", "tier", "questionnaireVersion", "status", "startedAt", "completedAt",
+    "subjectLabel", "subjectContext",
 }
 RESPONSE_FIELDS = {
     "id", "testAttemptId", "questionId", "selectedOptionId", "freeTextResponse", "orderingResponse",
@@ -19,8 +20,14 @@ def answer_body(question_id: str, option_id: str | None, **overrides) -> dict:
     }
 
 
-def start(client, headers) -> dict:
-    response = client.post("/api/attempts", headers=headers)
+def subject_body(label: str, *, context: str | None = None, consent_declared: bool = True) -> dict:
+    return {"label": label, "context": context, "consentDeclared": consent_declared}
+
+
+def start(client, headers, *, subject: dict | None = None) -> dict:
+    response = client.post(
+        "/api/attempts", headers=headers, json=({"subject": subject} if subject is not None else None)
+    )
     assert response.status_code == 201, response.get_json()
     return response.get_json()
 

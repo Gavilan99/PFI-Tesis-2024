@@ -20,6 +20,8 @@ const attempt: TestAttempt = {
   status: 'completed',
   startedAt: '2026-10-01T12:00:00Z',
   completedAt: '2026-10-01T12:20:00Z',
+  subjectLabel: null,
+  subjectContext: null,
 };
 
 const cut: CutStatus = {

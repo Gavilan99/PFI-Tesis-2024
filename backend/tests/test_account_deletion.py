@@ -80,7 +80,10 @@ def account(api, db_session):
         Feedback(test_attempt_id=attempt.id, user_id=row.id, rating=4, comment="Me reconocí, soy Juana."),
         # Feedback tied only to the attempt, without user_id: still hers.
         Feedback(test_attempt_id=attempt.id, rating=5, comment="Firmado: Juana."),
-        Subject(professional_user_id=row.id, label="Paciente Pérez", context_data={"dni": "12345678"}),
+        Subject(
+            professional_user_id=row.id, label="Paciente Pérez", context_data={"dni": "12345678"},
+            consent_declared_at=NOW,
+        ),
     )
     subscription = add(
         db_session,
@@ -178,7 +181,7 @@ def test_same_email_can_register_again_after_deletion(api, db_session, account):
     assert response.status_code == 201
     new_user = response.get_json()["user"]
     assert new_user["id"] != account["user"]["id"]
-    assert new_user["accountType"] is None
+    assert new_user["accountType"] == "individual"
     assert _count(db_session, User, User.email == email) == 1
 
 

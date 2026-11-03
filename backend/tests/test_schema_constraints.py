@@ -24,6 +24,7 @@ from app.db.models import (
     User,
 )
 from app.db.models.enums import (
+    AccountType,
     AttemptStatus,
     AttemptTier,
     GroupingSystem,
@@ -57,8 +58,17 @@ _counter = iter(range(1, 1_000_000))
 
 def make_user(session, **overrides) -> User:
     n = next(_counter)
-    values = {"cognito_sub": f"sub-{n}", "email": f"user{n}@example.test", "display_name": f"user{n}"}
+    values = {
+        "cognito_sub": f"sub-{n}", "email": f"user{n}@example.test", "display_name": f"user{n}",
+        "account_type": AccountType.INDIVIDUAL,
+    }
     return add(session, User(**{**values, **overrides}))
+
+
+def make_subject(session, professional: User, **overrides) -> Subject:
+    n = next(_counter)
+    values = {"professional_user_id": professional.id, "label": f"evaluado-{n}", "consent_declared_at": NOW}
+    return add(session, Subject(**{**values, **overrides}))
 
 
 def make_question(session, n_options: int = 3) -> Question:
@@ -97,37 +107,26 @@ def make_attempt(session, user: User, **overrides) -> TestAttempt:
 # --- test_attempts ------------------------------------------------------------------------------
 
 
-def test_attempt_with_both_user_and_subject_is_rejected(db_session):
+def test_attempt_without_a_user_is_rejected(db_session):
+    """Every attempt belongs to one account (Feature 20): `user_id` is NOT NULL even with a subject."""
     professional = make_user(db_session)
-    subject = add(db_session, Subject(professional_user_id=professional.id, label="S"))
+    subject = make_subject(db_session, professional)
+    savepoint = db_session.begin_nested()
+    with pytest.raises(IntegrityError) as excinfo:
+        db_session.add(TestAttempt(subject_id=subject.id, tier=AttemptTier.FREE_REDUCED, questionnaire_version=0))
+        db_session.flush()
+    savepoint.rollback()
+    assert excinfo.value.orig.diag.column_name == "user_id"
+
+
+def test_attempt_with_a_user_and_optionally_a_subject_is_accepted(db_session):
     user = make_user(db_session)
-    assert_violates(
-        db_session,
-        "ck_test_attempts_user_xor_subject",
-        TestAttempt(
-            user_id=user.id,
-            subject_id=subject.id,
-            tier=AttemptTier.FREE_REDUCED,
-            questionnaire_version=0,
-        ),
-    )
-
-
-def test_attempt_with_neither_user_nor_subject_is_rejected(db_session):
-    assert_violates(
-        db_session,
-        "ck_test_attempts_user_xor_subject",
-        TestAttempt(tier=AttemptTier.FREE_REDUCED, questionnaire_version=0),
-    )
-
-
-def test_attempt_with_only_a_user_or_only_a_subject_is_accepted(db_session):
-    user = make_user(db_session)
-    subject = add(db_session, Subject(professional_user_id=make_user(db_session).id))
+    professional = make_user(db_session)
+    subject = make_subject(db_session, professional)
     make_attempt(db_session, user)
     add(
         db_session,
-        TestAttempt(subject_id=subject.id, tier=AttemptTier.PAID_FULL, questionnaire_version=0),
+        TestAttempt(user_id=professional.id, subject_id=subject.id, tier=AttemptTier.PAID_FULL, questionnaire_version=0),
     )
 
 
@@ -139,7 +138,7 @@ def test_attempt_check_is_enforced_by_the_database_not_the_model(db_session):
                 "VALUES ('free_reduced', 0)"
             )
         )
-    assert excinfo.value.orig.diag.constraint_name == "ck_test_attempts_user_xor_subject"
+    assert excinfo.value.orig.diag.column_name == "user_id"
 
 
 def test_only_one_in_progress_attempt_per_user(db_session):
@@ -147,8 +146,27 @@ def test_only_one_in_progress_attempt_per_user(db_session):
     make_attempt(db_session, user)
     assert_violates(
         db_session,
-        "uq_test_attempts_user_id_in_progress",
+        "uq_test_attempts_user_subject_in_progress",
         TestAttempt(user_id=user.id, tier=AttemptTier.FREE_REDUCED, questionnaire_version=0),
+    )
+
+
+def test_only_one_in_progress_attempt_per_subject_too(db_session):
+    """The in-progress limit is per person (Feature 20): the same professional, different
+    evaluados, each get their own; the same evaluado twice collides, just like a user alone."""
+    professional = make_user(db_session)
+    subject_a = make_subject(db_session, professional, label="A")
+    subject_b = make_subject(db_session, professional, label="B")
+    make_attempt(db_session, professional, subject_id=subject_a.id)
+
+    add(
+        db_session,
+        TestAttempt(user_id=professional.id, subject_id=subject_b.id, tier=AttemptTier.FREE_REDUCED, questionnaire_version=0),
+    )
+    assert_violates(
+        db_session,
+        "uq_test_attempts_user_subject_in_progress",
+        TestAttempt(user_id=professional.id, subject_id=subject_a.id, tier=AttemptTier.FREE_REDUCED, questionnaire_version=0),
     )
 
 
@@ -171,6 +189,41 @@ def test_completed_attempt_needs_completed_at(db_session):
             status=AttemptStatus.COMPLETED,
         ),
     )
+
+
+# --- subjects (Feature 20) -----------------------------------------------------------------------
+
+
+def test_subject_requires_consent_declared_at(db_session):
+    professional = make_user(db_session)
+    savepoint = db_session.begin_nested()
+    with pytest.raises(IntegrityError) as excinfo:
+        db_session.add(Subject(professional_user_id=professional.id, label="Evaluado"))
+        db_session.flush()
+    savepoint.rollback()
+    assert excinfo.value.orig.diag.column_name == "consent_declared_at"
+
+
+def test_subject_label_is_unique_per_account_case_insensitively(db_session):
+    professional = make_user(db_session)
+    make_subject(db_session, professional, label="Paciente X")
+    assert_violates(
+        db_session,
+        "uq_subjects_professional_user_id_label",
+        Subject(professional_user_id=professional.id, label="paciente x", consent_declared_at=NOW),
+    )
+
+
+def test_subject_label_can_repeat_after_deletion(db_session):
+    professional = make_user(db_session)
+    make_subject(db_session, professional, label="Paciente Y", deleted_at=NOW)
+    make_subject(db_session, professional, label="Paciente Y")
+
+
+def test_subject_label_is_not_unique_across_accounts(db_session):
+    a, b = make_user(db_session), make_user(db_session)
+    make_subject(db_session, a, label="Mismo nombre")
+    make_subject(db_session, b, label="Mismo nombre")
 
 
 # --- responses ----------------------------------------------------------------------------------
@@ -368,7 +421,11 @@ def test_deleting_a_user_with_attempts_is_restricted(db_session):
 
 def test_cognito_sub_is_unique(db_session):
     make_user(db_session, cognito_sub="same-sub")
-    assert_violates(db_session, "uq_users_cognito_sub", User(cognito_sub="same-sub", email="x@example.test"))
+    assert_violates(
+        db_session,
+        "uq_users_cognito_sub",
+        User(cognito_sub="same-sub", email="x@example.test", account_type=AccountType.INDIVIDUAL),
+    )
 
 
 def test_email_is_unique_among_live_accounts(db_session):
@@ -376,7 +433,7 @@ def test_email_is_unique_among_live_accounts(db_session):
     assert_violates(
         db_session,
         "uq_users_email_not_deleted",
-        User(cognito_sub="other", email="dup@example.test"),
+        User(cognito_sub="other", email="dup@example.test", account_type=AccountType.INDIVIDUAL),
     )
 
 
@@ -395,7 +452,10 @@ def test_deleted_at_matches_is_deleted(db_session, is_deleted, deleted_at):
     assert_violates(
         db_session,
         "ck_users_deleted_at_matches_flag",
-        User(cognito_sub="s", email="e@example.test", is_deleted=is_deleted, deleted_at=deleted_at),
+        User(
+            cognito_sub="s", email="e@example.test", account_type=AccountType.INDIVIDUAL,
+            is_deleted=is_deleted, deleted_at=deleted_at,
+        ),
     )
 
 
@@ -498,7 +558,8 @@ def test_enum_rejects_values_outside_the_vocabulary(db_session):
 def test_ids_and_timestamps_are_generated_by_the_database(db_session):
     row = db_session.execute(
         text(
-            "INSERT INTO users (cognito_sub, email) VALUES ('db-gen', 'dbgen@example.test') "
+            "INSERT INTO users (cognito_sub, email, account_type) "
+            "VALUES ('db-gen', 'dbgen@example.test', 'individual') "
             "RETURNING id, created_at, is_deleted"
         )
     ).one()

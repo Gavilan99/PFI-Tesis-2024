@@ -8,18 +8,36 @@ sale del servidor" in CLAUDE.md. Every test response is checked for them automat
 
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import model_validator
+from pydantic import StrictBool, StringConstraints, model_validator
 
 from app.blueprints.schemas import ApiModel, ApiOutput
 from app.db.models.enums import AttemptStatus, AttemptTier, QuestionType
 from app.exceptions import TierNotAccepted
 
 
+class SubjectIn(ApiModel):
+    """The optional `subject` of `createTestAttempt` (Feature 20): administers the test to an
+    evaluado instead of the account itself. `label` identifies them within the account (reused,
+    case-insensitively, if it already names an active one); `context` precompletes the same free
+    text a self-testing account would have in its profile; `consentDeclared` must be `true`, strict:
+    the professional declares the informed consent anew for every test."""
+
+    label: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=64)]
+    context: Annotated[str, StringConstraints(strip_whitespace=True, max_length=255)] | None = None
+    # Defaults to false, like RegisterIn.consent_accepted: a body without it gets
+    # SUBJECT_CONSENT_REQUIRED, the message that says what is missing, rather than a generic
+    # validation error.
+    consent_declared: StrictBool = False
+
+
 class CreateAttemptIn(ApiModel):
-    """`createTestAttempt(userId)` carries nothing the server uses. `userId` is tolerated and ignored
-    (identity comes from the token); a tier is refused outright; anything else is unknown."""
+    """`createTestAttempt(userId)` carries nothing the server uses besides the optional `subject`.
+    `userId` is tolerated and ignored (identity comes from the token); a tier is refused outright;
+    anything else is unknown."""
+
+    subject: SubjectIn | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -55,6 +73,10 @@ class TestAttemptOut(ApiOutput):
     status: AttemptStatus
     started_at: datetime
     completed_at: datetime | None
+    # Feature 20: the evaluado's current label (null without one, or once it was deleted) and the
+    # free-text context declared for this attempt. Never the professional's own profile fields.
+    subject_label: str | None
+    subject_context: str | None
 
 
 class AnswerOptionOut(ApiOutput):

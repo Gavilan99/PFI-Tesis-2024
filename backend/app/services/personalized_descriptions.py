@@ -143,6 +143,12 @@ def _normalized(value: str | None) -> str:
 
 
 def _profile_is_empty(account_type, age_range: str | None, profession_context: str | None) -> bool:
+    """Since Feature 20, `account_type` is always set (registration requires one, defaulted to
+    'individual' for an account that doesn't choose otherwise): a self-testing account with nothing
+    else filled in is no longer "empty" by this check — it already has that much. "profile_missing"
+    for a self-testing account is unreachable from here on; the newer "context_missing" (an
+    attempt administered to a subject with no declared context) is the status that replaces it in
+    practice."""
     return not (account_type or _normalized(age_range) or _normalized(profession_context))
 
 
@@ -235,21 +241,35 @@ def get_personalized_description(
     since; otherwise generates, stores and returns them. A failure (the generator's, or an answer
     that doesn't follow the format or doesn't pass the length checks) falls back to the pregenerated
     sections instead, without storing anything, so the next visit retries the generator.
+
+    An attempt administered to a subject (Feature 20) uses the professional's own `account_type`
+    (always salud or rrhh), never an age range, and the attempt's declared `subject_context` in
+    place of the account's `profession_context` — the subject's own data, never the account's.
+    Missing that context answers "context_missing" rather than "profile_missing": there is no
+    profile to complete here, only a context that was optional when the test was started. The
+    subject's label never reaches the prompt or the fingerprint, here or anywhere else.
     """
     session = Session()
-    found = result_repository.result_of_owned_completed_with_tier(session, attempt_id, user.id)
+    found = result_repository.result_of_owned_completed_for_personalization(session, attempt_id, user.id)
     if found is None:
         raise ResultNotFound()
-    result, tier = found
+    result, tier, subject_id, subject_context = found
+    has_subject = subject_id is not None
+    age_range = None if has_subject else user.age_range
+    context = subject_context if has_subject else user.profession_context
+    empty_status = "context_missing" if has_subject else "profile_missing"
 
     if tier is not AttemptTier.PAID_FULL:
         return _empty_sections("not_in_plan")
-    if _profile_is_empty(user.account_type, user.age_range, user.profession_context):
-        return _empty_sections("profile_missing")
+    if has_subject:
+        if not _normalized(context):
+            return _empty_sections(empty_status)
+    elif _profile_is_empty(user.account_type, age_range, context):
+        return _empty_sections(empty_status)
     if generator is None:
         return _pregenerated_sections(result.eneatype, user.account_type)
 
-    fingerprint = _fingerprint(user.account_type, user.age_range, user.profession_context, generator.model_id)
+    fingerprint = _fingerprint(user.account_type, age_range, context, generator.model_id)
     if result.personalized_strengths and result.personalized_profile_hash == fingerprint:
         return _from_row(result)
 
@@ -262,13 +282,7 @@ def get_personalized_description(
         session.rollback()
         return _from_row(result)
 
-    prompt = _user_prompt(
-        result.eneatype,
-        description_for(result.eneatype),
-        user.account_type,
-        user.age_range,
-        user.profession_context,
-    )
+    prompt = _user_prompt(result.eneatype, description_for(result.eneatype), user.account_type, age_range, context)
     try:
         raw = generator.generate(SYSTEM_PROMPT, prompt)
     except TextGenerationFailed:

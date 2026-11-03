@@ -5,6 +5,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.db.models import Feedback, Subject, TestAttempt, User
+from app.db.models.enums import AccountType
 
 
 def get_live_by_sub(session: Session, sub: str, *, for_update: bool = False) -> User | None:
@@ -36,6 +37,7 @@ def insert_if_absent(
     sub: str,
     email: str,
     display_name: str | None,
+    account_type: AccountType,
     consent_accepted_at: datetime | None = None,
     consent_version: str | None = None,
 ) -> User | None:
@@ -51,6 +53,7 @@ def insert_if_absent(
             cognito_sub=sub,
             email=email,
             display_name=display_name,
+            account_type=account_type,
             consent_accepted_at=consent_accepted_at,
             consent_version=consent_version,
         )
@@ -91,4 +94,7 @@ def anonymize(session: Session, user: User, now: datetime) -> None:
         .where(Subject.professional_user_id == user.id)
         .values(label=None, context_data=None)
     )
+    # The free-text context declared for the account's own subject attempts (Feature 20) can be
+    # just as identifying as the subject's own label; nulled here like the rest of what identifies.
+    session.execute(update(TestAttempt).where(TestAttempt.user_id == user.id).values(subject_context=None))
     session.flush()
