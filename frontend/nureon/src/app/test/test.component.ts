@@ -1,5 +1,5 @@
 import { Component, HostListener, Inject, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, forkJoin, of, throwError } from 'rxjs';
 import { API_SERVICE, ApiService } from '../core/services/api.service';
 import { isNotContinuable, isPaidTierRequired } from '../core/services/api-error';
@@ -17,6 +17,7 @@ import { BrandButtonComponent } from '../shared/components/brand-button/brand-bu
 import { ScenarioItemComponent } from './scenario-item/scenario-item.component';
 import { LikertItemComponent } from './likert-item/likert-item.component';
 import { FeedbackFormComponent } from '../shared/components/feedback-form/feedback-form.component';
+import { SubjectBannerComponent } from '../shared/components/subject-banner/subject-banner.component';
 import { BetweenCutsComponent } from './between-cuts/between-cuts.component';
 
 // CU003 — El test. One item per screen, auto-advance on select (the one
@@ -42,6 +43,7 @@ import { BetweenCutsComponent } from './between-cuts/between-cuts.component';
     ScenarioItemComponent,
     LikertItemComponent,
     FeedbackFormComponent,
+    SubjectBannerComponent,
     BetweenCutsComponent,
   ],
   templateUrl: './test.component.html',
@@ -56,6 +58,9 @@ export class TestComponent implements OnInit {
   currentIndex = 0;
 
   attemptId: string | null = null;
+  // Feature 20/21: the evaluado's identifier, when the attempt has a subject — shown as a banner
+  // throughout the test (and the screen between cuts), null for the account's own attempt.
+  subjectLabel: string | null = null;
   private readonly selections = new Map<string, string>();
 
   // Where the attempt stands in the cuts; refreshed when a cut is finished,
@@ -70,6 +75,7 @@ export class TestComponent implements OnInit {
     @Inject(API_SERVICE) private readonly api: ApiService,
     private readonly auth: AuthService,
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
@@ -195,9 +201,20 @@ export class TestComponent implements OnInit {
     }
   }
 
+  // ?intento=<id> (Feature 20/21) names which attempt to show when a salud/rrhh account has more
+  // than one in progress at once (its own, plus one per evaluado) — getLatestAttempt alone can't
+  // tell those apart. Without it, the account's latest attempt resumes exactly as before.
   private loadOrResume(): void {
     this.loading = true;
     this.error = null;
+    const requestedId = this.route.snapshot.queryParamMap.get('intento');
+    if (requestedId) {
+      this.api.getAttempt(requestedId).subscribe({
+        next: (attempt) => (attempt ? this.resume(attempt) : this.fail()),
+        error: () => this.fail(),
+      });
+      return;
+    }
     const userId = this.auth.currentUser?.id;
     if (!userId) {
       this.fail();
@@ -221,6 +238,7 @@ export class TestComponent implements OnInit {
   // cuts; with the whole of the last cut answered, its last item, as before.
   private resume(attempt: TestAttempt): void {
     this.attemptId = attempt.id;
+    this.subjectLabel = attempt.subjectLabel;
     forkJoin({
       questions: this.api.getQuestions(attempt.id),
       responses: this.api.getResponses(attempt.id),

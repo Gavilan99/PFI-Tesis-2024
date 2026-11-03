@@ -18,6 +18,9 @@
           }
         </select>
       </label>
+      @if (accountTypeError) {
+        <p class="profile__error" role="alert">{{ accountTypeError }}</p>
+      }
 
       <label class="profile__field">
         <span>Rango etario</span>
@@ -51,8 +54,8 @@
 
       @if (form.controls.accountType.value !== 'individual') {
         <label class="profile__field">
-          <span>{{ professionContextLabel }}</span>
-          <input formControlName="professionContext" [placeholder]="professionContextPlaceholder" />
+          <span>Contexto profesional</span>
+          <input formControlName="professionContext" placeholder="ej. Psicóloga clínica" />
         </label>
       }
 
@@ -75,26 +78,71 @@
       <app-loading-state message="Cargando tu historial…"></app-loading-state>
     } @else if (historyError) {
       <app-error-state [message]="historyError" (retry)="retryHistory()"></app-error-state>
-    } @else if (history.length === 0) {
-      <app-empty-state message="Todavía no hiciste ningún test."></app-empty-state>
     } @else {
-      <ul class="profile__history">
-        @for (entry of history; track entry.attempt.id) {
-          <li class="profile__history-item">
-            @if (entry.eneatype) {
-              <a [routerLink]="['/resultados', entry.attempt.id]" class="profile__history-link">
-                {{ entry.attempt.completedAt || entry.attempt.startedAt | date: 'dd/MM/yyyy' }}
-                — Eneatipo {{ entry.eneatype }}
-              </a>
+      @if (isProfessional) {
+        <h3 class="profile__history-heading">Mis tests</h3>
+      }
+      @if (history.length === 0) {
+        <app-empty-state message="Todavía no hiciste ningún test."></app-empty-state>
+      } @else {
+        <ul class="profile__history">
+          @for (entry of history; track entry.attempt.id) {
+            <li class="profile__history-item">
+              @if (entry.eneatype) {
+                <a [routerLink]="['/resultados', entry.attempt.id]" class="profile__history-link">
+                  {{ entry.attempt.completedAt || entry.attempt.startedAt | date: 'dd/MM/yyyy' }}
+                  — Eneatipo {{ entry.eneatype }}
+                </a>
+              } @else {
+                <span class="profile__history-pending">
+                  {{ entry.attempt.startedAt | date: 'dd/MM/yyyy' }}
+                  — {{ entry.attempt.status === 'in_progress' ? 'En curso' : 'Abandonado' }}
+                </span>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      @if (isProfessional) {
+        @for (group of subjectGroups; track group.subject.id) {
+          <div class="profile__subject-group">
+            <h3 class="profile__history-heading">{{ group.subject.label }}</h3>
+            <p class="profile__subject-summary">
+              {{ group.subject.testCount }} test{{ group.subject.testCount === 1 ? '' : 's' }}
+              — último resultado: {{ group.lastEneatype ? 'Eneatipo ' + group.lastEneatype : 'Pendiente' }}
+            </p>
+            @if (!group.deleteOpen) {
+              <app-brand-button variant="text" [negative]="true" (click)="openDeleteSubject(group)">
+                Eliminar evaluado
+              </app-brand-button>
             } @else {
-              <span class="profile__history-pending">
-                {{ entry.attempt.startedAt | date: 'dd/MM/yyyy' }}
-                — {{ entry.attempt.status === 'in_progress' ? 'En curso' : 'Abandonado' }}
-              </span>
+              <div class="profile__delete-panel">
+                <p>
+                  Se borran el identificador y el contexto de <strong>{{ group.subject.label }}</strong>.
+                  Sus respuestas y resultados se conservan, sin esos datos. Esto no se puede deshacer.
+                </p>
+                @if (group.deleteError) {
+                  <p class="profile__error" role="alert">{{ group.deleteError }}</p>
+                }
+                <div class="profile__delete-actions">
+                  <button
+                    type="button"
+                    class="profile__delete-confirm"
+                    [disabled]="group.deleting"
+                    (click)="confirmDeleteSubject(group)"
+                  >
+                    {{ group.deleting ? 'Eliminando…' : 'Eliminar evaluado' }}
+                  </button>
+                  <app-brand-button variant="text" [negative]="true" [disabled]="group.deleting" (click)="cancelDeleteSubject(group)">
+                    Cancelar
+                  </app-brand-button>
+                </div>
+              </div>
             }
-          </li>
+          </div>
         }
-      </ul>
+      }
     }
   </section>
 

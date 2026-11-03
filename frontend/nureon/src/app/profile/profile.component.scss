@@ -69,6 +69,22 @@
   color: rgba(black, 0.6);
 }
 
+.profile__history-heading {
+  font: var(--nureon-text-h3-weight) var(--nureon-text-h3-size) / var(--nureon-text-h3-line-height)
+    var(--nureon-text-h3-font);
+  margin: var(--nureon-space-md) 0 var(--nureon-space-2xs);
+}
+
+.profile__subject-group {
+  padding-top: var(--nureon-space-sm);
+  border-top: 1px solid rgba(black, 0.12);
+}
+
+.profile__subject-summary {
+  color: rgba(black, 0.7);
+  margin-bottom: var(--nureon-space-2xs);
+}
+
 .profile__delete-intro {
   margin-bottom: var(--nureon-space-sm);
 }

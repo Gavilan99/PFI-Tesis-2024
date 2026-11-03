@@ -81,6 +81,17 @@ interface ContactMessageRecord {
   submittedAt: string;
 }
 
+// Feature 20/21: an evaluado, scoped to the salud/rrhh account that created it. Soft-deleted like
+// the backend's row — `deletedAt` set, label/context erased — rather than removed outright, so a
+// dangling `subjectId` on an old attempt still resolves to "no label any more" instead of nothing.
+interface SubjectRecord {
+  id: string;
+  professionalUserId: string;
+  label: string;
+  context: string | null;
+  deletedAt: string | null;
+}
+
 interface PersistedState {
   attempts: Record<string, TestAttempt>;
   responsesByAttempt: Record<string, TestResponse[]>;
@@ -88,6 +99,8 @@ interface PersistedState {
   usersByEmail: Record<string, { password: string; user: User }>;
   feedback: FeedbackRecord[];
   contactMessages: ContactMessageRecord[];
+  // Feature 20/21: every evaluado ever created, across every salud/rrhh account, keyed by id.
+  subjects: Record<string, SubjectRecord>;
   // Keyed by userId — was a single global value until Stage 7 added real
   // multi-account registration and exposed the bug: with only one implicit
   // session, nobody noticed every user's attempts lived in one shared space.
@@ -152,6 +165,7 @@ function defaultState(): PersistedState {
     usersByEmail: seededAccounts(),
     feedback: [],
     contactMessages: [],
+    subjects: {},
     latestAttemptIdByUser: { [DEMO_USER_ID]: attempt.id },
     servedByAttempt: { [attempt.id]: CUT_ENDS[0] },
     continuedFromByAttempt: {},
@@ -264,10 +278,23 @@ export class MockApiService implements ApiService {
     return of(record.user).pipe(delay(MOCK_DELAY_MS));
   }
 
+  // Like the backend: changing accountType while the account has active evaluados is refused
+  // (Feature 20/21) — their consent and personalization are tied to it. Keeping the same type,
+  // even if sent, is always allowed.
   updateProfile(userId: string, input: UpdateProfileInput): Observable<User> {
     const record = Object.values(this.state.usersByEmail).find((r) => r.user.id === userId);
     if (!record) {
       return throwError(() => new Error(`MockApiService: unknown user "${userId}"`));
+    }
+    if (input.accountType && input.accountType !== record.user.accountType && this.hasActiveSubjects(userId)) {
+      return throwError(
+        () =>
+          new ApiError(
+            'No podés cambiar el tipo de cuenta mientras tengas evaluados activos.',
+            'ACCOUNT_TYPE_LOCKED',
+            409,
+          ),
+      );
     }
     record.user = { ...record.user, ...input };
     this.saveState();
@@ -290,23 +317,65 @@ export class MockApiService implements ApiService {
     return of(undefined).pipe(delay(MOCK_DELAY_MS));
   }
 
-  // `subject` is not modeled in the mock's persisted state (Feature 20 is backend-only so far):
-  // this just carries the label/context straight onto the created attempt.
+  // `subject` administers the test to an evaluado instead of the account itself (Feature 20/21):
+  // reused by label (case-insensitively) if it already names an active one, like the backend.
   createTestAttempt(userId: string, subject?: SubjectInput): Observable<TestAttempt> {
+    let subjectId: string | null = null;
+    let subjectLabel: string | null = null;
+    let subjectContext: string | null = null;
+    if (subject) {
+      const owner = this.userById(userId);
+      if (!owner || (owner.accountType !== 'salud' && owner.accountType !== 'rrhh')) {
+        return throwError(
+          () =>
+            new ApiError('Esta función es sólo para cuentas de salud o de recursos humanos.', 'SUBJECTS_NOT_ALLOWED', 403),
+        );
+      }
+      if (subject.consentDeclared !== true) {
+        return throwError(
+          () =>
+            new ApiError(
+              'Para administrarle el test a otra persona tenés que declarar que diste el consentimiento informado.',
+              'SUBJECT_CONSENT_REQUIRED',
+              422,
+            ),
+        );
+      }
+      const label = subject.label.trim();
+      const context = subject.context?.trim() || null;
+      const existing = this.findActiveSubjectByLabel(userId, label);
+      if (existing) {
+        existing.context = context ?? existing.context;
+        subjectId = existing.id;
+      } else {
+        const record: SubjectRecord = {
+          id: `subject-${this.state.nextId++}`,
+          professionalUserId: userId,
+          label,
+          context,
+          deletedAt: null,
+        };
+        this.state.subjects[record.id] = record;
+        subjectId = record.id;
+      }
+      const record = this.state.subjects[subjectId];
+      subjectLabel = record.label;
+      subjectContext = record.context;
+    }
     const id = `attempt-${this.state.nextId++}`;
     const attempt: TestAttempt = {
       id,
       userId,
-      subjectId: null,
+      subjectId,
       tier: 'free_reduced',
       questionnaireVersion: 1,
       status: 'in_progress',
       startedAt: new Date().toISOString(),
       completedAt: null,
-      subjectLabel: subject?.label ?? null,
-      subjectContext: subject?.context ?? null,
+      subjectLabel,
+      subjectContext,
     };
-    this.abandonInProgress(userId);
+    this.abandonInProgress(userId, subjectId);
     this.state.attempts[id] = attempt;
     this.state.responsesByAttempt[id] = [];
     this.state.servedByAttempt[id] = CUT_ENDS[0];
@@ -315,12 +384,39 @@ export class MockApiService implements ApiService {
     return of(attempt).pipe(delay(MOCK_DELAY_MS));
   }
 
-  // Stubs: no persisted subjects in the mock yet (Feature 20 is backend-only so far).
+  // GET /api/subjects (Feature 20/21): the signed-in account's own evaluados — salud/rrhh only, an
+  // empty list for anyone else, same shape as the real backend answering 403 would hide.
   listSubjects(): Observable<Subject[]> {
-    return of([]).pipe(delay(MOCK_DELAY_MS));
+    const userId = this.state.sessionUserId;
+    const owner = userId ? this.userById(userId) : undefined;
+    if (!owner || (owner.accountType !== 'salud' && owner.accountType !== 'rrhh')) {
+      return of([]).pipe(delay(MOCK_DELAY_MS));
+    }
+    const subjects = Object.values(this.state.subjects)
+      .filter((s) => s.professionalUserId === userId && !s.deletedAt)
+      .map((s) => this.subjectSummary(s))
+      .sort((a, b) => (b.lastTestAt ?? '').localeCompare(a.lastTestAt ?? ''));
+    return of(subjects).pipe(delay(MOCK_DELAY_MS));
   }
 
-  deleteSubject(_subjectId: string): Observable<void> {
+  // Logical deletion, like the backend: label and context erased, deletedAt set, the evaluado's
+  // attempts and results stay (their subjectLabel/subjectContext erased too, for the same reason).
+  deleteSubject(subjectId: string): Observable<void> {
+    const userId = this.state.sessionUserId;
+    const subject = this.state.subjects[subjectId];
+    if (!subject || subject.deletedAt || subject.professionalUserId !== userId) {
+      return throwError(() => new ApiError('El evaluado no existe.', 'SUBJECT_NOT_FOUND', 404));
+    }
+    subject.deletedAt = new Date().toISOString();
+    subject.label = '';
+    subject.context = null;
+    for (const attempt of Object.values(this.state.attempts)) {
+      if (attempt.subjectId === subjectId) {
+        attempt.subjectLabel = null;
+        attempt.subjectContext = null;
+      }
+    }
+    this.saveState();
     return of(undefined).pipe(delay(MOCK_DELAY_MS));
   }
 
@@ -423,7 +519,7 @@ export class MockApiService implements ApiService {
       return of(attempt).pipe(delay(MOCK_DELAY_MS));
     }
     const userId = attempt.userId!;
-    this.abandonInProgress(userId);
+    this.abandonInProgress(userId, attempt.subjectId);
     const id = `attempt-${this.state.nextId++}`;
     const continued: TestAttempt = {
       ...attempt,
@@ -492,10 +588,18 @@ export class MockApiService implements ApiService {
     if (attempt.tier !== 'paid_full') {
       return of<PersonalizedDescription>(NOTHING_PERSONALIZED('not_in_plan')).pipe(delay(MOCK_DELAY_MS));
     }
-    const owner = Object.values(this.state.usersByEmail).find((r) => r.user.id === attempt.userId)?.user;
-    const hasProfile = !!(owner?.accountType || owner?.ageRange || owner?.professionContext);
-    if (!hasProfile) {
-      return of<PersonalizedDescription>(NOTHING_PERSONALIZED('profile_missing')).pipe(delay(MOCK_DELAY_MS));
+    const owner = attempt.userId ? this.userById(attempt.userId) : undefined;
+    // An evaluado's attempt (Feature 20/21) personalizes from its own declared context and the
+    // professional's accountType, never the professional's label or the rest of their profile.
+    if (attempt.subjectId) {
+      if (!attempt.subjectContext) {
+        return of<PersonalizedDescription>(NOTHING_PERSONALIZED('context_missing')).pipe(delay(MOCK_DELAY_MS));
+      }
+    } else {
+      const hasProfile = !!(owner?.accountType || owner?.ageRange || owner?.professionContext);
+      if (!hasProfile) {
+        return of<PersonalizedDescription>(NOTHING_PERSONALIZED('profile_missing')).pipe(delay(MOCK_DELAY_MS));
+      }
     }
     const marker = `eneatipo ${result.eneatype}, cuenta ${owner?.accountType}`;
     return of<PersonalizedDescription>({
@@ -600,12 +704,45 @@ export class MockApiService implements ApiService {
     return entry ? entry[0] : null;
   }
 
-  private abandonInProgress(userId: string): void {
+  // Scoped to subjectId (null for the account's own attempts): a salud/rrhh account can have one
+  // in-progress attempt per evaluado, plus one of its own, all at the same time (Feature 20/21).
+  private abandonInProgress(userId: string, subjectId: string | null): void {
     for (const attempt of Object.values(this.state.attempts)) {
-      if (attempt.userId === userId && attempt.status === 'in_progress') {
+      if (attempt.userId === userId && attempt.subjectId === subjectId && attempt.status === 'in_progress') {
         attempt.status = 'abandoned';
       }
     }
+  }
+
+  private userById(userId: string): User | undefined {
+    return Object.values(this.state.usersByEmail).find((r) => r.user.id === userId)?.user;
+  }
+
+  private hasActiveSubjects(professionalUserId: string): boolean {
+    return Object.values(this.state.subjects).some((s) => s.professionalUserId === professionalUserId && !s.deletedAt);
+  }
+
+  private findActiveSubjectByLabel(professionalUserId: string, label: string): SubjectRecord | undefined {
+    const normalized = label.toLowerCase();
+    return Object.values(this.state.subjects).find(
+      (s) => s.professionalUserId === professionalUserId && !s.deletedAt && s.label.toLowerCase() === normalized,
+    );
+  }
+
+  // GET /api/subjects's row: test count and last test's context/date, derived from the attempts
+  // that name this subject rather than kept redundantly on the record itself.
+  private subjectSummary(subject: SubjectRecord): Subject {
+    const attempts = Object.values(this.state.attempts)
+      .filter((a) => a.subjectId === subject.id)
+      .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+    const last = attempts[0] as TestAttempt | undefined;
+    return {
+      id: subject.id,
+      label: subject.label,
+      testCount: attempts.length,
+      lastTestAt: last ? last.completedAt ?? last.startedAt : null,
+      lastTestContext: last ? last.subjectContext : null,
+    };
   }
 
   private latestCompletedId(userId: string): string | null {

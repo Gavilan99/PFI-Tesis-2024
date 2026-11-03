@@ -1,0 +1,102 @@
+<div class="start-test-dialog__backdrop" (click)="close()">
+  <div
+    class="start-test-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="start-test-dialog-title"
+    (click)="$event.stopPropagation()"
+  >
+    <h2 id="start-test-dialog-title">¿Para quién es este test?</h2>
+
+    <div class="start-test-dialog__recipient" role="radiogroup" aria-labelledby="start-test-dialog-title">
+      <label class="start-test-dialog__recipient-option">
+        <input
+          #firstField
+          type="radio"
+          name="recipient"
+          [checked]="recipient === 'self'"
+          (change)="selectRecipient('self')"
+        />
+        Para mí
+      </label>
+      <label class="start-test-dialog__recipient-option">
+        <input
+          type="radio"
+          name="recipient"
+          [checked]="recipient === 'other'"
+          (change)="selectRecipient('other')"
+        />
+        Otra persona
+      </label>
+    </div>
+
+    @if (recipient === 'other') {
+      <form [formGroup]="otherForm" class="start-test-dialog__form" (ngSubmit)="startForOther()">
+        <label class="start-test-dialog__field">
+          <span>Identificador</span>
+          <input
+            formControlName="label"
+            type="text"
+            list="start-test-dialog-subjects"
+            autocomplete="off"
+            (input)="onLabelInput()"
+            [attr.aria-invalid]="labelError ? 'true' : null"
+          />
+          <datalist id="start-test-dialog-subjects">
+            @for (subject of subjects; track subject.id) {
+              <option [value]="subject.label"></option>
+            }
+          </datalist>
+        </label>
+        @if (labelError) {
+          <p class="start-test-dialog__error">{{ labelError }}</p>
+        }
+
+        <label class="start-test-dialog__field">
+          <span>Contexto (opcional)</span>
+          <textarea formControlName="context" rows="2" maxlength="255"></textarea>
+          <small>
+            Por ejemplo, el puesto al que aplica o el motivo de la evaluación. Evitá datos clínicos o de salud.
+          </small>
+        </label>
+
+        <label class="start-test-dialog__consent">
+          <input
+            type="checkbox"
+            formControlName="consentDeclared"
+            [attr.aria-invalid]="consentError ? 'true' : null"
+          />
+          <span>Declaro contar con el consentimiento de la persona evaluada</span>
+        </label>
+        @if (consentError) {
+          <p class="start-test-dialog__error">{{ consentError }}</p>
+        }
+
+        @if (submitError) {
+          <p class="start-test-dialog__error" role="alert">{{ submitError }}</p>
+        }
+
+        <div class="start-test-dialog__actions">
+          <app-brand-button variant="primary" type="submit" [disabled]="submitting">
+            {{ submitting ? 'Iniciando…' : 'Iniciar test' }}
+          </app-brand-button>
+          <app-brand-button variant="text" [negative]="true" [disabled]="submitting" (click)="close()">
+            Cancelar
+          </app-brand-button>
+        </div>
+      </form>
+    } @else {
+      @if (submitError) {
+        <p class="start-test-dialog__error" role="alert">{{ submitError }}</p>
+      }
+      <div class="start-test-dialog__actions">
+        <app-brand-button variant="primary" [disabled]="submitting" (click)="startForSelf()">
+          {{ submitting ? 'Iniciando…' : 'Iniciar test' }}
+        </app-brand-button>
+        <app-brand-button variant="text" [negative]="true" [disabled]="submitting" (click)="close()">
+          Cancelar
+        </app-brand-button>
+      </div>
+    }
+  </div>
+</div>

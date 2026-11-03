@@ -1,0 +1,98 @@
+.start-test-dialog__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(black, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--nureon-space-md);
+  z-index: 100;
+}
+
+.start-test-dialog {
+  background: white;
+  border-radius: var(--nureon-radius-lg);
+  box-shadow: var(--nureon-elevation-4);
+  padding: var(--nureon-space-lg);
+  max-width: 480px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-sm);
+}
+
+.start-test-dialog__recipient {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--nureon-space-sm);
+}
+
+.start-test-dialog__recipient-option {
+  display: flex;
+  align-items: center;
+  gap: var(--nureon-space-2xs);
+  padding: var(--nureon-space-xs) var(--nureon-space-sm);
+  border: 1px solid rgba(black, 0.16);
+  border-radius: var(--nureon-radius-md);
+  cursor: pointer;
+
+  input {
+    accent-color: var(--nureon-green-dark);
+  }
+}
+
+.start-test-dialog__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-sm);
+}
+
+.start-test-dialog__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nureon-space-3xs);
+  font-size: var(--nureon-text-body-sm-size);
+
+  input,
+  textarea {
+    padding: var(--nureon-space-xs);
+    border: 1px solid rgba(black, 0.24);
+    border-radius: var(--nureon-radius-md);
+    font-family: var(--nureon-font-body);
+    font-size: var(--nureon-text-body-size);
+    resize: vertical;
+  }
+
+  small {
+    color: rgba(black, 0.65);
+    font-size: var(--nureon-text-caption-size);
+  }
+}
+
+.start-test-dialog__consent {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--nureon-space-xs);
+  font-size: var(--nureon-text-body-sm-size);
+  cursor: pointer;
+
+  input {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: var(--nureon-green-dark);
+  }
+}
+
+.start-test-dialog__error {
+  color: var(--nureon-color-danger);
+  font-size: var(--nureon-text-body-sm-size);
+}
+
+.start-test-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--nureon-space-xs);
+}

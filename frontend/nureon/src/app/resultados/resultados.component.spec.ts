@@ -93,6 +93,48 @@ describe('ResultadosComponent, continuing from the result', () => {
   });
 });
 
+// Feature 20/21: "Evaluación de: <identificador>" when the result belongs to an evaluado.
+describe('ResultadosComponent, the evaluado\'s banner', () => {
+  function create(attemptToUse: TestAttempt) {
+    const api: Partial<ApiService> = {
+      getLatestAttempt: () => of(attemptToUse),
+      getResult: () =>
+        of({
+          id: 'r-1',
+          testAttemptId: attemptToUse.id,
+          eneatype: 3,
+          descriptionText: '',
+          generatedAt: attemptToUse.completedAt!,
+        }),
+      getCutStatus: () => of(cut),
+      getAttemptHistory: () => of([attemptToUse]),
+    };
+    TestBed.configureTestingModule({
+      imports: [ResultadosComponent, NoopAnimationsModule],
+      providers: [
+        provideRouter([]),
+        { provide: API_SERVICE, useValue: api },
+        { provide: AuthService, useValue: { currentUser: { id: 'user-1', accountType: 'salud' } } },
+      ],
+    });
+    const fixture = TestBed.createComponent(ResultadosComponent);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('shows "Evaluación de: <identificador>" for an evaluado\'s result', () => {
+    const fixture = create({ ...attempt, subjectId: 'subject-1', subjectLabel: 'Paciente A' });
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Evaluación de: Paciente A');
+  });
+
+  it('shows no banner for the account\'s own result', () => {
+    const fixture = create(attempt);
+
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Evaluación de:');
+  });
+});
+
 describe('ResultadosComponent, the locked premium block (Capa 6)', () => {
   function create(cutOverrides: Partial<CutStatus>) {
     const continueTestAttempt = jasmine.createSpy('continueTestAttempt').and.returnValue(of({ ...attempt, id: 'attempt-2' }));
@@ -239,12 +281,12 @@ describe('ResultadosComponent, personalized description (Feature 18)', () => {
     expect(page.tensions).toEqual(genericContent.tensions);
   });
 
-  it('shows the context_missing notice with no link, and the generic content (Feature 20)', () => {
+  it('shows the context_missing notice with no link, and the generic content (Feature 20/21)', () => {
     const fixture = create({ getPersonalizedDescription: () => of(nothing('context_missing')) });
     const page = fixture.componentInstance;
     const element = fixture.nativeElement as HTMLElement;
 
-    expect(element.textContent).toContain('no tiene un contexto declarado');
+    expect(element.textContent).toContain('completá el contexto del evaluado al iniciar su próximo test');
     expect(element.textContent).not.toContain('Completá tu tipo de cuenta');
     expect(element.querySelector('a[routerLink="/perfil"]')).toBeNull();
     expect(page.strengths).toEqual(genericContent.strengths);

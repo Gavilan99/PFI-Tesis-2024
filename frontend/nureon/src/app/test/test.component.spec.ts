@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError } from 'rxjs';
 import { TestComponent } from './test.component';
@@ -87,5 +87,68 @@ describe('TestComponent', () => {
     const test = create(new ApiError('No pudimos conectarnos con el servidor.', 'NETWORK_ERROR', 0));
 
     expect(test.error).toBe('No pudimos cargar el test.');
+  });
+});
+
+// Feature 20/21: ?intento=<id> picks which attempt /test shows when a salud/rrhh account has more
+// than one in progress at once (its own, plus one per evaluado) — getLatestAttempt can't tell
+// those apart on its own.
+describe('TestComponent, ?intento=<id> (Feature 20/21)', () => {
+  const subjectAttempt: TestAttempt = {
+    ...attempt,
+    id: 'attempt-subject',
+    subjectId: 'subject-1',
+    subjectLabel: 'Paciente A',
+    subjectContext: 'Primera consulta',
+  };
+
+  function create(queryParams: Record<string, string>, latest: TestAttempt | null) {
+    const api: Partial<ApiService> = {
+      getLatestAttempt: () => of(latest),
+      getAttempt: (id: string) => of(id === subjectAttempt.id ? subjectAttempt : null),
+      getQuestions: () => of(questions(20)),
+      getResponses: () => of([]),
+      getCutStatus: () =>
+        throwError(() => new ApiError('Este intento ya no se puede seguir.', 'ATTEMPT_NOT_CONTINUABLE', 409)),
+    };
+    TestBed.configureTestingModule({
+      imports: [TestComponent, NoopAnimationsModule],
+      providers: [
+        provideRouter([]),
+        { provide: API_SERVICE, useValue: api },
+        { provide: AuthService, useValue: { currentUser: { id: 'user-1' } } },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap(queryParams) } },
+        },
+      ],
+    });
+    const fixture = TestBed.createComponent(TestComponent);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('resumes the attempt named by ?intento instead of the account-wide latest one', () => {
+    const fixture = create({ intento: 'attempt-subject' }, attempt);
+
+    expect(fixture.componentInstance.attemptId).toBe('attempt-subject');
+    expect(fixture.componentInstance.subjectLabel).toBe('Paciente A');
+  });
+
+  it('shows the "Evaluación de" banner for an evaluado\'s attempt', () => {
+    const fixture = create({ intento: 'attempt-subject' }, attempt);
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent!;
+    expect(text).toContain('Evaluación de: Paciente A');
+  });
+
+  it('falls back to the account-wide latest attempt without the query param, unchanged', () => {
+    const fixture = create({}, attempt);
+
+    expect(fixture.componentInstance.attemptId).toBe(attempt.id);
+    expect(fixture.componentInstance.subjectLabel).toBeNull();
+    const text = (fixture.nativeElement as HTMLElement).textContent!;
+    expect(text).not.toContain('Evaluación de');
   });
 });

@@ -2,8 +2,11 @@
   @if (registeredUser) {
     <section class="confirmation">
       <h1 class="nureon-heading">¡Listo, {{ registeredUser.displayName }}!</h1>
-      <p>Tu cuenta se creó correctamente. Ya podés empezar el test cuando quieras.</p>
-      <app-brand-button variant="primary" routerLink="/test">Empezar el test</app-brand-button>
+      <p>Tu cuenta se creó correctamente. Podés completar tu perfil ahora o hacerlo después.</p>
+      <div class="confirmation__actions">
+        <app-brand-button variant="primary" routerLink="/perfil">Completar perfil</app-brand-button>
+        <app-brand-button variant="text" routerLink="/inicio">Completar después</app-brand-button>
+      </div>
     </section>
   } @else {
     <section class="registro-form">
@@ -32,6 +35,22 @@
             <mat-error>{{ passwordError }}</mat-error>
           }
         </mat-form-field>
+
+        <fieldset class="registro-form__account-type" [attr.aria-invalid]="accountTypeError ? 'true' : null">
+          <legend>Tipo de cuenta</legend>
+          @for (option of accountTypeOptions; track option.value) {
+            <label class="registro-form__account-type-option">
+              <input type="radio" formControlName="accountType" [value]="option.value" />
+              <span>
+                <strong>{{ option.label }}</strong>
+                <small>{{ option.description }}</small>
+              </span>
+            </label>
+          }
+          @if (accountTypeError) {
+            <p class="registro-form__error" role="alert">{{ accountTypeError }}</p>
+          }
+        </fieldset>
 
         <p class="registro-form__notice">{{ consentSummary }}</p>
 

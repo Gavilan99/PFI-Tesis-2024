@@ -81,8 +81,6 @@ export class HttpApiService implements ApiService {
     );
   }
 
-  // `subject` administers the test to an evaluado instead of the account itself (Feature 20); not
-  // part of ApiService yet — see subject.model.ts.
   createTestAttempt(_userId: string, subject?: SubjectInput): Observable<TestAttempt> {
     return this.http
       .post<TestAttempt>(this.url('/api/attempts'), subject ? { subject } : null)

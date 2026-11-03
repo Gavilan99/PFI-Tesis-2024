@@ -10,7 +10,11 @@
       @switch (state) {
         @case ('no-attempts') {
           <p>Todavía no hiciste el test. Arrancá cuando quieras — dura unos minutos.</p>
-          <app-brand-button variant="primary" routerLink="/test">Iniciar test</app-brand-button>
+          @if (isProfessional) {
+            <app-brand-button variant="primary" (click)="openStartTestDialog()">Iniciar test</app-brand-button>
+          } @else {
+            <app-brand-button variant="primary" routerLink="/test">Iniciar test</app-brand-button>
+          }
         }
         @case ('in-progress') {
           <p>Tenés un test en curso.</p>
@@ -33,5 +37,9 @@
         }
       }
     </section>
+
+    @if (showStartTestDialog) {
+      <app-start-test-dialog (closed)="closeStartTestDialog()"></app-start-test-dialog>
+    }
   }
 </app-page-container>
