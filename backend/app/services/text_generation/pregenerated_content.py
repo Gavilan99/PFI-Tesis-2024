@@ -1,4 +1,3 @@
-# DRAFT: pending human review before this is merged (see the module docstring below).
 """Pregenerated content (Feature 19) for the result screen's four personalized sections —
 strengths, tensions, growth, stress — one entry per eneatype and account type.
 
