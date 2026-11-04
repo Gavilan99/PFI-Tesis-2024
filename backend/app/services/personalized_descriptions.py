@@ -10,9 +10,8 @@ this module only ever adds a second, personalized set of sections to a `Result`,
 `description_text` or the generic strengths/tensions the result screen already shows for free.
 
 Feature 19 adds a second source for the same four sections: pregenerated content per eneatype and
-account type (`app.services.text_generation.pregenerated_content` — a draft, pending human review
-before it reaches production; see that module's docstring), already structured as lists and
-paragraphs — it never goes through SYSTEM_PROMPT's marker format or `_parse_sections`.
+account type (`app.services.text_generation.pregenerated_content` — a draft, already structured as lists
+and paragraphs — it never goes through SYSTEM_PROMPT's marker format or `_parse_sections`.
 With TEXT_GENERATOR=pregenerated there is no generator at all (`generator` is `None`): every paid
 attempt with a profile gets its pregenerated sections straight away, nothing is stored. With a real
 generator (bedrock or, in tests, local), a failed call or an answer that doesn't follow the format or
